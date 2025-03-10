@@ -1,0 +1,66 @@
+{
+  "name": "metagame-sdk",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/types/src/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build:esm": "tsc -p tsconfig.json --module ESNext --outDir dist/esm",
+    "build:types": "tsc -p tsconfig.json --emitDeclarationOnly --outDir dist/types",
+    "build": "bun run build:esm && bun run build:types",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "bun test",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "type-check": "tsc --noEmit",
+    "docs": "typedoc --out docs src/index.ts",
+    "prepublishOnly": "bun run build",
+    "examples": "bun run examples/basic-usage.ts",
+    "generate-readme": "typedoc --plugin typedoc-plugin-markdown --out docs-md src/index.ts"
+  },
+  "keywords": [
+    "sdk",
+    "metagame",
+    "dojo",
+    "gaming"
+  ],
+  "devDependencies": {
+    "@dojoengine/sdk": "^1.2.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/node": "^22.13.5",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "bun-types": "latest",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "prettier": "^3.5.2",
+    "semantic-release": "^24.2.3",
+    "tsc-alias": "^1.8.11",
+    "tsup": "^8.4.0",
+    "typedoc": "^0.27.9",
+    "typescript": "^5.7.3",
+    "zustand": "^4.4.7"
+  },
+  "peerDependencies": {
+    "@dojoengine/sdk": "^1.2.2",
+    "typescript": "^5.0.0",
+    "zustand": "^4.4.7"
+  },
+  "author": "Provable Games",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/provablegames/metagame.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "default": "./dist/cjs/src/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ]
+}
