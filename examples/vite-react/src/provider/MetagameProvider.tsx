@@ -7,22 +7,14 @@ import {
 import { useProvider } from '@starknet-react/core';
 import { dojoConfig } from '../../dojoConfig';
 import { SchemaType } from '../bindings/models.gen';
-import { SDK } from '@dojoengine/sdk';
 
-export const MetagameProvider = ({
-  dojoSdk,
-  children,
-}: {
-  dojoSdk: SDK<SchemaType>;
-  children: ReactNode;
-}) => {
+export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
   const { provider } = useProvider();
 
   useEffect(() => {
     async function initialize() {
       const metagameClient = initMetagame<SchemaType>({
-        dojoSDK: dojoSdk as any,
         toriiUrl: dojoConfig.toriiUrl,
         provider: provider,
       });

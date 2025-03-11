@@ -44,7 +44,7 @@ function Root() {
   return (
     <StarknetProvider>
       <DojoSdkProvider sdk={sdk!} dojoConfig={dojoConfig} clientFn={setupWorld}>
-        <MetagameProvider dojoSdk={sdk!}>
+        <MetagameProvider>
           <App />
         </MetagameProvider>
       </DojoSdkProvider>
