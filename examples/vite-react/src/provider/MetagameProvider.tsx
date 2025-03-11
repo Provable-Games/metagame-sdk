@@ -7,28 +7,20 @@ import {
 import { useProvider } from '@starknet-react/core';
 import { dojoConfig } from '../../dojoConfig';
 import { SchemaType } from '../bindings/models.gen';
-import { init } from '@dojoengine/sdk';
+import { SDK } from '@dojoengine/sdk';
 
-export const MetagameProvider = ({ children }: { children: ReactNode }) => {
+export const MetagameProvider = ({
+  dojoSdk,
+  children,
+}: {
+  dojoSdk: SDK<SchemaType>;
+  children: ReactNode;
+}) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
   const { provider } = useProvider();
 
   useEffect(() => {
     async function initialize() {
-      const dojoSdk = await init<SchemaType>({
-        client: {
-          toriiUrl: dojoConfig.toriiUrl,
-          relayUrl: dojoConfig.relayUrl,
-          worldAddress: dojoConfig.manifest.world.address,
-        },
-        domain: {
-          name: 'WORLD_NAME',
-          version: '1.0',
-          chainId: 'KATANA',
-          revision: '1',
-        },
-      });
-
       const metagameClient = initMetagame<SchemaType>({
         dojoSDK: dojoSdk as any,
         toriiUrl: dojoConfig.toriiUrl,
