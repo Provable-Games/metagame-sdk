@@ -20,11 +20,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
-    "paths": {
-      "metagame-sdk": ["node_modules/metagame-sdk"]
-    }
   },
   "include": ["src", "debug.ts"]
 }
