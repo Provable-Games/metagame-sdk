@@ -1,6 +1,6 @@
 import { useAccount, useConnect } from '@starknet-react/core';
 import { useMiniGames, useOwnedGames, useGameScores } from 'metagame-sdk';
-import { displayAddress } from '../src/lib/index';
+import { displayAddress } from './lib/index';
 import './App.css';
 
 function App() {
