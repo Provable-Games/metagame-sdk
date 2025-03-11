@@ -1,5 +1,5 @@
 {
-  "name": "metagame-sdk",
+  "name": "@provablegames/metagame-sdk",
   "module": "./dist/esm/src/index.js",
   "types": "./dist/types/src/index.d.ts",
   "type": "module",
