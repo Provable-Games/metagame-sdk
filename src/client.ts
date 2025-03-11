@@ -1,13 +1,7 @@
 import { SchemaType } from '@dojoengine/sdk';
 import { createDojoStore } from '@dojoengine/sdk/react';
 
-import { MetagameConfig, MetaGame, MiniGame, GameInfo, ApiResponse } from './types';
-import {
-  subscribeToEntities,
-  SubscriptionResult,
-  SubscriptionOptions,
-} from './dojo/hooks/useEntitySubscription';
-import { miniGamesDataQuery } from './queries/sdk';
+import { MetagameConfig } from './types';
 import { executeSqlQuery } from './services/sqlService';
 import { gameDataQuery, miniGamesQuery } from './queries/sql';
 
@@ -20,7 +14,6 @@ export class MetagameClient<T extends SchemaType> {
       ...config,
     };
 
-    // Use the provided store or create a new one
     this.store = this.config.store || createDojoStore<T>();
   }
 
@@ -65,18 +58,4 @@ export class MetagameClient<T extends SchemaType> {
   ): Promise<{ data: any[]; error: string | null }> {
     return executeSqlQuery(this.config.toriiUrl, gameDataQuery(gameNamespaces), logging);
   }
-
-  /**
-   * Subscribe to mini game updates
-   */
-  subscribeGameData(gameNamespace: string, logging: boolean): Promise<SubscriptionResult<any>> {
-    return subscribeToEntities(this, {
-      query: miniGamesDataQuery({ gameNamespace }).query,
-      namespace: gameNamespace,
-      logging,
-    });
-  }
-
-  // Add your existing API methods here
-  // ...
 }

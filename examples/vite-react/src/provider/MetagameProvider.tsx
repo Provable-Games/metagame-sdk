@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import {
   initMetagame,
   MetagameClient,
@@ -9,7 +9,7 @@ import { dojoConfig } from '../../dojoConfig';
 import { SchemaType } from '../bindings/models.gen';
 import { init } from '@dojoengine/sdk';
 
-export const MetagameProvider = ({ children }: { children: React.ReactNode }) => {
+export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
   const { provider } = useProvider();
 

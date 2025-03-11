@@ -1,4 +1,4 @@
 export * from './useMiniGames';
-export * from './useSubscribeMiniGame';
+export * from './useSubscribeGameScores';
 export * from './useOwnedGames';
 export * from './useGameScores';

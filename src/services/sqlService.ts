@@ -14,7 +14,7 @@ export interface SqlQueryResult<T> {
 
 export function useSqlQuery<T>(
   toriiUrl: string | undefined,
-  query: string,
+  query: string | null | undefined,
   logging: boolean = false
 ): SqlQueryResult<T> {
   const [data, setData] = useState<T[]>([]);
@@ -24,6 +24,14 @@ export function useSqlQuery<T>(
   const fetchData = useCallback(async () => {
     if (!toriiUrl) {
       setError('Torii URL is not configured');
+      setLoading(false);
+      return;
+    }
+
+    // Return early with empty data if query is null or undefined
+    if (!query) {
+      setData([]);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -61,11 +69,15 @@ export function useSqlQuery<T>(
 
 export async function executeSqlQuery<T>(
   toriiUrl: string,
-  query: string,
+  query: string | null | undefined,
   logging: boolean = false
 ): Promise<{ data: T[]; error: string | null }> {
   if (!toriiUrl) {
     return { data: [], error: 'Torii URL is not configured' };
+  }
+
+  if (!query) {
+    return { data: [], error: null };
   }
 
   try {

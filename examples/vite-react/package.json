@@ -1,11 +1,11 @@
 {
-  "name": "vite-react-hooks",
+  "name": "vite-react",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cd ../.. && bun run build && cd examples/vite-react && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "bunx --bun vite preview"
   },

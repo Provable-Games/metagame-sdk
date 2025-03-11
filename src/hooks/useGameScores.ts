@@ -1,8 +1,9 @@
-import { gameScoresQuery } from '../queries/sql';
+import { gameScoresQuery, gameScoresKeyQuery } from '../queries/sql';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
 import { getMetagameClient } from '../singleton';
 import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
-import { indexAddress } from '../lib';
+import { feltToString } from '../lib';
+import { useMemo } from 'react';
 
 interface GameScoresQueryParams {
   gameAddress: string;
@@ -13,10 +14,12 @@ interface GameScoresQueryParams {
 
 interface GameScores {
   score: number;
-  playerName: string;
-  tokenId: string;
+  player_name: string;
+  token_id: string;
   metadata: string;
-  tokenBalanceId: string;
+  minted: number;
+  start: number;
+  end: number;
 }
 
 export const useGameScores = ({
@@ -27,51 +30,68 @@ export const useGameScores = ({
 }: GameScoresQueryParams): SqlQueryResult<GameScores> => {
   const client = getMetagameClient();
   const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
+  const { data: gameScoreKey } = useSqlQuery<{ name: string }>(
+    client.getConfig().toriiUrl,
+    gameScoresKeyQuery(gameNamespace ?? '', gameScoreModel ?? '')
+  );
 
-  // Check for required endpoints
-  const missingConfig = !gameScoreModel || !gameScoreAttribute || !gameNamespace;
+  const missingConfig =
+    !gameScoreModel || !gameScoreAttribute || !gameNamespace || !gameScoreKey[0]?.name;
 
-  // Create error message if config is missing
   let configError = null;
   if (missingConfig) {
     let errorMessage = 'Missing required game configuration: ';
     if (!gameScoreModel) errorMessage += 'Score Model, ';
     if (!gameScoreAttribute) errorMessage += 'Score Attribute, ';
     if (!gameNamespace) errorMessage += 'Namespace, ';
-
-    // Remove trailing comma and space
+    if (!gameScoreKey[0]?.name) errorMessage += 'Score Key, ';
     errorMessage = errorMessage.replace(/, $/, '');
-    configError = new Error(errorMessage);
+    configError = errorMessage;
   }
 
-  // Always call useSqlQuery, but with an empty query if config is missing
+  const query = !missingConfig
+    ? gameScoresQuery({
+        gameIds,
+        gameAddress,
+        gameNamespace: gameNamespace,
+        gameScoreModel: gameScoreModel,
+        gameScoreAttribute: gameScoreAttribute,
+        gameScoreKey: gameScoreKey[0].name,
+        limit,
+        offset,
+      })
+    : null;
+
   const {
-    data,
+    data: rawGameData,
     loading,
     error: queryError,
     refetch,
-  } = useSqlQuery<GameScores>(
-    client.getConfig().toriiUrl,
-    missingConfig
-      ? 'SELECT 1 WHERE 0' // Empty query that returns no results
-      : gameScoresQuery({
-          gameIds,
-          gameAddress: indexAddress(gameAddress),
-          gameNamespace: gameNamespace!,
-          gameScoreModel: gameScoreModel!,
-          gameScoreAttribute: gameScoreAttribute!,
-          limit,
-          offset,
-        })
-  );
+  } = useSqlQuery<any>(client.getConfig().toriiUrl, query);
 
-  // Combine the config error with any query error
   const error = configError || queryError;
 
+  const gameScores = useMemo(() => {
+    if (!rawGameData || !rawGameData.length) return [];
+
+    return rawGameData.map((game) => {
+      const filteredGame: GameScores = {
+        score: game.score,
+        player_name: feltToString(game.player_name),
+        token_id: game.token_id,
+        metadata: game.metadata,
+        minted: Number(game['lifecycle.mint']),
+        start: Number(game['lifecycle.start']),
+        end: Number(game['lifecycle.end']),
+      };
+      return filteredGame;
+    });
+  }, [rawGameData]);
+
   return {
-    data: missingConfig ? [] : data,
+    data: gameScores,
     loading: !missingConfig && loading,
-    error: error as string | null,
+    error,
     refetch,
   };
 };

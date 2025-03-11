@@ -1,7 +1,6 @@
 import { SchemaType } from '@dojoengine/sdk';
 import { MetagameClient } from './client';
 import { MetagameConfig } from './types/config';
-import { createDojoStore } from '@dojoengine/sdk/react';
 
 // Store the singleton instance
 let metagameClientInstance: MetagameClient<any> | null = null;

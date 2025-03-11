@@ -66,17 +66,20 @@ export function useEntitySubscription<S extends SchemaType, T = any>(
       const { dojoSDK } = client.getConfig();
       const state = client.getStore().getState();
 
-      const [_initialEntities, subscription] = await dojoSDK.subscribeEntityQuery({
+      const [initialEntities, subscription] = await dojoSDK.subscribeEntityQuery({
         query: memoizedQuery,
         callback: (response) => {
           if (response.error) {
             console.error('MetagameClient subscription error:', response.error.message);
           } else if (response.data && response.data.length > 0) {
-            // Update the store with new entities
+            console.log(
+              'useSdkSubscribeEntities() transformEntity:',
+              response.data.map(transformEntity)
+            );
             response.data.forEach((entity) => {
-              state.updateEntity(entity);
+              state.updateEntity(transformEntity(entity));
             });
-            setEntities(response.data.map(transformEntity));
+            setEntities(initialEntities.map(transformEntity));
           }
         },
       });
@@ -134,6 +137,7 @@ export async function subscribeToEntities<S extends SchemaType, T = any>(
       if (response.error) {
         console.error('Subscription error:', response.error.message);
       } else if (response.data && response.data.length > 0) {
+        console.log('useSdkSubscribeEntities() response.data:', response.data);
         response.data.forEach((entity) => {
           state.updateEntity(entity);
         });

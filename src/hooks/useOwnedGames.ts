@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
-import { miniGamesQuery, ownedGamesQuery } from '../queries/sql';
+import { ownedGamesQuery } from '../queries/sql';
 import { getMetagameClient } from '../singleton';
 import { indexAddress } from '../lib';
 
