@@ -81,8 +81,8 @@ export const useGameScores = ({
         token_id: game.token_id,
         metadata: game.metadata,
         minted: Number(game['lifecycle.mint']),
-        start: Number(game['lifecycle.start']),
-        end: Number(game['lifecycle.end']),
+        start: Number(game['lifecycle.start.Some']),
+        end: Number(game['lifecycle.end.Some']),
       };
       return filteredGame;
     });

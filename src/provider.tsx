@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { MetagameClient } from './client';
 
 const MetagameContext = createContext<MetagameClient<any> | null>(null);
