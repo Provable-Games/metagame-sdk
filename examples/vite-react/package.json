@@ -14,7 +14,7 @@
     "@dojoengine/core": "^1.2.2",
     "@dojoengine/sdk": "^1.2.2",
     "@starknet-react/core": "^3.7.2",
-    "metagame-sdk": "../../",
+    "metagame-sdk": "^0.0.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "starknet": "^6.23.1",
