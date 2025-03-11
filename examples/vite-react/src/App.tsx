@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAccount, useConnect } from '@starknet-react/core';
 import { useMiniGames, useOwnedGames, useGameScores } from 'metagame-sdk';
 import { displayAddress } from './lib/index';
@@ -7,16 +8,26 @@ function App() {
   const { address } = useAccount();
   const { connect, connectors } = useConnect();
 
+  const queryAddress = useMemo(() => address ?? '0x0', [address]);
+
   const { data: miniGames } = useMiniGames({});
 
+  const queryGameAddresses = useMemo(
+    () => miniGames?.map((game) => game?.contract_address ?? '0x0'),
+    [miniGames]
+  );
+  const queryGameAddress = useMemo(() => miniGames?.[0]?.contract_address ?? '0x0', [miniGames]);
+
   const { data: ownedGames } = useOwnedGames({
-    address: address ?? '0x0',
-    gameAddresses: miniGames.map((game) => game?.contract_address ?? '0x0'),
+    address: queryAddress,
+    gameAddresses: queryGameAddresses,
   });
 
+  const queryGameIds = useMemo(() => ownedGames?.map((game: any) => game.token_id), [ownedGames]);
+
   const { data: gameScores } = useGameScores({
-    gameAddress: miniGames?.[0]?.contract_address ?? '0x0',
-    gameIds: ownedGames.map((game: any) => game.token_id),
+    gameAddress: queryGameAddress,
+    gameIds: queryGameIds,
   });
 
   return (
