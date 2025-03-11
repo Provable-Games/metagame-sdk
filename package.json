@@ -69,5 +69,6 @@
       "require": "./dist/cjs/src/index.js",
       "default": "./dist/cjs/src/index.js"
     }
-  }
+  },
+  "version": "0.0.1"
 }
