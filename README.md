@@ -10,14 +10,12 @@ A JavaScript/TypeScript SDK for interacting with Metagame components in Dojo.
 bun add metagame-sdk
 ```
 
-2. Wrap your app with `MetagameProvider` and pass in your dojo `SDK`, `toriiUrl` and starknet `provider`.
+2. Wrap your app with `MetagameProvider` and pass in your `toriiUrl` and starknet `provider`.
 
 ```tsx
 export const MetagameProvider = ({
-  dojoSdk,
   children,
 }: {
-  dojoSdk: SDK<SchemaType>;
   children: ReactNode;
 }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
@@ -26,7 +24,6 @@ export const MetagameProvider = ({
   useEffect(() => {
     async function initialize() {
       const metagameClient = initMetagame<SchemaType>({
-        dojoSDK: dojoSdk as any,
         toriiUrl: dojoConfig.toriiUrl,
         provider: provider,
       });
