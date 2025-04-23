@@ -21,21 +21,15 @@ export interface MiniGame {
   updatedAt: string;
 }
 
-export interface GameInfo {
-  id: string;
-  type: 'meta' | 'mini';
-  name: string;
-  description: string;
-  stats: {
-    players: number;
-    totalPlays: number;
-    averagePlayTime: number;
-  };
-  leaderboard?: {
-    topPlayers: Array<{
-      playerId: string;
-      playerName: string;
-      score: number;
-    }>;
-  };
+export interface GameScore {
+  score: number;
+  player_name: string;
+  token_id: string;
+  metadata: string;
+  minted: number;
+  start: number;
+  end: number;
+  metagame_data?: number;
+  account_address?: string;
+  contract_address?: string;
 }

@@ -5,6 +5,7 @@ import { useCallback, useMemo, useEffect } from 'react';
 import { feltToString } from '../lib';
 
 interface UseMiniGamesProps {
+  gameAddresses?: string[];
   limit?: number;
   offset?: number;
   logging?: boolean;
@@ -26,6 +27,7 @@ interface GameData {
 }
 
 export const useMiniGames = ({
+  gameAddresses,
   limit = 10,
   offset = 0,
   logging = false,
@@ -46,7 +48,11 @@ export const useMiniGames = ({
     loading: gameDataLoading,
     error: gameDataError,
     refetch: gameDataRefetch,
-  } = useSqlQuery<GameData>(client.getConfig().toriiUrl, gameDataQuery(miniGames), logging);
+  } = useSqlQuery<GameData>(
+    client.getConfig().toriiUrl,
+    gameDataQuery(miniGames, gameAddresses),
+    logging
+  );
 
   useEffect(() => {
     if (miniGames.length > 0) {
