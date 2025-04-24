@@ -40,22 +40,49 @@ export const useOwnedGamesWithScores = ({
     gameScoreKey,
     logging
   );
+
+  const missingConfig =
+    !gameScoreModel || !gameScoreAttribute || !gameNamespace || !gameScoreKeyData[0]?.name;
+
+  let configError = null;
+  if (missingConfig) {
+    let errorMessage = 'Missing required game configuration: ';
+    if (!gameScoreModel) errorMessage += 'Score Model, ';
+    if (!gameScoreAttribute) errorMessage += 'Score Attribute, ';
+    if (!gameNamespace) errorMessage += 'Namespace, ';
+    if (!gameScoreKeyData[0]?.name) errorMessage += 'Score Key, ';
+    errorMessage = errorMessage.replace(/, $/, '');
+    configError = errorMessage;
+  }
+
   const query = useMemo(
     () =>
-      ownedGamesWithScoresQuery({
-        address: indexAddress(address),
-        gameAddress: indexAddress(gameAddress),
-        gameScoreInfo: {
-          gameNamespace: gameNamespace ?? '',
-          gameScoreModel: gameScoreModel ?? '',
-          gameScoreAttribute: gameScoreAttribute ?? '',
-          gameScoreKey: gameScoreKeyData[0]?.name ?? '',
-        },
-        metagame,
-        limit,
-        offset,
-      }),
-    [address, gameAddress, metagame, limit, offset]
+      !missingConfig
+        ? ownedGamesWithScoresQuery({
+            address: indexAddress(address),
+            gameAddress: indexAddress(gameAddress),
+            gameScoreInfo: {
+              gameNamespace: gameNamespace ?? '',
+              gameScoreModel: gameScoreModel ?? '',
+              gameScoreAttribute: gameScoreAttribute ?? '',
+              gameScoreKey: gameScoreKeyData[0]?.name ?? '',
+            },
+            metagame,
+            limit,
+            offset,
+          })
+        : null,
+    [
+      address,
+      gameAddress,
+      metagame,
+      limit,
+      offset,
+      gameNamespace,
+      gameScoreModel,
+      gameScoreAttribute,
+      gameScoreKeyData[0]?.name,
+    ]
   );
   const {
     data: rawGameData,
