@@ -36,7 +36,6 @@ function App() {
       model: 'Quest',
       attribute: 'quest_tile_id',
       key: 'game_token_id',
-      attributeFilters: [162],
     },
   });
 

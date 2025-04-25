@@ -257,7 +257,7 @@ export const ownedGamesWithScoresQuery = ({
   LEFT JOIN '${gameNamespace}-${gameScoreModel}' s 
     ON SUBSTR(tb.token_id, INSTR(tb.token_id, ':') + 1) = s.${gameScoreKey}
   LEFT JOIN '${gameNamespace}-TokenMetadata' m 
-    ON s.${gameScoreKey} = m.token_id`;
+    ON SUBSTR(tb.token_id, INSTR(tb.token_id, ':') + 1) = m.token_id`;
 
   // Add metagame join if needed
   if (includeMetagameJoin) {
