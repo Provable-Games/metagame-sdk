@@ -284,3 +284,34 @@ export const ownedGamesWithScoresQuery = ({
 
   return query;
 };
+
+export const gameSettingsQuery = (
+  gameNamespace: string,
+  gameSettingsModel: string,
+  settingsIds?: number[],
+  limit?: number,
+  offset?: number
+) => {
+  return `
+      SELECT *
+      FROM '${gameNamespace}-${gameSettingsModel}'
+      ${settingsIds ? `WHERE settings_id IN (${settingsIds.join(',')})` : ''}
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+};
+
+export const gameSettingsMetadataQuery = (
+  gameNamespace: string,
+  settingsIds?: number[],
+  limit?: number,
+  offset?: number
+) => {
+  return `
+      SELECT name, description, created_at, created_by, settings_id
+      FROM '${gameNamespace}-GameSettingsMetadata'
+      ${settingsIds ? `WHERE settings_id IN (${settingsIds.join(',')})` : ''}
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+};
