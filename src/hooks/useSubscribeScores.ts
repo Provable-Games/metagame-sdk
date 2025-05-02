@@ -11,12 +11,13 @@ export interface UseSubscribeScoresParams {
   gameIds?: string[];
   enabled?: boolean;
   logging?: boolean;
+  onScoreUpdate?: (score: Score) => void;
 }
 
 export function useSubscribeScores(params: UseSubscribeScoresParams) {
   const client = getMetagameClient();
   const { scores, setScore } = useScoreStore();
-  const { gameAddress, gameIds, enabled = true, logging = false } = params;
+  const { gameAddress, gameIds, enabled = true, logging = false, onScoreUpdate } = params;
   const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
   const gameScoreSubscription = useRef<Subscription | null>(null);
 
@@ -46,6 +47,7 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
           }
           const score = formatScore(data);
           setScore(score);
+          onScoreUpdate?.(score);
         }
       }
     );
