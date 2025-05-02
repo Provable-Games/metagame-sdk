@@ -56,15 +56,12 @@ function App() {
 
   // console.log(gameScores);
 
-  useSubscribeTokens({
+  const { scores } = useSubscribeScores({
     gameAddress: queryGameAddress,
     // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
   });
 
-  // useSubscribeScores({
-  //   gameAddress: queryGameAddress,
-  //   // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
-  // });
+  console.log(scores);
 
   return (
     <div className="flex flex-col gap-5 w-full">

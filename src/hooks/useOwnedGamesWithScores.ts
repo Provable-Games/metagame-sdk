@@ -99,7 +99,6 @@ export const useOwnedGamesWithScores = ({
         score: game.score,
         player_name: feltToString(game.player_name),
         token_id: game.token_id,
-        metadata: game.metadata,
         minted: Number(game['lifecycle.mint']),
         start: Number(game['lifecycle.start.Some']),
         end: Number(game['lifecycle.end.Some']),

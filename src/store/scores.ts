@@ -1,14 +1,14 @@
 import { create } from 'zustand';
-import { Score } from '../types/games';
+import { GameScore, Score } from '../types/games';
 
 interface ScoreState {
   // Store scores by game_id for the basic Score type
-  scores: Record<number, Score>;
+  scores: Record<number, GameScore>;
 
   // Actions for Score type
-  setScore: (score: Score) => void;
-  getScore: (gameId: number) => Score | undefined;
-  getAllScores: () => Score[];
+  setScore: (score: GameScore) => void;
+  getScore: (gameId: number) => GameScore | undefined;
+  getAllScores: () => GameScore[];
   clearScores: () => void;
 }
 
@@ -19,11 +19,11 @@ export const useScoreStore = create<ScoreState>((set, get) => ({
   scores: {},
 
   // Score actions
-  setScore: (score: Score) =>
+  setScore: (score: GameScore) =>
     set((state) => ({
       scores: {
         ...state.scores,
-        [score.game_id]: score,
+        [score.token_id]: score,
       },
     })),
 

@@ -24,8 +24,7 @@ export interface MiniGame {
 export interface GameScore {
   score: number;
   player_name: string;
-  token_id: string;
-  metadata: string;
+  token_id: number;
   minted: number;
   start: number;
   end: number;
@@ -37,4 +36,14 @@ export interface GameScore {
 export interface Score {
   game_id: number;
   score: number;
+}
+
+export interface TokenMetadata {
+  start: number;
+  end: number;
+  minted: number;
+  minted_by: string;
+  player_name: string;
+  settings_id: number;
+  token_id: number;
 }
