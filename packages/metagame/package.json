@@ -1,0 +1,30 @@
+{
+  "name": "@metagame-sdk/metagame",
+  "version": "0.0.1",
+  "description": "Full Metagame SDK package that includes all modules",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "test": "bun test",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dojoengine/sdk": "^1.2.2",
+    "@metagame-sdk/core": "^0.0.1",
+    "@metagame-sdk/sdk": "^0.0.1",
+    "@metagame-sdk/client": "^0.0.1",
+    "@metagame-sdk/sql": "^0.0.1",
+    "zustand": "^4.4.7"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

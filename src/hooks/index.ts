@@ -6,3 +6,5 @@ export * from './useEternumQuests';
 export * from './useOwnedGamesWithScores';
 export * from './useGameSettings';
 export * from './useGameSettingsMetadata';
+export * from './useSubscribeTokens';
+export * from './useSubscribeScores';
