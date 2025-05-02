@@ -33,3 +33,8 @@ export interface GameScore {
   account_address?: string;
   contract_address?: string;
 }
+
+export interface Score {
+  game_id: number;
+  score: number;
+}

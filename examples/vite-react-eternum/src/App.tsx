@@ -5,7 +5,12 @@ import {
   useOwnedGames,
   useOwnedGamesWithScores,
   useEternumQuests,
+  useSubscribeGameScores,
+  useSubscribeTokens,
+  useSubscribeScores,
 } from 'metagame-sdk';
+import { useDojoSDK } from '@dojoengine/sdk/react';
+
 import { displayAddress } from './lib/index';
 import './App.css';
 
@@ -43,6 +48,23 @@ function App() {
     eternumNamespace: 's1_eternum',
     questTileIds: ownedGamesWithScores?.map((game) => game.metagame_data?.toString() ?? '') ?? [],
   });
+
+  // const { entities: gameScores } = useSubscribeGameScores({
+  //   gameAddress: queryGameAddress,
+  //   gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  // });
+
+  // console.log(gameScores);
+
+  useSubscribeTokens({
+    gameAddress: queryGameAddress,
+    // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  });
+
+  // useSubscribeScores({
+  //   gameAddress: queryGameAddress,
+  //   // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  // });
 
   return (
     <div className="flex flex-col gap-5 w-full">
