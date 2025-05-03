@@ -18,11 +18,15 @@ export interface UseSubscribeScoresParams {
 const formatTokenMetadata = (gameNamespace: string, data: any): TokenMetadata => {
   try {
     const result = {
-      start: !isNaN(Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.start.value))
-        ? Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.start.value)
+      start: !isNaN(
+        Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.start.value.value.value)
+      )
+        ? Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.start.value.value.value)
         : 0,
-      end: !isNaN(Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.end.value))
-        ? Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.end.value)
+      end: !isNaN(
+        Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.end.value.value.value)
+      )
+        ? Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.end.value.value.value)
         : 0,
       minted: !isNaN(Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.mint.value))
         ? Number(data[`${gameNamespace}-TokenMetadata`].lifecycle.value.mint.value)
