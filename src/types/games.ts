@@ -1,24 +1,12 @@
-export interface MetaGame {
-  id: string;
-  name: string;
+export interface GameData {
+  contract_address: string;
+  creator_address: string;
   description: string;
-  imageUrl?: string;
-  status: 'active' | 'inactive' | 'coming_soon';
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface MiniGame {
-  id: string;
-  metaGameId: string;
+  developer: string;
+  genre: string;
+  image: string;
   name: string;
-  description: string;
-  imageUrl?: string;
-  status: 'active' | 'inactive' | 'coming_soon';
-  gameType: string;
-  config: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
+  publisher: string;
 }
 
 export interface GameScore {
@@ -46,4 +34,12 @@ export interface TokenMetadata {
   player_name: string;
   settings_id: number;
   token_id: number;
+}
+
+export interface GameSettingsMetadata {
+  name: string;
+  description: string;
+  created_at: number;
+  created_by: string;
+  settings_id: number;
 }

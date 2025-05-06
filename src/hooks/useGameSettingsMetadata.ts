@@ -4,6 +4,7 @@ import { gameSettingsMetadataQuery } from '../queries/sql';
 import { getMetagameClient } from '../singleton';
 import { feltToString } from '../lib';
 import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
+import { GameSettingsMetadata } from '../types/games';
 
 interface UseGameSettingsMetadataProps {
   gameAddress: string;
@@ -11,14 +12,6 @@ interface UseGameSettingsMetadataProps {
   limit?: number;
   offset?: number;
   logging?: boolean;
-}
-
-interface GameSettingsMetadata {
-  name: string;
-  description: string;
-  created_at: number;
-  created_by: string;
-  settings_id: number;
 }
 
 export const useGameSettingsMetadata = ({

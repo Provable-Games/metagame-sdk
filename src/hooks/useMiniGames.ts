@@ -3,6 +3,7 @@ import { getMetagameClient } from '../singleton';
 import { miniGamesQuery, gameDataQuery } from '../queries/sql';
 import { useCallback, useMemo, useEffect } from 'react';
 import { feltToString } from '../lib';
+import { GameData } from '../types/games';
 
 interface UseMiniGamesProps {
   gameAddresses?: string[];
@@ -13,17 +14,6 @@ interface UseMiniGamesProps {
 
 interface MiniGame {
   namespace: string;
-}
-
-interface GameData {
-  contract_address: string;
-  creator_address: string;
-  description: string;
-  developer: string;
-  genre: string;
-  image: string;
-  name: string;
-  publisher: string;
 }
 
 export const useMiniGames = ({
