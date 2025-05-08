@@ -1,11 +1,12 @@
 import { getMetagameClient } from '../singleton';
 import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
 import { KeysClause } from '@dojoengine/sdk';
-import type { EntityKeysClause, Subscription } from '@dojoengine/torii-wasm';
+import type { Clause, Subscription } from '@dojoengine/torii-wasm';
 import { GameScore, Score, TokenMetadata } from '../types/games';
 import { useScoreStore } from '../store/scores';
 import { useEffect, useRef } from 'react';
 import { feltToString } from '../lib';
+import { PatternMatching } from '@dojoengine/torii-wasm';
 
 export interface UseSubscribeScoresParams {
   gameAddress: string;
@@ -80,22 +81,22 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
     if (!toriiClient || missingConfig || !enabled) return;
 
     gameScoreSubscription.current = toriiClient.onEntityUpdated(
-      [
-        KeysClause(
-          [`${gameNamespace}-${gameScoreModel}`, `${gameNamespace}-TokenMetadata`],
-          []
-        ).build() as EntityKeysClause,
-      ],
+      KeysClause(
+        [`${gameNamespace}-${gameScoreModel}`, `${gameNamespace}-TokenMetadata`],
+        []
+      ).build(),
       (entity: any, data: any) => {
         if (entity !== '0x0') {
           // Process TokenMetadata updates
+
+          const models = data.models;
           if (
-            data[`${gameNamespace}-TokenMetadata`] &&
-            data[`${gameNamespace}-TokenMetadata`].token_id &&
-            data[`${gameNamespace}-TokenMetadata`].token_id.value
+            models[`${gameNamespace}-TokenMetadata`] &&
+            models[`${gameNamespace}-TokenMetadata`].token_id &&
+            models[`${gameNamespace}-TokenMetadata`].token_id.value
           ) {
             try {
-              const tokenMetadata = formatTokenMetadata(gameNamespace, data);
+              const tokenMetadata = formatTokenMetadata(gameNamespace, models);
               const score = {
                 ...tokenMetadata,
                 score: 0,
@@ -109,19 +110,19 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
 
           // Process Score updates
           if (
-            data[`${gameNamespace}-${gameScoreModel}`] &&
-            data[`${gameNamespace}-${gameScoreModel}`].game_id &&
-            data[`${gameNamespace}-${gameScoreModel}`].game_id.value
+            models[`${gameNamespace}-${gameScoreModel}`] &&
+            models[`${gameNamespace}-${gameScoreModel}`].game_id &&
+            models[`${gameNamespace}-${gameScoreModel}`].game_id.value
           ) {
             try {
               // Get token ID to match with existing metadata
-              const tokenId = Number(data[`${gameNamespace}-${gameScoreModel}`].game_id.value);
+              const tokenId = Number(models[`${gameNamespace}-${gameScoreModel}`].game_id.value);
 
               // Get the score value
               const scoreValue = !isNaN(
-                Number(data[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
+                Number(models[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
               )
-                ? Number(data[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
+                ? Number(models[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
                 : 0;
 
               // Get the latest scores state from the store

@@ -28,7 +28,7 @@
   "author": "Provable Games",
   "license": "MIT",
   "devDependencies": {
-    "@dojoengine/sdk": "^1.2.2",
+    "@dojoengine/sdk": "^1.5.3",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/node": "^22.13.5",
@@ -46,7 +46,7 @@
     "zustand": "^4.4.7"
   },
   "peerDependencies": {
-    "@dojoengine/sdk": "^1.2.2",
+    "@dojoengine/sdk": "^1.5.3",
     "typescript": "^5.0.0",
     "zustand": "^4.4.7"
   },

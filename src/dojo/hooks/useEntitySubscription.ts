@@ -93,7 +93,8 @@ export function useEntitySubscription<S extends SchemaType, T = any>(
               response.data.forEach((entity) => {
                 state.updateEntity(transformEntity(entity));
               });
-              setEntities(initialEntities.map(transformEntity));
+              console.log('initialEntities:', initialEntities);
+              // setEntities(initialEntities.map(transformEntity));
             }
           },
         });
@@ -174,7 +175,8 @@ export async function subscribeToEntities<S extends SchemaType, T = any>(
     },
   });
 
-  const entities = _initialEntities.map(transformEntity);
+  // const entities = _initialEntities.map(transformEntity);
+  const entities: any[] = [];
 
   return {
     entities,

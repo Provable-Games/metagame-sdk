@@ -17,7 +17,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@dojoengine/sdk": "^1.2.2"
+    "@dojoengine/sdk": "^1.5.3"
   },
   "publishConfig": {
     "access": "public"

@@ -25,12 +25,10 @@ export const gameScoresQuery = ({
         )
         .withEntityModels([`${gameNamespace}-${gameScoreModel}`])
         .withLimit(limit)
-        .withOffset(offset)
         .includeHashedKeys()
     : new ToriiQueryBuilder()
         .withClause(KeysClause([`${gameNamespace}-${gameScoreModel}`], []).build())
         .withEntityModels([`${gameNamespace}-${gameScoreModel}`])
         .withLimit(limit)
-        .withOffset(offset)
         .includeHashedKeys();
 };
