@@ -29,21 +29,23 @@ export const useGameScores = ({
   offset = 0,
 }: GameScoresQueryParams): SqlQueryResult<GameScores> => {
   const client = getMetagameClient();
-  const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
+  const gameEndpoints = useGameEndpoints([gameAddress]);
+  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const { scoreModel, scoreAttribute, namespace } = addressEndpoints ?? {};
+
   const { data: gameScoreKey } = useSqlQuery<{ name: string }>(
     client.getConfig().toriiUrl,
-    gameScoresKeyQuery(gameNamespace ?? '', gameScoreModel ?? '')
+    gameScoresKeyQuery(namespace ?? '', scoreModel ?? '')
   );
 
-  const missingConfig =
-    !gameScoreModel || !gameScoreAttribute || !gameNamespace || !gameScoreKey[0]?.name;
+  const missingConfig = !scoreModel || !scoreAttribute || !namespace || !gameScoreKey[0]?.name;
 
   let configError = null;
   if (missingConfig) {
     let errorMessage = 'Missing required game configuration: ';
-    if (!gameScoreModel) errorMessage += 'Score Model, ';
-    if (!gameScoreAttribute) errorMessage += 'Score Attribute, ';
-    if (!gameNamespace) errorMessage += 'Namespace, ';
+    if (!scoreModel) errorMessage += 'Score Model, ';
+    if (!scoreAttribute) errorMessage += 'Score Attribute, ';
+    if (!namespace) errorMessage += 'Namespace, ';
     if (!gameScoreKey[0]?.name) errorMessage += 'Score Key, ';
     errorMessage = errorMessage.replace(/, $/, '');
     configError = errorMessage;
@@ -53,9 +55,9 @@ export const useGameScores = ({
     ? gameScoresQuery({
         gameIds,
         gameAddress,
-        gameNamespace: gameNamespace,
-        gameScoreModel: gameScoreModel,
-        gameScoreAttribute: gameScoreAttribute,
+        gameNamespace: namespace ?? '',
+        gameScoreModel: scoreModel ?? '',
+        gameScoreAttribute: scoreAttribute ?? '',
         gameScoreKey: gameScoreKey[0].name,
         limit,
         offset,

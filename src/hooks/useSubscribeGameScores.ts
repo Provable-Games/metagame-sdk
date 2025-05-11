@@ -15,10 +15,10 @@ export interface UseSubscribeGameScoresParams {
 export function useSubscribeGameScores(params: UseSubscribeGameScoresParams) {
   const client = getMetagameClient();
   const { gameAddress, gameIds, enabled = true, logging = false } = params;
-  const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
-
-  const keyQuery =
-    gameNamespace && gameScoreModel ? gameScoresKeyQuery(gameNamespace, gameScoreModel) : null;
+  const gameEndpoints = useGameEndpoints([gameAddress]);
+  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const { scoreModel, scoreAttribute, namespace } = addressEndpoints ?? {};
+  const keyQuery = namespace && scoreModel ? gameScoresKeyQuery(namespace, scoreModel) : null;
 
   const { data: gameScoreKeyData } = useSqlQuery<{ name: string }>(
     client.getConfig().toriiUrl,
@@ -27,18 +27,18 @@ export function useSubscribeGameScores(params: UseSubscribeGameScoresParams) {
 
   const gameScoreKey = gameScoreKeyData?.[0]?.name || null;
 
-  const missingConfig = !gameScoreModel || !gameScoreAttribute || !gameNamespace || !gameScoreKey;
+  const missingConfig = !scoreModel || !scoreAttribute || !namespace || !gameScoreKey;
 
-  // let configError = null;
-  // if (missingConfig) {
-  //   const missingItems = [];
-  //   if (!gameScoreModel) missingItems.push('Score Model');
-  //   if (!gameScoreAttribute) missingItems.push('Score Attribute');
-  //   if (!gameNamespace) missingItems.push('Namespace');
-  //   if (!gameScoreKey) missingItems.push('Score Key');
+  let configError = null;
+  if (missingConfig) {
+    const missingItems = [];
+    if (!scoreModel) missingItems.push('Score Model');
+    if (!scoreAttribute) missingItems.push('Score Attribute');
+    if (!namespace) missingItems.push('Namespace');
+    if (!gameScoreKey) missingItems.push('Score Key');
 
-  //   configError = new Error(`Missing required game configuration: ${missingItems.join(', ')}`);
-  // }
+    configError = new Error(`Missing required game configuration: ${missingItems.join(', ')}`);
+  }
 
   const scoreTransform = (entity: any) => {
     if (missingConfig) {
@@ -50,16 +50,16 @@ export function useSubscribeGameScores(params: UseSubscribeGameScoresParams) {
 
     const { entityId, models } = entity;
 
-    const namespaceModels = models[gameNamespace] || {};
-    const gameModel = namespaceModels[gameScoreModel] || {};
+    const namespaceModels = models[namespace] || {};
+    const gameModel = namespaceModels[scoreModel] || {};
 
-    const score = gameModel[gameScoreAttribute] || 0;
+    const score = gameModel[scoreAttribute] || 0;
     const game_id = gameModel[gameScoreKey] || 0;
 
     return {
       entityId,
       models: {
-        [gameNamespace]: {
+        [namespace]: {
           score,
           game_id,
         },
@@ -69,16 +69,16 @@ export function useSubscribeGameScores(params: UseSubscribeGameScoresParams) {
 
   const query = !missingConfig
     ? gameScoresQuery({
-        gameNamespace,
-        gameScoreModel,
-        gameScoreKey,
+        gameNamespace: namespace,
+        gameScoreModel: scoreModel,
+        gameScoreKey: gameScoreKey,
         gameIds,
       })
     : null;
 
   return useEntitySubscription(client, {
     query,
-    namespace: gameNamespace || '',
+    namespace: namespace || '',
     enabled: enabled && !missingConfig,
     logging,
     transform: scoreTransform,

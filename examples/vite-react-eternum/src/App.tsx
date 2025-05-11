@@ -7,6 +7,7 @@ import {
   useEternumQuests,
   useSubscribeGameScores,
   useSubscribeTokens,
+  useGameSettingsMetadata,
   useSubscribeScores,
 } from 'metagame-sdk';
 import { useDojoSDK } from '@dojoengine/sdk/react';
@@ -62,6 +63,14 @@ function App() {
   });
 
   console.log(scores);
+
+  console.log(queryGameAddresses);
+
+  const { data: gameSettingsMetadata } = useGameSettingsMetadata({
+    gameAddresses: ['0x002418e02ae43901d8aa8ab5c4b676740dccdcf1c94f13344a978ebe6077b109', '0x0'],
+  });
+
+  console.log(gameSettingsMetadata);
 
   return (
     <div className="flex flex-col gap-5 w-full">
