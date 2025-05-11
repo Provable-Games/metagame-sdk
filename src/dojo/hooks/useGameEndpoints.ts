@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ByteArray, byteArray } from 'starknet';
 import { getMetagameClient } from '../../singleton';
 
-export const useGameEndpoints = (gameAddress: string) => {
+interface GameEndpoints {
+  namespace: string;
+  scoreModel: string;
+  scoreAttribute: string;
+  settingsModel: string;
+}
+
+const createEmptyGameEndpoints = (): GameEndpoints => ({
+  namespace: '',
+  scoreModel: '',
+  scoreAttribute: '',
+  settingsModel: '',
+});
+
+export const useGameEndpoints = (gameAddresses: string[]) => {
   const client = getMetagameClient();
   const provider = client.getConfig().provider;
-  const [gameNamespace, setGameNamespace] = useState<string | null>(null);
-  const [gameScoreModel, setGameScoreModel] = useState<string | null>(null);
-  const [gameScoreAttribute, setGameScoreAttribute] = useState<string | null>(null);
-  const [gameSettingsModel, setGameSettingsModel] = useState<string | null>(null);
+  const [gameEndpoints, setGameEndpoints] = useState<Record<string, GameEndpoints> | null>(null);
 
-  const getGameNamespace = async () => {
+  const getGameNamespace = async (gameAddress: string) => {
     const gameNamespace = await provider.callContract({
       contractAddress: gameAddress,
       entrypoint: 'namespace',
@@ -21,10 +32,16 @@ export const useGameEndpoints = (gameAddress: string) => {
       pending_word: gameNamespace[gameNamespace.length - 2],
       pending_word_len: gameNamespace[gameNamespace.length - 1],
     };
-    setGameNamespace(byteArray.stringFromByteArray(gameNamespaceByteArray));
+    setGameEndpoints((prev) => ({
+      ...prev,
+      [gameAddress]: {
+        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
+        namespace: byteArray.stringFromByteArray(gameNamespaceByteArray),
+      },
+    }));
   };
 
-  const getGameScoreData = async () => {
+  const getGameScoreData = async (gameAddress: string) => {
     const gameScoreModelData = await provider.callContract({
       contractAddress: gameAddress,
       entrypoint: 'score_model',
@@ -45,13 +62,18 @@ export const useGameEndpoints = (gameAddress: string) => {
       pending_word: gameScoreAttributeData[gameScoreAttributeData.length - 2],
       pending_word_len: gameScoreAttributeData[gameScoreAttributeData.length - 1],
     };
-    const gameScoreModel = byteArray.stringFromByteArray(gameScoreModelByteArray);
-    const gameScoreAttribute = byteArray.stringFromByteArray(gameScoreAttributeByteArray);
-    setGameScoreModel(gameScoreModel);
-    setGameScoreAttribute(gameScoreAttribute);
+
+    setGameEndpoints((prev) => ({
+      ...prev,
+      [gameAddress]: {
+        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
+        scoreModel: byteArray.stringFromByteArray(gameScoreModelByteArray),
+        scoreAttribute: byteArray.stringFromByteArray(gameScoreAttributeByteArray),
+      },
+    }));
   };
 
-  const getGameSettings = async () => {
+  const getGameSettings = async (gameAddress: string) => {
     const gameSettingsData = await provider.callContract({
       contractAddress: gameAddress,
       entrypoint: 'settings_model',
@@ -62,22 +84,29 @@ export const useGameEndpoints = (gameAddress: string) => {
       pending_word: gameSettingsData[gameSettingsData.length - 2],
       pending_word_len: gameSettingsData[gameSettingsData.length - 1],
     };
-    const gameSettings = byteArray.stringFromByteArray(gameSettingsByteArray);
-    setGameSettingsModel(gameSettings);
+
+    setGameEndpoints((prev) => ({
+      ...prev,
+      [gameAddress]: {
+        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
+        settingsModel: byteArray.stringFromByteArray(gameSettingsByteArray),
+      },
+    }));
   };
+
+  const gameAddressesKey = useMemo(() => {
+    return gameAddresses.map((address) => `'${address}'`).join(',');
+  }, [gameAddresses]);
 
   useEffect(() => {
-    if (gameAddress) {
-      getGameNamespace();
-      getGameScoreData();
-      getGameSettings();
+    if (gameAddresses.length > 0) {
+      gameAddresses.forEach((gameAddress) => {
+        getGameNamespace(gameAddress);
+        getGameScoreData(gameAddress);
+        getGameSettings(gameAddress);
+      });
     }
-  }, [provider, gameAddress]);
+  }, [provider, gameAddressesKey]);
 
-  return {
-    gameNamespace,
-    gameScoreModel,
-    gameScoreAttribute,
-    gameSettingsModel,
-  };
+  return gameEndpoints;
 };

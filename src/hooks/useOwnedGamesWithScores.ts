@@ -30,10 +30,13 @@ export const useOwnedGamesWithScores = ({
   logging = false,
 }: UseOwnedGameProps): SqlQueryResult<GameScore> => {
   const client = getMetagameClient();
-  const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
+  const gameEndpoints = useGameEndpoints([gameAddress]);
+  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const { scoreModel, scoreAttribute, namespace } = addressEndpoints ?? {};
+
   const gameScoreKey = useMemo(
-    () => gameScoresKeyQuery(gameNamespace ?? '', gameScoreModel ?? ''),
-    [gameNamespace, gameScoreModel]
+    () => gameScoresKeyQuery(namespace ?? '', scoreModel ?? ''),
+    [namespace, scoreModel]
   );
   const { data: gameScoreKeyData } = useSqlQuery<{ name: string }>(
     client.getConfig().toriiUrl,
@@ -41,15 +44,14 @@ export const useOwnedGamesWithScores = ({
     logging
   );
 
-  const missingConfig =
-    !gameScoreModel || !gameScoreAttribute || !gameNamespace || !gameScoreKeyData[0]?.name;
+  const missingConfig = !scoreModel || !scoreAttribute || !namespace || !gameScoreKeyData[0]?.name;
 
   let configError = null;
   if (missingConfig) {
     let errorMessage = 'Missing required game configuration: ';
-    if (!gameScoreModel) errorMessage += 'Score Model, ';
-    if (!gameScoreAttribute) errorMessage += 'Score Attribute, ';
-    if (!gameNamespace) errorMessage += 'Namespace, ';
+    if (!scoreModel) errorMessage += 'Score Model, ';
+    if (!scoreAttribute) errorMessage += 'Score Attribute, ';
+    if (!namespace) errorMessage += 'Namespace, ';
     if (!gameScoreKeyData[0]?.name) errorMessage += 'Score Key, ';
     errorMessage = errorMessage.replace(/, $/, '');
     configError = errorMessage;
@@ -62,9 +64,9 @@ export const useOwnedGamesWithScores = ({
             address: indexAddress(address),
             gameAddress: indexAddress(gameAddress),
             gameScoreInfo: {
-              gameNamespace: gameNamespace ?? '',
-              gameScoreModel: gameScoreModel ?? '',
-              gameScoreAttribute: gameScoreAttribute ?? '',
+              gameNamespace: namespace ?? '',
+              gameScoreModel: scoreModel ?? '',
+              gameScoreAttribute: scoreAttribute ?? '',
               gameScoreKey: gameScoreKeyData[0]?.name ?? '',
             },
             metagame,
@@ -78,9 +80,9 @@ export const useOwnedGamesWithScores = ({
       metagame,
       limit,
       offset,
-      gameNamespace,
-      gameScoreModel,
-      gameScoreAttribute,
+      namespace,
+      scoreModel,
+      scoreAttribute,
       gameScoreKeyData[0]?.name,
     ]
   );

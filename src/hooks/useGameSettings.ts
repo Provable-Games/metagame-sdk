@@ -27,15 +27,17 @@ export const useGameSettings = ({
   logging = false,
 }: UseGameSettingsProps): SqlQueryResult<GameSettings> => {
   const client = getMetagameClient();
-  const { gameNamespace, gameSettingsModel } = useGameEndpoints(gameAddress);
+  const gameEndpoints = useGameEndpoints([gameAddress]);
+  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const { settingsModel, namespace } = addressEndpoints ?? {};
 
-  const missingConfig = !gameSettingsModel || !gameNamespace;
+  const missingConfig = !settingsModel || !namespace;
 
   let configError = null;
   if (missingConfig) {
     let errorMessage = 'Missing required game configuration: ';
-    if (!gameSettingsModel) errorMessage += 'Settings Model, ';
-    if (!gameNamespace) errorMessage += 'Namespace, ';
+    if (!settingsModel) errorMessage += 'Settings Model, ';
+    if (!namespace) errorMessage += 'Namespace, ';
     errorMessage = errorMessage.replace(/, $/, '');
     configError = errorMessage;
   }
@@ -43,15 +45,9 @@ export const useGameSettings = ({
   const query = useMemo(
     () =>
       !missingConfig
-        ? gameSettingsQuery(
-            gameNamespace ?? '',
-            gameSettingsModel ?? '',
-            settingsIds,
-            limit,
-            offset
-          )
+        ? gameSettingsQuery(namespace ?? '', settingsModel ?? '', settingsIds, limit, offset)
         : null,
-    [gameNamespace, gameSettingsModel, settingsIds, limit, offset]
+    [namespace, settingsModel, settingsIds, limit, offset]
   );
   const { data, loading, error, refetch } = useSqlQuery<GameSettings>(
     client.getConfig().toriiUrl,

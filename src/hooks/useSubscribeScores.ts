@@ -60,19 +60,22 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
   const client = getMetagameClient();
   const { scores, setScore } = useScoreStore();
   const { gameAddress, gameIds, enabled = true, logging = false, onScoreUpdate } = params;
-  const { gameScoreModel, gameScoreAttribute, gameNamespace } = useGameEndpoints(gameAddress);
+  const gameEndpoints = useGameEndpoints([gameAddress]);
+  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const { scoreModel, scoreAttribute, namespace } = addressEndpoints ?? {};
+
   const gameScoreSubscription = useRef<Subscription | null>(null);
 
   const toriiClient = client.getConfig().toriiClient;
 
-  const missingConfig = !gameScoreModel || !gameScoreAttribute || !gameNamespace;
+  const missingConfig = !gameEndpoints || !gameEndpoints[gameAddress];
 
   let configError = null;
   if (missingConfig) {
     const missingItems = [];
-    if (!gameScoreModel) missingItems.push('Score Model');
-    if (!gameScoreAttribute) missingItems.push('Score Attribute');
-    if (!gameNamespace) missingItems.push('Namespace');
+    if (!scoreModel) missingItems.push('Score Model');
+    if (!scoreAttribute) missingItems.push('Score Attribute');
+    if (!namespace) missingItems.push('Namespace');
 
     configError = new Error(`Missing required game configuration: ${missingItems.join(', ')}`);
   }
@@ -81,22 +84,19 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
     if (!toriiClient || missingConfig || !enabled) return;
 
     gameScoreSubscription.current = toriiClient.onEntityUpdated(
-      KeysClause(
-        [`${gameNamespace}-${gameScoreModel}`, `${gameNamespace}-TokenMetadata`],
-        []
-      ).build(),
+      KeysClause([`${namespace}-${scoreModel}`, `${namespace}-TokenMetadata`], []).build(),
       (entity: any, data: any) => {
         if (entity !== '0x0') {
           // Process TokenMetadata updates
 
           const models = data.models;
           if (
-            models[`${gameNamespace}-TokenMetadata`] &&
-            models[`${gameNamespace}-TokenMetadata`].token_id &&
-            models[`${gameNamespace}-TokenMetadata`].token_id.value
+            models[`${namespace}-TokenMetadata`] &&
+            models[`${namespace}-TokenMetadata`].token_id &&
+            models[`${namespace}-TokenMetadata`].token_id.value
           ) {
             try {
-              const tokenMetadata = formatTokenMetadata(gameNamespace, models);
+              const tokenMetadata = formatTokenMetadata(namespace ?? '', models);
               const score = {
                 ...tokenMetadata,
                 score: 0,
@@ -110,20 +110,24 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
 
           // Process Score updates
           if (
-            models[`${gameNamespace}-${gameScoreModel}`] &&
-            models[`${gameNamespace}-${gameScoreModel}`].game_id &&
-            models[`${gameNamespace}-${gameScoreModel}`].game_id.value
+            models[`${namespace}-${scoreModel}`] &&
+            models[`${namespace}-${scoreModel}`].game_id &&
+            models[`${namespace}-${scoreModel}`].game_id.value
           ) {
             try {
               // Get token ID to match with existing metadata
-              const tokenId = Number(models[`${gameNamespace}-${gameScoreModel}`].game_id.value);
+              const tokenId = Number(models[`${namespace}-${scoreModel}`].game_id.value);
 
               // Get the score value
-              const scoreValue = !isNaN(
-                Number(models[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
-              )
-                ? Number(models[`${gameNamespace}-${gameScoreModel}`][gameScoreAttribute].value)
-                : 0;
+              const scoreValue = (() => {
+                if (!scoreAttribute) return 0;
+
+                const model = models[`${namespace}-${scoreModel}`];
+                if (!model || !model[scoreAttribute]) return 0;
+
+                const value = Number(model[scoreAttribute].value);
+                return !isNaN(value) ? value : 0;
+              })();
 
               // Get the latest scores state from the store
               const currentScores = useScoreStore.getState().scores;
@@ -158,7 +162,7 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
         gameScoreSubscription.current = null;
       }
     };
-  }, [toriiClient, gameNamespace, gameScoreModel, gameScoreAttribute, enabled, missingConfig]);
+  }, [toriiClient, namespace, scoreModel, scoreAttribute, enabled, missingConfig]);
 
   return {
     scores,

@@ -302,16 +302,39 @@ export const gameSettingsQuery = (
 };
 
 export const gameSettingsMetadataQuery = (
-  gameNamespace: string,
-  settingsIds?: number[],
+  gameNamespaces: string[],
+  gameSettingsIds?: Record<string, number[]>,
   limit?: number,
   offset?: number
 ) => {
-  return `
-      SELECT name, description, created_at, created_by, settings_id
-      FROM '${gameNamespace}-GameSettingsMetadata'
-      ${settingsIds ? `WHERE settings_id IN (${settingsIds.join(',')})` : ''}
-      LIMIT ${limit}
-      OFFSET ${offset}
+  // Create a UNION ALL query for each namespace
+  const namespaceQueries = gameNamespaces.map((namespace) => {
+    const settingsIds = gameSettingsIds?.[namespace];
+    const whereClause = settingsIds ? `WHERE settings_id IN (${settingsIds.join(',')})` : '';
+
+    return `
+      SELECT 
+        name, 
+        description, 
+        created_at, 
+        created_by, 
+        settings_id,
+        '${namespace}' as namespace
+      FROM '${namespace}-GameSettingsMetadata'
+      ${whereClause}
     `;
+  });
+
+  // Combine all namespace queries with UNION ALL
+  const combinedQuery = namespaceQueries.join('\nUNION ALL\n');
+
+  // Add limit and offset to the final result
+  return `
+    WITH combined_results AS (
+      ${combinedQuery}
+    )
+    SELECT * FROM combined_results
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
 };

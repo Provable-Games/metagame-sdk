@@ -1,69 +1,109 @@
 import { useMemo } from 'react';
-import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
+import { useSqlQuery } from '../services/sqlService';
 import { gameSettingsMetadataQuery } from '../queries/sql';
 import { getMetagameClient } from '../singleton';
 import { feltToString } from '../lib';
 import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
 import { GameSettingsMetadata } from '../types/games';
+import { SqlResponse } from '../types/responses';
 
 interface UseGameSettingsMetadataProps {
-  gameAddress: string;
-  settingsIds?: number[];
+  gameAddresses: string[];
+  settingsIds?: Record<string, number[]>;
   limit?: number;
   offset?: number;
   logging?: boolean;
 }
 
 export const useGameSettingsMetadata = ({
-  gameAddress,
+  gameAddresses,
   settingsIds,
   limit = 100,
   offset = 0,
   logging = false,
-}: UseGameSettingsMetadataProps): SqlQueryResult<GameSettingsMetadata> => {
+}: UseGameSettingsMetadataProps): SqlResponse<Record<string, GameSettingsMetadata[]>> => {
   const client = getMetagameClient();
-  const { gameNamespace } = useGameEndpoints(gameAddress);
+  const gameEndpoints = useGameEndpoints(gameAddresses);
 
-  const missingConfig = !gameNamespace;
+  const missingConfig = !gameEndpoints;
 
   const settingsIdKey = useMemo(() => {
-    return settingsIds?.map((id) => `'${id}'`).join(',') ?? '';
+    if (!settingsIds) return '';
+
+    // Get all unique IDs from all namespaces
+    const allIds = Object.values(settingsIds)
+      .flat()
+      .map((id) => `'${id}'`)
+      .join(',');
+
+    return allIds;
   }, [settingsIds]);
 
   let configError = null;
   if (missingConfig) {
     let errorMessage = 'Missing required game configuration: ';
-    if (!gameNamespace) errorMessage += 'Namespace, ';
+    if (!gameEndpoints) errorMessage += 'Game endpoints, ';
+    if (gameEndpoints && gameAddresses.some((address) => !gameEndpoints[address])) {
+      errorMessage += 'Some game addresses missing configuration, ';
+    }
     errorMessage = errorMessage.replace(/, $/, '');
     configError = errorMessage;
+
+    // throw new Error(errorMessage);
   }
 
-  const query = useMemo(
-    () =>
-      !missingConfig
-        ? gameSettingsMetadataQuery(gameNamespace ?? '', settingsIds, limit, offset)
-        : null,
-    [gameNamespace, settingsIdKey, limit, offset]
-  );
+  const query = useMemo(() => {
+    if (missingConfig) return null;
+
+    const gameNamespaces = gameAddresses
+      .filter((address) => gameEndpoints?.[address])
+      .map((address) => gameEndpoints[address].namespace);
+
+    return gameSettingsMetadataQuery(gameNamespaces, settingsIds, limit, offset);
+  }, [gameEndpoints, gameAddresses, settingsIdKey, limit, offset]);
+
   const {
-    data: rawGameData,
+    data: rawSettingsMetadata,
     loading,
     error,
     refetch,
   } = useSqlQuery<any>(client.getConfig().toriiUrl, query, logging);
 
-  const gameData = useMemo(() => {
-    return rawGameData.map((game) => {
-      const filteredGame: GameSettingsMetadata = {
-        name: feltToString(game.name),
-        description: game.description,
-        created_at: Number(game.created_at),
-        created_by: game.created_by,
-        settings_id: game.settings_id,
-      };
-      return filteredGame;
-    });
-  }, [rawGameData]);
+  const settingsMetadata = useMemo(() => {
+    if (!rawSettingsMetadata) return {};
 
-  return { data: gameData, loading, error, refetch };
+    // Initialize an empty record with arrays for each game address
+    const gameDataRecord: Record<string, GameSettingsMetadata[]> = {};
+    gameAddresses.forEach((address) => {
+      gameDataRecord[address] = [];
+    });
+
+    // Group settings metadata by game address
+    rawSettingsMetadata.forEach((settingMetadata) => {
+      const gameAddress = Object.entries(gameEndpoints || {}).find(
+        ([_, endpoints]) => endpoints.namespace === settingMetadata.namespace
+      )?.[0];
+
+      if (gameAddress) {
+        const filteredGame: GameSettingsMetadata = {
+          name: feltToString(settingMetadata.name),
+          description: settingMetadata.description,
+          created_at: Number(settingMetadata.created_at),
+          created_by: settingMetadata.created_by,
+          settings_id: settingMetadata.settings_id,
+        };
+
+        gameDataRecord[gameAddress].push(filteredGame);
+      }
+    });
+
+    return gameDataRecord;
+  }, [rawSettingsMetadata, gameEndpoints, gameAddresses]);
+
+  return {
+    data: settingsMetadata,
+    loading,
+    error: error || configError,
+    refetch,
+  };
 };

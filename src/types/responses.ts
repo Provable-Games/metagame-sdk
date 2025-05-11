@@ -17,3 +17,10 @@ export interface ErrorResponse {
     details?: any;
   };
 }
+
+export interface SqlResponse<T> {
+  data: T;
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
