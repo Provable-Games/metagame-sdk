@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameScore, Score } from '../types/games';
+import { GameScore } from '../types/games';
 
 interface ScoreState {
   // Store scores by game_id for the basic Score type
