@@ -45,6 +45,8 @@ function App() {
     },
   });
 
+  console.log(ownedGamesWithScores);
+
   const { data: eternumQuests } = useEternumQuests({
     eternumNamespace: 's1_eternum',
     questTileIds: ownedGamesWithScores?.map((game) => game.metagame_data?.toString() ?? '') ?? [],

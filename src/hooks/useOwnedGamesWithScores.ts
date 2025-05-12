@@ -57,6 +57,12 @@ export const useOwnedGamesWithScores = ({
     configError = errorMessage;
   }
 
+  const healthAttribute = useMemo(() => {
+    if (namespace === 'ls_0_0_1') return 'health';
+    if (namespace === 'ds_v1_2_0') return 'hero_health';
+    return undefined;
+  }, [namespace]);
+
   const query = useMemo(
     () =>
       !missingConfig
@@ -70,6 +76,7 @@ export const useOwnedGamesWithScores = ({
               gameScoreKey: gameScoreKeyData[0]?.name ?? '',
             },
             metagame,
+            healthAttribute: healthAttribute,
             limit,
             offset,
           })
@@ -86,6 +93,7 @@ export const useOwnedGamesWithScores = ({
       gameScoreKeyData[0]?.name,
     ]
   );
+
   const {
     data: rawGameData,
     loading,
@@ -108,6 +116,18 @@ export const useOwnedGamesWithScores = ({
         account_address: game.account_address,
         contract_address: game.contract_address,
       };
+      if (namespace === 'ls_0_0_1') {
+        return {
+          ...filteredGame,
+          health: game.health,
+        };
+      }
+      if (namespace === 'ds_v1_2_0') {
+        return {
+          ...filteredGame,
+          health: game.health,
+        };
+      }
       return filteredGame;
     });
   }, [rawGameData]);
