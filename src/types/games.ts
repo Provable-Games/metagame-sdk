@@ -19,6 +19,7 @@ export interface GameScore {
   metagame_data?: number;
   account_address?: string;
   contract_address?: string;
+  health?: number;
 }
 
 export interface Score {

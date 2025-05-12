@@ -1,12 +1,11 @@
 import { getMetagameClient } from '../singleton';
 import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
 import { KeysClause } from '@dojoengine/sdk';
-import type { Clause, Subscription } from '@dojoengine/torii-wasm';
-import { GameScore, Score, TokenMetadata } from '../types/games';
+import type { Subscription } from '@dojoengine/torii-wasm';
+import { GameScore, TokenMetadata } from '../types/games';
 import { useScoreStore } from '../store/scores';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { feltToString } from '../lib';
-import { PatternMatching } from '@dojoengine/torii-wasm';
 
 export interface UseSubscribeScoresParams {
   gameAddress: string;
@@ -90,11 +89,10 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
           // Process TokenMetadata updates
 
           const models = data.models;
-          if (
-            models[`${namespace}-TokenMetadata`] &&
-            models[`${namespace}-TokenMetadata`].token_id &&
-            models[`${namespace}-TokenMetadata`].token_id.value
-          ) {
+          const tokenMetadataData = models[`${namespace}-TokenMetadata`];
+          const scoreModelData = models[`${namespace}-${scoreModel}`];
+
+          if (tokenMetadataData && tokenMetadataData.token_id && tokenMetadataData.token_id.value) {
             try {
               const tokenMetadata = formatTokenMetadata(namespace ?? '', models);
               const score = {
@@ -109,24 +107,32 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
           }
 
           // Process Score updates
-          if (
-            models[`${namespace}-${scoreModel}`] &&
-            models[`${namespace}-${scoreModel}`].game_id &&
-            models[`${namespace}-${scoreModel}`].game_id.value
-          ) {
+          if (scoreModelData && scoreModelData.game_id && scoreModelData.game_id.value) {
             try {
               // Get token ID to match with existing metadata
-              const tokenId = Number(models[`${namespace}-${scoreModel}`].game_id.value);
+              const tokenId = Number(scoreModelData.game_id.value);
 
               // Get the score value
               const scoreValue = (() => {
                 if (!scoreAttribute) return 0;
 
-                const model = models[`${namespace}-${scoreModel}`];
-                if (!model || !model[scoreAttribute]) return 0;
+                if (!scoreModelData || !scoreModelData[scoreAttribute]) return 0;
 
-                const value = Number(model[scoreAttribute].value);
+                const value = Number(scoreModelData[scoreAttribute].value);
                 return !isNaN(value) ? value : 0;
+              })();
+
+              // Get the health from the namespace
+              const healthValue = (() => {
+                if (namespace === 'ds_v1_2_0') {
+                  const health = scoreModelData.hero_health.value;
+                  return !isNaN(Number(health)) ? Number(health) : 0;
+                }
+                if (namespace === 'ls_0_0_1') {
+                  const health = scoreModelData.health.value;
+                  return !isNaN(Number(health)) ? Number(health) : 0;
+                }
+                return 0;
               })();
 
               // Get the latest scores state from the store
@@ -140,6 +146,7 @@ export function useSubscribeScores(params: UseSubscribeScoresParams) {
                 const updatedScore = {
                   ...existingScore,
                   score: scoreValue,
+                  health: healthValue,
                 };
 
                 // Set in store and call callback
