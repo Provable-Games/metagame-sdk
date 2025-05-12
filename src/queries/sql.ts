@@ -205,6 +205,7 @@ interface OwnedGamesWithScoresParams {
     key: string;
     attributeFilters?: number[];
   };
+  healthAttribute?: string;
   limit?: number;
   offset?: number;
 }
@@ -214,6 +215,7 @@ export const ownedGamesWithScoresQuery = ({
   gameAddress,
   gameScoreInfo,
   metagame,
+  healthAttribute,
   limit = 100,
   offset = 0,
 }: OwnedGamesWithScoresParams) => {
@@ -249,6 +251,11 @@ export const ownedGamesWithScoresQuery = ({
   if (includeMetagameJoin) {
     query += `,
     mg.${metagame.attribute} AS metagame_data`;
+  }
+
+  if (healthAttribute) {
+    query += `,
+    COALESCE(s.${healthAttribute}, 0) as health`;
   }
 
   query += `
