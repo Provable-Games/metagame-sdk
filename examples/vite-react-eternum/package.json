@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@cartridge/connector": "^0.6.0",
-    "@dojoengine/core": "^1.5.3",
-    "@dojoengine/sdk": "^1.5.3",
+    "@dojoengine/core": "^1.5.5",
+    "@dojoengine/sdk": "^1.5.5",
     "@starknet-react/core": "^3.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
