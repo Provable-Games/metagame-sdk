@@ -19,20 +19,20 @@ function App() {
   const { address } = useAccount();
   const { connect, connectors } = useConnect();
 
-  const queryAddress = useMemo(() => address ?? '0x0', [address]);
+  const queryAddress = useMemo(() => address, [address]);
 
   const { data: miniGames } = useMiniGames({});
 
   const queryGameAddresses = useMemo(
-    () => miniGames?.map((game) => game?.contract_address ?? '0x0'),
+    () => miniGames?.map((game) => game?.contract_address),
     [miniGames]
   );
-  const queryGameAddress = useMemo(() => miniGames?.[0]?.contract_address ?? '0x0', [miniGames]);
+  const queryGameAddress = useMemo(() => miniGames?.[0]?.contract_address, [miniGames]);
 
-  const { data: ownedGames } = useOwnedGames({
-    address: queryAddress,
-    gameAddresses: queryGameAddresses,
-  });
+  // const { data: ownedGames } = useOwnedGames({
+  //   address: queryAddress,
+  //   gameAddresses: queryGameAddresses,
+  // });
 
   const { data: ownedGamesWithScores } = useOwnedGamesWithScores({
     address: queryAddress,
@@ -52,12 +52,12 @@ function App() {
     questTileIds: ownedGamesWithScores?.map((game) => game.metagame_data?.toString() ?? '') ?? [],
   });
 
-  // const { entities: gameScores } = useSubscribeGameScores({
-  //   gameAddress: queryGameAddress,
-  //   gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
-  // });
+  const { entities: gameScores } = useSubscribeGameScores({
+    gameAddress: queryGameAddress,
+    gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  });
 
-  // console.log(gameScores);
+  console.log(gameScores);
 
   const { scores } = useSubscribeScores({
     gameAddress: queryGameAddress,
@@ -66,10 +66,8 @@ function App() {
 
   console.log(scores);
 
-  console.log(queryGameAddresses);
-
   const { data: gameSettingsMetadata } = useGameSettingsMetadata({
-    gameAddresses: ['0x002418e02ae43901d8aa8ab5c4b676740dccdcf1c94f13344a978ebe6077b109', '0x0'],
+    gameAddresses: [queryGameAddress],
   });
 
   console.log(gameSettingsMetadata);
@@ -142,7 +140,7 @@ function App() {
       <h1 className="text-2xl font-bold">Owned Games</h1>
       <div className="w-full overflow-x-auto pb-4">
         <div className="flex flex-row gap-4 min-w-min px-4">
-          {ownedGames.map((game: any, index: number) => (
+          {/* {ownedGames.map((game: any, index: number) => (
             <div
               className="flex flex-col flex-shrink-0 w-[250px] bg-white rounded-lg shadow-md overflow-hidden"
               key={index}
@@ -159,7 +157,7 @@ function App() {
                 />
               </div>
             </div>
-          ))}
+          ))} */}
         </div>
       </div>
       <h1 className="text-2xl font-bold">Game Scores</h1>

@@ -9,89 +9,86 @@ interface GameEndpoints {
   settingsModel: string;
 }
 
-const createEmptyGameEndpoints = (): GameEndpoints => ({
-  namespace: '',
-  scoreModel: '',
-  scoreAttribute: '',
-  settingsModel: '',
-});
+// Update the state type to allow for undefined values
+type GameEndpointsState = Record<string, GameEndpoints | null>;
 
 export const useGameEndpoints = (gameAddresses: string[]) => {
   const client = getMetagameClient();
   const provider = client.getConfig().provider;
-  const [gameEndpoints, setGameEndpoints] = useState<Record<string, GameEndpoints> | null>(null);
+  const [gameEndpoints, setGameEndpoints] = useState<GameEndpointsState | null>(null);
 
   const getGameNamespace = async (gameAddress: string) => {
-    const gameNamespace = await provider.callContract({
-      contractAddress: gameAddress,
-      entrypoint: 'namespace',
-      calldata: [],
-    });
-    const gameNamespaceByteArray: ByteArray = {
-      data: gameNamespace.slice(0, -2),
-      pending_word: gameNamespace[gameNamespace.length - 2],
-      pending_word_len: gameNamespace[gameNamespace.length - 1],
-    };
-    setGameEndpoints((prev) => ({
-      ...prev,
-      [gameAddress]: {
-        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
-        namespace: byteArray.stringFromByteArray(gameNamespaceByteArray),
-      },
-    }));
+    try {
+      const gameNamespace = await provider.callContract({
+        contractAddress: gameAddress,
+        entrypoint: 'namespace',
+        calldata: [],
+      });
+      const gameNamespaceByteArray: ByteArray = {
+        data: gameNamespace.slice(0, -2),
+        pending_word: gameNamespace[gameNamespace.length - 2],
+        pending_word_len: gameNamespace[gameNamespace.length - 1],
+      };
+      return byteArray.stringFromByteArray(gameNamespaceByteArray);
+    } catch (error) {
+      console.error('Failed to get game namespace:', error);
+      return null;
+    }
   };
 
   const getGameScoreData = async (gameAddress: string) => {
-    const gameScoreModelData = await provider.callContract({
-      contractAddress: gameAddress,
-      entrypoint: 'score_model',
-      calldata: [],
-    });
-    const gameScoreModelByteArray: ByteArray = {
-      data: gameScoreModelData.slice(0, -2),
-      pending_word: gameScoreModelData[gameScoreModelData.length - 2],
-      pending_word_len: gameScoreModelData[gameScoreModelData.length - 1],
-    };
-    const gameScoreAttributeData = await provider.callContract({
-      contractAddress: gameAddress,
-      entrypoint: 'score_attribute',
-      calldata: [],
-    });
-    const gameScoreAttributeByteArray: ByteArray = {
-      data: gameScoreAttributeData.slice(0, -2),
-      pending_word: gameScoreAttributeData[gameScoreAttributeData.length - 2],
-      pending_word_len: gameScoreAttributeData[gameScoreAttributeData.length - 1],
-    };
+    try {
+      const [gameScoreModelData, gameScoreAttributeData] = await Promise.all([
+        provider.callContract({
+          contractAddress: gameAddress,
+          entrypoint: 'score_model',
+          calldata: [],
+        }),
+        provider.callContract({
+          contractAddress: gameAddress,
+          entrypoint: 'score_attribute',
+          calldata: [],
+        }),
+      ]);
 
-    setGameEndpoints((prev) => ({
-      ...prev,
-      [gameAddress]: {
-        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
+      const gameScoreModelByteArray: ByteArray = {
+        data: gameScoreModelData.slice(0, -2),
+        pending_word: gameScoreModelData[gameScoreModelData.length - 2],
+        pending_word_len: gameScoreModelData[gameScoreModelData.length - 1],
+      };
+      const gameScoreAttributeByteArray: ByteArray = {
+        data: gameScoreAttributeData.slice(0, -2),
+        pending_word: gameScoreAttributeData[gameScoreAttributeData.length - 2],
+        pending_word_len: gameScoreAttributeData[gameScoreAttributeData.length - 1],
+      };
+
+      return {
         scoreModel: byteArray.stringFromByteArray(gameScoreModelByteArray),
         scoreAttribute: byteArray.stringFromByteArray(gameScoreAttributeByteArray),
-      },
-    }));
+      };
+    } catch (error) {
+      console.error('Failed to get game score data:', error);
+      return null;
+    }
   };
 
   const getGameSettings = async (gameAddress: string) => {
-    const gameSettingsData = await provider.callContract({
-      contractAddress: gameAddress,
-      entrypoint: 'settings_model',
-      calldata: [],
-    });
-    const gameSettingsByteArray: ByteArray = {
-      data: gameSettingsData.slice(0, -2),
-      pending_word: gameSettingsData[gameSettingsData.length - 2],
-      pending_word_len: gameSettingsData[gameSettingsData.length - 1],
-    };
-
-    setGameEndpoints((prev) => ({
-      ...prev,
-      [gameAddress]: {
-        ...(prev?.[gameAddress] || createEmptyGameEndpoints()),
-        settingsModel: byteArray.stringFromByteArray(gameSettingsByteArray),
-      },
-    }));
+    try {
+      const gameSettingsData = await provider.callContract({
+        contractAddress: gameAddress,
+        entrypoint: 'settings_model',
+        calldata: [],
+      });
+      const gameSettingsByteArray: ByteArray = {
+        data: gameSettingsData.slice(0, -2),
+        pending_word: gameSettingsData[gameSettingsData.length - 2],
+        pending_word_len: gameSettingsData[gameSettingsData.length - 1],
+      };
+      return byteArray.stringFromByteArray(gameSettingsByteArray);
+    } catch (error) {
+      console.error('Failed to get game settings:', error);
+      return null;
+    }
   };
 
   const gameAddressesKey = useMemo(() => {
@@ -99,13 +96,58 @@ export const useGameEndpoints = (gameAddresses: string[]) => {
   }, [gameAddresses]);
 
   useEffect(() => {
-    if (gameAddresses.length > 0) {
-      gameAddresses.forEach((gameAddress) => {
-        getGameNamespace(gameAddress);
-        getGameScoreData(gameAddress);
-        getGameSettings(gameAddress);
-      });
+    if (!gameAddresses || gameAddresses.length === 0) {
+      setGameEndpoints(null);
+      return;
     }
+
+    const fetchGameData = async (gameAddress: string) => {
+      if (!gameAddress) return;
+
+      // First get namespace
+      const namespace = await getGameNamespace(gameAddress);
+      if (!namespace) {
+        setGameEndpoints((prev) => ({
+          ...prev,
+          [gameAddress]: null,
+        }));
+        return;
+      }
+
+      // Then get score data
+      const scoreData = await getGameScoreData(gameAddress);
+      if (!scoreData) {
+        setGameEndpoints((prev) => ({
+          ...prev,
+          [gameAddress]: null,
+        }));
+        return;
+      }
+
+      // Finally get settings
+      const settings = await getGameSettings(gameAddress);
+      if (!settings) {
+        setGameEndpoints((prev) => ({
+          ...prev,
+          [gameAddress]: null,
+        }));
+        return;
+      }
+
+      // If all calls succeed, set the complete data
+      setGameEndpoints((prev) => ({
+        ...prev,
+        [gameAddress]: {
+          namespace,
+          ...scoreData,
+          settingsModel: settings,
+        },
+      }));
+    };
+
+    gameAddresses.forEach((gameAddress) => {
+      fetchGameData(gameAddress);
+    });
   }, [provider, gameAddressesKey]);
 
   return gameEndpoints;

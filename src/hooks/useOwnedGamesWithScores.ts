@@ -7,8 +7,8 @@ import { useGameEndpoints } from '../dojo/hooks/useGameEndpoints';
 import { GameScore } from '../types/games';
 
 interface UseOwnedGameProps {
-  address: string;
-  gameAddress: string;
+  address?: string;
+  gameAddress?: string;
   metagame?: {
     namespace: string;
     model: string;
@@ -30,8 +30,8 @@ export const useOwnedGamesWithScores = ({
   logging = false,
 }: UseOwnedGameProps): SqlQueryResult<GameScore> => {
   const client = getMetagameClient();
-  const gameEndpoints = useGameEndpoints([gameAddress]);
-  const addressEndpoints = gameEndpoints?.[gameAddress];
+  const gameEndpoints = useGameEndpoints(gameAddress ? [gameAddress] : []);
+  const addressEndpoints = gameAddress ? gameEndpoints?.[gameAddress] : undefined;
   const { scoreModel, scoreAttribute, namespace } = addressEndpoints ?? {};
 
   const gameScoreKey = useMemo(
@@ -43,6 +43,10 @@ export const useOwnedGamesWithScores = ({
     gameScoreKey,
     logging
   );
+
+  if (!address || !gameAddress) {
+    console.warn('address and gameAddress are both not provided');
+  }
 
   const missingConfig = !scoreModel || !scoreAttribute || !namespace || !gameScoreKeyData[0]?.name;
 
@@ -65,7 +69,7 @@ export const useOwnedGamesWithScores = ({
 
   const query = useMemo(
     () =>
-      !missingConfig
+      !missingConfig && address && gameAddress
         ? ownedGamesWithScoresQuery({
             address: indexAddress(address),
             gameAddress: indexAddress(gameAddress),

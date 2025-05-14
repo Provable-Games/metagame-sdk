@@ -4,5 +4,5 @@ import manifest from './manifest_mainnet.json';
 
 export const dojoConfig = createDojoConfig({
   manifest,
-  toriiUrl: 'https://api.cartridge.gg/x/eternum-sepolia-interim/torii',
+  toriiUrl: 'https://api.cartridge.gg/x/eternum-sepolia-2/torii',
 });

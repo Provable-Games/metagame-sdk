@@ -57,7 +57,8 @@ export const useGameSettingsMetadata = ({
 
     const gameNamespaces = gameAddresses
       .filter((address) => gameEndpoints?.[address])
-      .map((address) => gameEndpoints[address].namespace);
+      .map((address) => gameEndpoints?.[address]?.namespace)
+      .filter((namespace): namespace is string => namespace !== undefined && namespace !== null);
 
     return gameSettingsMetadataQuery(gameNamespaces, settingsIds, limit, offset);
   }, [gameEndpoints, gameAddresses, settingsIdKey, limit, offset]);
@@ -81,7 +82,7 @@ export const useGameSettingsMetadata = ({
     // Group settings metadata by game address
     rawSettingsMetadata.forEach((settingMetadata) => {
       const gameAddress = Object.entries(gameEndpoints || {}).find(
-        ([_, endpoints]) => endpoints.namespace === settingMetadata.namespace
+        ([_, endpoints]) => endpoints?.namespace === settingMetadata.namespace
       )?.[0];
 
       if (gameAddress) {
