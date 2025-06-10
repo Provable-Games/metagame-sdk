@@ -6,28 +6,34 @@ import {
 } from 'metagame-sdk';
 import { useProvider } from '@starknet-react/core';
 import { dojoConfig } from '../../dojoConfig';
-import { SchemaType } from '../bindings/models.gen';
 
 export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
   const { provider } = useProvider();
 
   useEffect(() => {
+    if (!provider) return;
+
     async function initialize() {
-      const metagameClient = initMetagame<SchemaType>({
+      // Use the new automatic dojoSDK feature!
+      const metagameClient = await initMetagame({
         toriiUrl: dojoConfig.toriiUrl,
         provider: provider,
+        worldAddress: dojoConfig.manifest.world.address, // Automatic dojoSDK creation
+        // Optional: Override defaults if needed
+        // relayUrl: dojoConfig.relayUrl,
+        // domain: { name: 'CUSTOM_WORLD', version: '1.0', chainId: 'KATANA', revision: '1' }
       });
 
       setMetagameClient(metagameClient);
     }
 
     initialize();
-  }, []);
+  }, [provider]);
 
   if (!metagameClient) {
     return <div>Loading...</div>;
   }
 
-  return <MetagameProviderSDK metagameClient={metagameClient!}>{children}</MetagameProviderSDK>;
+  return <MetagameProviderSDK metagameClient={metagameClient}>{children}</MetagameProviderSDK>;
 };
