@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SchemaType } from '@dojoengine/sdk';
 import { MetagameClient } from '../../client';
+import { getMetagameClient } from '../../singleton';
 
 export interface UseTokenSubscriptionOptions {
   contractAddress: string;

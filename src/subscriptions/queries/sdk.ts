@@ -1,4 +1,4 @@
-import { ToriiQueryBuilder, KeysClause, AndComposeClause, MemberClause } from '@dojoengine/sdk';
+import { ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
 
 export const gamesQuery = ({ namespace }: { namespace: string }) => {
   return new ToriiQueryBuilder()

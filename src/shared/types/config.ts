@@ -8,7 +8,6 @@ export interface MetagameConfig<T extends SchemaType> {
   toriiUrl: string;
   dojoSDK?: SDK<T>;
   toriiClient?: ToriiClient;
-  store?: any;
   namespace?: string; // Optional namespace, defaults to 'denshokan_0_0_1'
 
   // Optional fields for default dojoSDK creation

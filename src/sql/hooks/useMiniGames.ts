@@ -1,5 +1,5 @@
 import { miniGamesQuery } from '../queries/sql';
-import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
+import { useSqlQuery } from '../services/sqlService';
 import { useCallback, useMemo } from 'react';
 import { feltToString } from '../../shared/lib';
 import { getMetagameClient } from '../../shared/singleton';

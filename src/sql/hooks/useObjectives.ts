@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
-import { gameSettingsQuery, objectivesQuery } from '../queries/sql';
+import { objectivesQuery } from '../queries/sql';
 import { getMetagameClient } from '../../shared/singleton';
-import { parseSettingsData } from '../../shared/utils/dataTransformers';
 import { feltToString } from '../../shared/lib';
 import type { GameObjective } from '../../shared/types';
 

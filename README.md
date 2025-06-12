@@ -188,28 +188,6 @@ const metagameClient = await initMetagame({
 - **🎯 Type Safe**: Full TypeScript support with comprehensive type definitions
 - **⚡ Performance**: Optimized data fetching and caching
 
-## 🔄 Migration from Previous Versions
-
-### Before (with provider)
-```tsx
-// ❌ Old way - required Starknet provider
-const { provider } = useProvider();
-const metagameClient = await initMetagame({
-  toriiUrl: 'http://localhost:8080',
-  provider: provider, // No longer needed!
-  worldAddress: '0x...'
-});
-```
-
-### After (simplified)
-```tsx
-// ✅ New way - no provider needed
-const metagameClient = await initMetagame({
-  toriiUrl: 'http://localhost:8080',
-  worldAddress: '0x...'
-});
-```
-
 ## 📚 API Reference
 
 ### Core Functions

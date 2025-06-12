@@ -52,7 +52,7 @@ export class MetagameClient<T extends SchemaType> {
       ...config,
     };
 
-    this.store = this.config.store || createDojoStore<T>();
+    this.store = createDojoStore<T>();
 
     this.namespace = 'denshokan_0_0_1';
     this.contractAddress = '0x50d5db3a00209bbcd8b7f5fbec727d36515485fb2859c257616d019a166f99';
@@ -112,20 +112,5 @@ export class MetagameClient<T extends SchemaType> {
    */
   getToriiUrl(): string {
     return this.config.toriiUrl;
-  }
-
-  /**
-   * Get mini games
-   */
-  async getMiniGames(
-    limit: number,
-    offset: number,
-    logging: boolean = false
-  ): Promise<{ data: any[]; error: string | null }> {
-    return executeSqlQuery(
-      this.config.toriiUrl,
-      miniGamesQuery({ namespace: this.namespace, limit, offset }),
-      logging
-    );
   }
 }
