@@ -18,7 +18,6 @@ const PaginatedGamesList: React.FC = () => {
       currentPage,
       totalPages,
       totalItems,
-      pageSize,
       hasNextPage,
       hasPreviousPage,
       goToPage,
