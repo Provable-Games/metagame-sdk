@@ -1,0 +1,280 @@
+import { getMetagameClient } from '../../shared/singleton';
+import { useEntitySubscription } from '../../shared/dojo/hooks/useEntitySubscription';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMiniGamesStore } from '../stores/miniGamesStore';
+import { miniGamesQuery } from '../queries/sdk';
+
+export interface UseSubscribeMiniGamesParams {
+  enabled?: boolean;
+  logging?: boolean;
+  // Filter options (same as useMergedMiniGames)
+  game_ids?: string[] | number[];
+  contract_addresses?: string[];
+  creator_token_id?: string | number;
+
+  // Pagination parameters
+  pagination?: {
+    pageSize?: number; // Number of items per page (default: 20)
+    initialPage?: number; // Starting page (0-indexed, default: 0)
+
+    // Sorting parameters
+    sortBy?: 'game_id' | 'name' | 'developer' | 'genre' | 'creator_token_id';
+    sortOrder?: 'asc' | 'desc'; // Default: 'asc'
+  };
+}
+
+export interface PaginationControls {
+  currentPage: number; // Current page (0-indexed)
+  pageSize: number; // Items per page
+  totalItems: number; // Total number of items across all pages
+  totalPages: number; // Total number of pages
+  hasNextPage: boolean; // Whether there's a next page
+  hasPreviousPage: boolean; // Whether there's a previous page
+  goToPage: (page: number) => void; // Navigate to specific page
+  nextPage: () => void; // Go to next page
+  previousPage: () => void; // Go to previous page
+  firstPage: () => void; // Go to first page
+  lastPage: () => void; // Go to last page
+}
+
+type MiniGamesRecord = Record<
+  string,
+  {
+    game_id: number;
+    contract_address: string;
+    creator_token_id: number;
+    name: string;
+    description: string;
+    developer: string;
+    publisher: string;
+    genre: string;
+    image: string;
+    color?: string;
+  }
+>;
+
+export interface UseSubscribeMiniGamesResult {
+  // Subscription status
+  isSubscribed: boolean;
+  error: any;
+
+  // Store data (paginated, indexed by game_id)
+  miniGames: MiniGamesRecord; // Paginated mini games for current page
+  allMiniGames: MiniGamesRecord; // All filtered mini games (unpaginated)
+  getMiniGameData: (game_id: string | number) => any;
+  getMiniGameByContractAddress: (contract_address: string) => any;
+  isInitialized: boolean;
+
+  // Pagination controls
+  pagination: PaginationControls;
+}
+
+export function useSubscribeMiniGames(
+  params: UseSubscribeMiniGamesParams = {}
+): UseSubscribeMiniGamesResult {
+  const client = getMetagameClient();
+  const {
+    enabled = true,
+    logging = false,
+    game_ids,
+    contract_addresses,
+    creator_token_id,
+    pagination,
+  } = params;
+
+  // Pagination state
+  const pageSize = pagination?.pageSize ?? 20;
+  const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
+
+  // Sorting parameters
+  const sortBy = pagination?.sortBy ?? 'name';
+  const sortOrder = pagination?.sortOrder ?? 'asc';
+
+  const query = miniGamesQuery({ namespace: client.getNamespace() });
+
+  const { entities, isSubscribed, error } = useEntitySubscription(client, {
+    query,
+    namespace: client.getNamespace(),
+    enabled,
+    logging,
+    transform: (entity: any) => {
+      const { entityId, models } = entity;
+      const transformed = {
+        entityId,
+        ...models[client.getNamespace()],
+      };
+
+      // Call our store's updateEntity for real-time updates
+      updateEntity(transformed);
+
+      return transformed;
+    },
+  });
+
+  const {
+    initializeStore,
+    updateEntity,
+    miniGames,
+    isInitialized,
+    getMiniGamesByFilter,
+    getMiniGameData,
+    getMiniGameByContractAddress,
+  } = useMiniGamesStore();
+
+  // Initialize store with all entities on first load
+  useEffect(() => {
+    if (entities && entities.length > 0) {
+      console.log('Initializing mini games store with', entities.length, 'entities');
+      initializeStore(entities);
+    }
+  }, [entities, initializeStore]);
+
+  // Apply filters to get filtered mini games (updated for new structure)
+  const filteredMiniGames = getMiniGamesByFilter({
+    game_ids,
+    contract_addresses,
+    creator_token_id,
+  });
+
+  // Convert to array and sort for pagination
+  const sortedMiniGamesArray = useMemo(() => {
+    const miniGamesArray = Object.entries(filteredMiniGames);
+
+    // Sort mini games based on sortBy and sortOrder
+    return miniGamesArray.sort(([keyA, gameA], [keyB, gameB]) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortBy) {
+        case 'game_id':
+          aValue = gameA.game_id || '';
+          bValue = gameB.game_id || '';
+          break;
+        case 'name':
+          aValue = (gameA.name || '').toLowerCase();
+          bValue = (gameB.name || '').toLowerCase();
+          break;
+        case 'developer':
+          aValue = (gameA.developer || '').toLowerCase();
+          bValue = (gameB.developer || '').toLowerCase();
+          break;
+        case 'genre':
+          aValue = (gameA.genre || '').toLowerCase();
+          bValue = (gameB.genre || '').toLowerCase();
+          break;
+        case 'creator_token_id':
+          aValue = gameA.creator_token_id || 0;
+          bValue = gameB.creator_token_id || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortOrder === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortOrder === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [filteredMiniGames, sortBy, sortOrder]);
+
+  // Calculate pagination values
+  const totalItems = sortedMiniGamesArray.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const hasNextPage = currentPage < totalPages - 1;
+  const hasPreviousPage = currentPage > 0;
+
+  // Auto-adjust current page if it's beyond available pages
+  useEffect(() => {
+    if (totalPages > 0 && currentPage >= totalPages) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [totalPages, currentPage]);
+
+  // Apply pagination to sorted mini games
+  const paginatedMiniGames = useMemo(() => {
+    const startIndex = currentPage * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedArray = sortedMiniGamesArray.slice(startIndex, endIndex);
+
+    // Convert back to record
+    return Object.fromEntries(paginatedArray);
+  }, [sortedMiniGamesArray, currentPage, pageSize]);
+
+  // Pagination control functions
+  const goToPage = useCallback(
+    (page: number) => {
+      const clampedPage = Math.max(0, Math.min(page, totalPages - 1));
+      setCurrentPage(clampedPage);
+    },
+    [totalPages]
+  );
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [hasNextPage]);
+
+  const previousPage = useCallback(() => {
+    if (hasPreviousPage) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [hasPreviousPage]);
+
+  const firstPage = useCallback(() => {
+    setCurrentPage(0);
+  }, []);
+
+  const lastPage = useCallback(() => {
+    setCurrentPage(Math.max(0, totalPages - 1));
+  }, [totalPages]);
+
+  // Pagination controls object
+  const paginationControls: PaginationControls = useMemo(
+    () => ({
+      currentPage,
+      pageSize,
+      totalItems,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    }),
+    [
+      currentPage,
+      pageSize,
+      totalItems,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    ]
+  );
+
+  return {
+    // Subscription status
+    isSubscribed,
+    error,
+
+    // Store data (paginated and unpaginated)
+    miniGames: paginatedMiniGames, // Paginated mini games for current page
+    allMiniGames: filteredMiniGames, // All filtered mini games (unpaginated)
+    getMiniGameData,
+    getMiniGameByContractAddress,
+    isInitialized,
+
+    // Pagination controls
+    pagination: paginationControls,
+  };
+}

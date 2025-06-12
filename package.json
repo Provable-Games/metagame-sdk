@@ -11,7 +11,6 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "type-check": "tsc --noEmit",
-    "docs": "typedoc --out docs src/index.ts",
     "prepublishOnly": "bun run build"
   },
   "files": [
@@ -67,6 +66,24 @@
       "import": "./dist/esm/src/index.js",
       "require": "./dist/cjs/src/index.js",
       "default": "./dist/cjs/src/index.js"
+    },
+    "./subscriptions": {
+      "types": "./dist/types/src/subscriptions/index.d.ts",
+      "import": "./dist/esm/src/subscriptions/index.js",
+      "require": "./dist/cjs/src/subscriptions/index.js",
+      "default": "./dist/cjs/src/subscriptions/index.js"
+    },
+    "./sql": {
+      "types": "./dist/types/src/sql/index.d.ts",
+      "import": "./dist/esm/src/sql/index.js",
+      "require": "./dist/cjs/src/sql/index.js",
+      "default": "./dist/cjs/src/sql/index.js"
+    },
+    "./shared": {
+      "types": "./dist/types/src/shared/index.d.ts",
+      "import": "./dist/esm/src/shared/index.js",
+      "require": "./dist/cjs/src/shared/index.js",
+      "default": "./dist/cjs/src/shared/index.js"
     }
   },
   "version": "0.0.19"

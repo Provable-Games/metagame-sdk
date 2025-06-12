@@ -1,0 +1,127 @@
+import { gamesQuery } from '../queries/sql';
+import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
+import { feltToString } from '../../shared/lib';
+import { useMemo } from 'react';
+import { getMetagameClient } from '../../shared/singleton';
+import { parseSettingsData, parseContextData } from '../../shared/utils/dataTransformers';
+import type { GameTokenData } from '../../shared/types';
+
+interface GameTokensQueryParams {
+  owner?: string;
+  gameAddresses?: string[];
+  tokenIds?: string[];
+  hasContext?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
+export const useGameTokens = ({
+  owner,
+  gameAddresses,
+  tokenIds,
+  hasContext,
+  limit = 100,
+  offset = 0,
+}: GameTokensQueryParams): SqlQueryResult<GameTokenData> => {
+  const client = getMetagameClient();
+
+  const query = gamesQuery({
+    namespace: client.getNamespace(),
+    owner,
+    gameAddresses,
+    tokenIds,
+    hasContext,
+    limit,
+    offset,
+  });
+
+  console.log(query);
+
+  const {
+    data: rawGameData,
+    loading,
+    error: queryError,
+    refetch,
+  } = useSqlQuery(client.getConfig().toriiUrl, query);
+
+  const error = queryError;
+
+  const gameScores = useMemo(() => {
+    if (!rawGameData || !rawGameData.length) return [];
+
+    return rawGameData.map((game: any) => {
+      // Parse context data if available
+      const parsedContext = game.context ? parseContextData(game.context) : undefined;
+
+      // Parse settings data if available
+      const parsedSettings = game.settings_data ? parseSettingsData(game.settings_data) : undefined;
+
+      // Build gameMetadata object if GameMetadata fields are available
+      const gameMetadata = game.game_metadata_id
+        ? {
+            game_id: Number(game.game_metadata_id) || 0,
+            contract_address: game.game_metadata_contract_address || '',
+            creator_token_id: Number(game.game_metadata_creator_token_id) || 0,
+            name: feltToString(game.game_metadata_name) || '',
+            description: game.game_metadata_description || '',
+            developer: feltToString(game.game_metadata_developer) || '',
+            publisher: feltToString(game.game_metadata_publisher) || '',
+            genre: feltToString(game.game_metadata_genre) || '',
+            image: game.game_metadata_image || '',
+            color: game.game_metadata_color,
+          }
+        : undefined;
+
+      const filteredGame: GameTokenData = {
+        game_id: Number(game.game_id),
+        game_over: game.game_over,
+        lifecycle: {
+          start: Number(game['lifecycle.start']) || undefined,
+          end: Number(game['lifecycle.end']) || undefined,
+        },
+        minted_at: Number(game.minted_at) || undefined,
+        minted_by: Number(game.minted_by) || undefined,
+        minted_by_address: game.minted_by_address,
+        owner: game.owner,
+        settings_id: Number(game.settings_id) || undefined,
+        soulbound: Boolean(game.soulbound),
+        completed_all_objectives: Boolean(game.completed_all_objectives),
+        token_id: Number(game.token_id) || 0,
+        player_name: feltToString(game.player_name) || undefined,
+        metadata: game.metadata,
+        context: parsedContext
+          ? {
+              name: parsedContext.name,
+              description: parsedContext.description,
+              contexts: parsedContext.contexts,
+            }
+          : undefined,
+        settings: parsedSettings
+          ? {
+              name: parsedSettings.name,
+              description: parsedSettings.description,
+              data: parsedSettings.data,
+            }
+          : undefined,
+        score: Number(game.score) || 0,
+        objective_ids: game.objective_ids
+          ? game.objective_ids
+              .split(',')
+              .map((id: string) => id.toString())
+              .filter((id: string) => id && id.trim() !== '' && id !== '0')
+          : [],
+        renderer: game.renderer,
+        client_url: game.client_url,
+        gameMetadata,
+      };
+      return filteredGame;
+    });
+  }, [rawGameData]);
+
+  return {
+    data: gameScores,
+    loading,
+    error,
+    refetch,
+  };
+};
