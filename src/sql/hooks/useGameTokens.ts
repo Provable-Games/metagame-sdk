@@ -35,8 +35,6 @@ export const useGameTokens = ({
     offset,
   });
 
-  console.log(query);
-
   const {
     data: rawGameData,
     loading,

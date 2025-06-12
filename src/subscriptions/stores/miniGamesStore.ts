@@ -49,9 +49,8 @@ interface MiniGamesState {
 
   // Getters
   getMiniGamesByFilter: (filter: {
-    game_ids?: (string | number)[];
-    contract_addresses?: string[];
-    creator_token_id?: string | number;
+    gameAddresses?: string[];
+    creatorTokenId?: number;
   }) => MiniGamesLookup;
   getMiniGameData: (game_id: string | number) => MiniGamesLookup[string] | null;
   getMiniGameByContractAddress: (contract_address: string) => MiniGamesLookup[string] | null;
@@ -168,33 +167,23 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
   },
 
   // Getters
-  getMiniGamesByFilter: (filter: {
-    game_ids?: (string | number)[];
-    contract_addresses?: string[];
-    creator_token_id?: string | number;
-  }) => {
+  getMiniGamesByFilter: (filter) => {
     const state = get();
     let filtered = { ...state.miniGames };
 
-    if (filter.game_ids && filter.game_ids.length > 0) {
-      const gameIdStrings = filter.game_ids.map((id) => id.toString());
-      filtered = Object.fromEntries(
-        Object.entries(filtered).filter(([gameId]) => gameIdStrings.includes(gameId))
-      );
-    }
-
-    if (filter.contract_addresses && filter.contract_addresses.length > 0) {
+    if (filter.gameAddresses && filter.gameAddresses.length > 0) {
       filtered = Object.fromEntries(
         Object.entries(filtered).filter(([_, game]) =>
-          filter.contract_addresses!.includes(game.contract_address)
+          filter.gameAddresses!.includes(game.contract_address)
         )
       );
     }
 
-    if (filter.creator_token_id !== undefined) {
-      const creatorTokenId = Number(filter.creator_token_id);
+    if (filter.creatorTokenId !== undefined) {
       filtered = Object.fromEntries(
-        Object.entries(filtered).filter(([_, game]) => game.creator_token_id === creatorTokenId)
+        Object.entries(filtered).filter(
+          ([_, game]) => game.creator_token_id === filter.creatorTokenId
+        )
       );
     }
 

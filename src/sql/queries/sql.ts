@@ -152,7 +152,7 @@ export const gameSettingsQuery = ({
 
   if (gameAddresses && gameAddresses.length > 0) {
     const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
-    conditions.push(`gr.game_address IN (${addressList})`);
+    conditions.push(`gr.contract_address IN (${addressList})`);
   }
 
   if (settingsIds && settingsIds.length > 0) {
@@ -195,7 +195,7 @@ export const objectivesQuery = ({
 
   if (gameAddresses && gameAddresses.length > 0) {
     const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
-    conditions.push(`gr.game_address IN (${addressList})`);
+    conditions.push(`gr.contract_address IN (${addressList})`);
   }
 
   if (objectiveIds && objectiveIds.length > 0) {

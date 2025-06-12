@@ -71,8 +71,8 @@ interface SettingsState {
 
   // Getters
   getSettingsByFilter: (filter: {
-    settings_ids?: string[];
-    game_id?: string | number;
+    gameAddresses?: string[];
+    settingsIds?: number[];
   }) => SettingsLookup;
   getSettingsData: (settings_id: string) => any;
 }
@@ -167,17 +167,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const state = get();
     let filtered = { ...state.settings };
 
-    if (filter.settings_ids && filter.settings_ids.length > 0) {
+    if (filter.settingsIds && filter.settingsIds.length > 0) {
       filtered = Object.fromEntries(
-        Object.entries(filtered).filter(([settingsId]) => filter.settings_ids!.includes(settingsId))
+        Object.entries(filtered).filter(([settingsId]) =>
+          filter.settingsIds!.includes(Number(settingsId))
+        )
       );
     }
 
-    if (filter.game_id !== undefined) {
-      const gameIdStr = filter.game_id.toString();
+    if (filter.gameAddresses && filter.gameAddresses.length > 0) {
       filtered = Object.fromEntries(
         Object.entries(filtered).filter(
-          ([_, settings]) => settings.game_id.toString() === gameIdStr
+          ([_, settings]) =>
+            settings.gameMetadata &&
+            filter.gameAddresses!.includes(settings.gameMetadata.contract_address)
         )
       );
     }

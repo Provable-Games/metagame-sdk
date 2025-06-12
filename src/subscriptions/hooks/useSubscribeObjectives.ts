@@ -8,15 +8,14 @@ import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
 export interface UseSubscribeObjectivesParams {
   enabled?: boolean;
   logging?: boolean;
-  // Filter options (same as useMergedObjectives)
-  game_id?: string | number;
-  objective_ids?: string[];
+  // Filter options (now consistent with SQL)
+  gameAddresses?: string[];
+  objectiveIds?: number[];
 
   // Pagination parameters
   pagination?: {
     pageSize?: number; // Number of items per page (default: 20)
     initialPage?: number; // Starting page (0-indexed, default: 0)
-
     // Sorting parameters
     sortBy?: 'game_id' | 'data';
     sortOrder?: 'asc' | 'desc'; // Default: 'asc'
@@ -77,7 +76,7 @@ export function useSubscribeObjectives(
   params: UseSubscribeObjectivesParams = {}
 ): UseSubscribeObjectivesResult {
   const client = getMetagameClient();
-  const { enabled = true, logging = false, game_id, objective_ids, pagination } = params;
+  const { enabled = true, logging = false, gameAddresses, objectiveIds, pagination } = params;
 
   // Ensure mini games store is initialized for gameMetadata relationships
   useEnsureMiniGamesStore();
@@ -130,8 +129,8 @@ export function useSubscribeObjectives(
 
   // Apply filters to get filtered objectives (same logic as useMergedObjectives)
   const filteredObjectives = getObjectivesByFilter({
-    game_id,
-    objective_ids,
+    gameAddresses,
+    objectiveIds,
   });
 
   // Convert to array and sort for pagination

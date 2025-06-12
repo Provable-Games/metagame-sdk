@@ -8,15 +8,14 @@ import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
 export interface UseSubscribeSettingsParams {
   enabled?: boolean;
   logging?: boolean;
-  // Filter options (same as useMergedSettings)
-  settings_ids?: string[];
-  game_id?: string | number;
+  // Filter options (now consistent with SQL)
+  gameAddresses?: string[];
+  settingsIds?: number[];
 
   // Pagination parameters
   pagination?: {
     pageSize?: number; // Number of items per page (default: 20)
     initialPage?: number; // Starting page (0-indexed, default: 0)
-
     // Sorting parameters
     sortBy?: 'game_id' | 'name' | 'description';
     sortOrder?: 'asc' | 'desc'; // Default: 'asc'
@@ -78,7 +77,7 @@ export function useSubscribeSettings(
   params: UseSubscribeSettingsParams = {}
 ): UseSubscribeSettingsResult {
   const client = getMetagameClient();
-  const { enabled = true, logging = false, settings_ids, game_id, pagination } = params;
+  const { enabled = true, logging = false, gameAddresses, settingsIds, pagination } = params;
 
   // Ensure mini games store is initialized for gameMetadata relationships
   useEnsureMiniGamesStore();
@@ -131,8 +130,8 @@ export function useSubscribeSettings(
 
   // Apply filters to get filtered settings (same logic as useMergedSettings)
   const filteredSettings = getSettingsByFilter({
-    settings_ids,
-    game_id,
+    gameAddresses,
+    settingsIds,
   });
 
   // Convert to array and sort for pagination

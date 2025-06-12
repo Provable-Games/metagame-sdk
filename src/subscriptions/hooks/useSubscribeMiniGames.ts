@@ -7,16 +7,14 @@ import { miniGamesQuery } from '../queries/sdk';
 export interface UseSubscribeMiniGamesParams {
   enabled?: boolean;
   logging?: boolean;
-  // Filter options (same as useMergedMiniGames)
-  game_ids?: string[] | number[];
-  contract_addresses?: string[];
-  creator_token_id?: string | number;
+  // Filter options (now consistent with SQL)
+  gameAddresses?: string[];
+  creatorTokenId?: number;
 
   // Pagination parameters
   pagination?: {
     pageSize?: number; // Number of items per page (default: 20)
     initialPage?: number; // Starting page (0-indexed, default: 0)
-
     // Sorting parameters
     sortBy?: 'game_id' | 'name' | 'developer' | 'genre' | 'creator_token_id';
     sortOrder?: 'asc' | 'desc'; // Default: 'asc'
@@ -73,14 +71,7 @@ export function useSubscribeMiniGames(
   params: UseSubscribeMiniGamesParams = {}
 ): UseSubscribeMiniGamesResult {
   const client = getMetagameClient();
-  const {
-    enabled = true,
-    logging = false,
-    game_ids,
-    contract_addresses,
-    creator_token_id,
-    pagination,
-  } = params;
+  const { enabled = true, logging = false, gameAddresses, creatorTokenId, pagination } = params;
 
   // Pagination state
   const pageSize = pagination?.pageSize ?? 20;
@@ -131,9 +122,8 @@ export function useSubscribeMiniGames(
 
   // Apply filters to get filtered mini games (updated for new structure)
   const filteredMiniGames = getMiniGamesByFilter({
-    game_ids,
-    contract_addresses,
-    creator_token_id,
+    gameAddresses,
+    creatorTokenId,
   });
 
   // Convert to array and sort for pagination
