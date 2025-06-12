@@ -4,21 +4,16 @@ import {
   MetagameClient,
   MetagameProvider as MetagameProviderSDK,
 } from 'metagame-sdk';
-import { useProvider } from '@starknet-react/core';
 import { dojoConfig } from '../../dojoConfig';
 
 export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
-  const { provider } = useProvider();
 
   useEffect(() => {
-    if (!provider) return;
-
     async function initialize() {
-      // Use the new automatic dojoSDK feature!
+      // Simple initialization - no provider required!
       const metagameClient = await initMetagame({
         toriiUrl: dojoConfig.toriiUrl,
-        provider: provider,
         worldAddress: dojoConfig.manifest.world.address, // Automatic dojoSDK creation
         // Optional: Override defaults if needed
         // relayUrl: dojoConfig.relayUrl,
@@ -29,7 +24,7 @@ export const MetagameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     initialize();
-  }, [provider]);
+  }, []);
 
   if (!metagameClient) {
     return <div>Loading...</div>;

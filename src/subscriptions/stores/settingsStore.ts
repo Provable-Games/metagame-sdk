@@ -38,9 +38,9 @@ export interface SettingsLookup {
   [settings_id: string]: {
     game_id: number;
     gameMetadata: {
-      game_id: string;
+      game_id: number;
       contract_address: string;
-      creator_address: string;
+      creator_token_id: number;
       name: string;
       description: string;
       developer: string;

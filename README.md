@@ -2,303 +2,239 @@
 
 A JavaScript/TypeScript SDK for interacting with Metagame components in Dojo.
 
-## Package Structure
+## 🚀 Quick Start
 
-The SDK is now modularly organized with subpath exports for better separation of concerns:
+### Installation
 
-### Core Package
-```typescript
-// Main import (includes everything for backward compatibility)
-import { useSubscribeGames, useGames, MetagameProvider } from 'metagame-sdk';
+```shell
+bun add metagame-sdk
+# or
+npm install metagame-sdk
 ```
 
-### Modular Imports (Recommended)
+### Basic Setup
+
+```tsx
+import { initMetagame, MetagameProvider } from 'metagame-sdk';
+
+// Initialize the SDK (no provider required!)
+const metagameClient = await initMetagame({
+  toriiUrl: 'http://localhost:8080',
+  worldAddress: '0x...', // Your world contract address
+});
+
+// Wrap your app with the provider
+function App() {
+  return (
+    <MetagameProvider metagameClient={metagameClient}>
+      <YourApp />
+    </MetagameProvider>
+  );
+}
+```
+
+## 📦 Package Structure
+
+The SDK is organized with **modular imports** for better tree-shaking and separation of concerns:
+
+### 🎯 Core Package (Root Level)
+Essential setup functions and types:
 
 ```typescript
-// Subscription hooks (Dojo real-time data)
 import { 
-  useSubscribeGames, 
+  // Setup functions
+  initMetagame, 
+  MetagameClient, 
+  MetagameProvider,
+  
+  // Essential types
+  GameTokenData,
+  GameMetadata,
+  MetagameConfig,
+  
+  // Utilities
+  feltToString,
+  stringToFelt
+} from 'metagame-sdk';
+```
+
+### 🔄 Subscription Hooks (Real-time Data)
+For live data that updates automatically:
+
+```typescript
+import { 
+  useSubscribeGameTokens, 
   useSubscribeMiniGames, 
   useSubscribeSettings, 
   useSubscribeObjectives 
 } from 'metagame-sdk/subscriptions';
+```
 
-// SQL hooks (Static queries)
+### 📊 SQL Hooks (Static Queries)
+For one-time data fetching:
+
+```typescript
 import { 
-  useGames, 
-  useMiniGames, 
-  useMetaGames, 
-  useGameSettings 
+  useGameTokens,
+  useMiniGames,
+  useSettings,
+  useObjectives 
 } from 'metagame-sdk/sql';
+```
 
-// Shared utilities and types
+### 🛠️ Advanced Utilities
+For custom data processing:
+
+```typescript
 import { 
-  feltToString, 
-  MetagameClient, 
-  MetagameProvider 
+  mergeGameEntities, 
+  parseContextData,
+  parseSettingsData,
+  MetagameClient 
 } from 'metagame-sdk/shared';
 ```
 
-**Benefits:**
-- **Tree shaking**: Only import what you need
-- **Clear separation**: Real-time vs static data
-- **Better organization**: Easier to understand and maintain
-- **Backward compatibility**: Existing imports still work
+## 🎮 Usage Examples
 
-## Getting Started
-
-1. Add `metagame-sdk` to your dependencies.
-
-```shell
-bun add metagame-sdk
-```
-
-2. Wrap your app with `MetagameProvider` and pass in your `toriiUrl` and starknet `provider`.
+### Real-time Game Tokens
 
 ```tsx
-export const MetagameProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
-  const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
-  const { provider } = useProvider();
+import { useSubscribeGameTokens } from 'metagame-sdk/subscriptions';
 
-  useEffect(() => {
-    async function initialize() {
-      const metagameClient = await initMetagame<SchemaType>({
-        toriiUrl: dojoConfig.toriiUrl,
-        provider: provider,
-        worldAddress: '0x1234...',
-        domain: {
-          name: 'WORLD_NAME',
-          version: '1.0',
-          chainId: 'KATANA',
-          revision: '1',
-        }
-      });
-
-      setMetagameClient(metagameClient);
+function GameTokensList() {
+  const { games, isSubscribing, pagination } = useSubscribeGameTokens({
+    owner: '0x123...',
+    pagination: {
+      pageSize: 10,
+      sortBy: 'score',
+      sortOrder: 'desc'
     }
+  });
 
-    initialize();
-  }, []);
+  if (isSubscribing) return <div>Loading...</div>;
 
-  if (!metagameClient) {
-    return <div>Loading...</div>;
-  }
-
-  return <MetagameProviderSDK metagameClient={metagameClient!}>{children}</MetagameProviderSDK>;
-};
+  return (
+    <div>
+      {games.map(game => (
+        <div key={game.token_id}>
+          <h3>Token #{game.token_id}</h3>
+          <p>Score: {game.score}</p>
+          <p>Player: {game.player_name}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
 
-#### dojoSDK Configuration Options
+### Static Data Queries
 
-The SDK now supports automatic dojoSDK creation with sensible defaults:
-
-**Option 1: Automatic dojoSDK (Recommended)**
 ```tsx
+import { useGameTokens } from 'metagame-sdk/sql';
+
+function GameTokensQuery() {
+  const { data: games, loading, error } = useGameTokens({
+    owner: '0x123...',
+    limit: 50
+  });
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {games.map(game => (
+        <div key={game.token_id}>
+          Token #{game.token_id} - Score: {game.score}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## 🔧 Configuration Options
+
+```typescript
 const metagameClient = await initMetagame({
+  // Required
   toriiUrl: 'http://localhost:8080',
-  provider: starknetProvider,
-  worldAddress: '0x1234...',
-  relayUrl: 'http://localhost:9090',
-  domain: { name: 'WORLD_NAME', version: '1.0', chainId: 'KATANA', revision: '1' }
-});
-```
-
-**Option 2: Provide your own dojoSDK**
-```tsx
-const customDojoSDK = await init<SchemaType>({
-  client: {
-    toriiUrl: 'http://localhost:8080',
-    relayUrl: 'http://localhost:9090',
-    worldAddress: '0x1234...',
-  },
-  domain: { name: 'CUSTOM_WORLD', version: '2.0', chainId: 'MAINNET', revision: '1' }
-});
-
-const metagameClient = await initMetagame({
-  toriiUrl: 'http://localhost:8080',
-  provider: starknetProvider,
-  dojoSDK: customDojoSDK,
-});
-```
-
-**Option 3: No dojoSDK (SQL queries only)**
-```tsx
-const metagameClient = await initMetagame({
-  toriiUrl: 'http://localhost:8080',
-  provider: starknetProvider,
-});
-```
-
-3. Access the hooks from your components.
-
-### Static Query (SQL-based)
-
-```tsx
-const { data: miniGames } = useMiniGames({});
-```
-
-Output:
-
-```ts
-[
-  {
-    contract_address: '0x020fc3c9efd0dde5f53642dac7f53638aeaae98ff9af5f1642546f389ce9dec5',
-    creator_address: '0x000b39b235b44c53a2e9f0c5d35939d9c8e8dafdd0a2ba2e695b501fc1e9fd2f',
-    description: "Dark Shuffle is a turn-based, collectible card game. Build your deck, battle monsters, and explore a procedurally generated world.",
-    developer: 'Provable Games',
-    genre: 'Digital TCG / Deck Building',
-    image: 'https://github.com/Provable-Games/dark-shuffle/blob/main/client/public/favicon.svg',
-    name: 'Dark Shuffle',
-    publisher: 'Provable Games',
-  },
-]
-```
-
-### Real-time Subscription (Entity-based)
-
-For real-time updates, use the subscription hooks that provide both subscription status AND data in one hook:
-
-```tsx
-// IMPROVED API: Get both subscription status AND data in one hook!
-const {
-  // Subscription status
-  isSubscribed,
-  error,
-  isInitialized,
   
-  // Store data with filtering (NOW indexed by game_id!)
-  miniGames,
-  getMiniGameData,
-  getMiniGameByContractAddress,
-} = useSubscribeMiniGames({
-  // Optional filters:
-  game_ids: [1, 2], // Filter by game IDs (NEW!)
-  contract_addresses: ['0x123...'], // Filter by specific contract addresses  
-  creator_address: '0x456...', // Filter by creator
+  // For automatic dojoSDK creation
+  worldAddress: '0x...', // Your world contract address
+  
+  // Optional
+  relayUrl: 'http://localhost:9090',
+  namespace: 'your_namespace_0_0_1',
+  domain: {
+    name: 'CUSTOM_WORLD',
+    version: '1.0',
+    chainId: 'KATANA',
+    revision: '1'
+  },
+  
+  // Advanced: Provide your own dojoSDK instance
+  dojoSDK: yourDojoSDK,
+  toriiClient: yourToriiClient
 });
-
-// Mini games are indexed by game_id
-console.log(miniGames);
-// {
-//   "1": {
-//     game_id: "1",
-//     contract_address: "0x123...",
-//     name: "Dark Shuffle", 
-//     description: "A great game",
-//     developer: "Provable Games",
-//     // ... other fields
-//   }
-// }
-
-// Get specific mini game by game_id
-const gameData = getMiniGameData(1);
-
-// Get specific mini game by contract address  
-const gameDataByAddress = getMiniGameByContractAddress('0x020fc3c9efd0dde5f53642dac7f53638aeaae98ff9af5f1642546f389ce9dec5');
-
-// Check subscription status
-if (!isSubscribed) {
-  return <div>Connecting...</div>;
-}
-
-if (error) {
-  return <div>Error: {error.message}</div>;
-}
 ```
 
-**Same pattern for all subscription hooks:**
+## ✨ Key Benefits
 
+- **🚫 No Provider Required**: Simplified setup without Starknet provider dependency
+- **🌳 Tree Shaking**: Import only what you need with modular structure
+- **🔄 Real-time & Static**: Choose between live subscriptions or one-time queries
+- **📱 React Ready**: Built-in hooks and provider for React applications
+- **🎯 Type Safe**: Full TypeScript support with comprehensive type definitions
+- **⚡ Performance**: Optimized data fetching and caching
+
+## 🔄 Migration from Previous Versions
+
+### Before (with provider)
 ```tsx
-// Games subscription with data (the main one!)
-const { 
-  isSubscribed, 
-  games, 
-  getGameByTokenId,
-  isInitialized 
-} = useSubscribeGames({
-  owner: '0x123...', // Optional filters
-  gameAddresses: ['0x456...'],
-  tokenIds: ['1', '2'],
-  hasContext: true,
+// ❌ Old way - required Starknet provider
+const { provider } = useProvider();
+const metagameClient = await initMetagame({
+  toriiUrl: 'http://localhost:8080',
+  provider: provider, // No longer needed!
+  worldAddress: '0x...'
 });
-
-// Settings subscription with enhanced data
-const { 
-  isSubscribed, 
-  settings, 
-  getSettingsData,
-  isInitialized 
-} = useSubscribeSettings({
-  settings_ids: ['1', '2'], // Optional filter
-  game_id: 123, // Optional filter by game_id
-});
-
-// Settings include rich game metadata:
-console.log(settings);
-// {
-//   "1": {
-//     game_id: 123,
-//     gameMetadata: {
-//       game_id: "123",
-//       contract_address: "0x123...",
-//       name: "Dark Shuffle",
-//       description: "A card game",
-//       developer: "Provable Games",
-//       publisher: "Provable Games", 
-//       genre: "TCG",
-//       image: "https://...",
-//       // ... complete mini game data
-//     },
-//     name: "Game Settings", // Parsed from JSON
-//     description: "Main game config", // Parsed from JSON
-//     data: { maxPlayers: 4, timeLimit: 60 } // Remaining settings data
-//   }
-// }
-
-// Objectives subscription with data  
-const { 
-  isSubscribed, 
-  objectives, 
-  getObjectiveData,
-  getObjectivesForGame,
-  isInitialized 
-} = useSubscribeObjectives({
-  game_id: '123', // Optional filter
-  objective_ids: ['1', '2'], // Optional filter
-});
-
-// Objectives include complete game metadata:
-console.log(objectives);
-// {
-//   "1": {
-//     game_id: 123,
-//     gameMetadata: {
-//       game_id: "123",
-//       contract_address: "0x123...",
-//       name: "Dark Shuffle",
-//       description: "A card game",
-//       developer: "Provable Games",
-//       // ... complete mini game data
-//     },
-//     data: "Complete 5 battles"
-//   }
-// }
 ```
 
-The improved subscription approach provides:
-- **Single hook** for both subscription status and data (no need for separate `useMerged*` hooks)
-- **Rich embedded data** with complete game metadata in settings and objectives
-- **Self-contained records** - no need for separate lookups to get game information
-- Real-time updates when entities change
-- Zustand-based local state management
-- Built-in filtering capabilities
-- Consistent API across all subscription hooks
-- Proper error handling and loading states
+### After (simplified)
+```tsx
+// ✅ New way - no provider needed
+const metagameClient = await initMetagame({
+  toriiUrl: 'http://localhost:8080',
+  worldAddress: '0x...'
+});
+```
 
-## License
+## 📚 API Reference
 
-This project is licensed under the MIT License.
+### Core Functions
+
+- `initMetagame(config)` - Initialize the SDK
+- `getMetagameClient()` - Get the initialized client instance
+- `resetMetagame()` - Reset the SDK (useful for testing)
+
+### Hook Categories
+
+- **Subscriptions**: Real-time data with automatic updates
+- **SQL**: Static queries for one-time data fetching
+- **Shared**: Utilities and advanced data processing
+
+### Types
+
+- `GameTokenData` - Complete game token information
+- `GameMetadata` - Mini game metadata
+- `GameSettings` - Game configuration settings
+- `MetagameConfig` - SDK configuration options
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.

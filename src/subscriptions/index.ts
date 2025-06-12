@@ -1,11 +1,11 @@
 // Subscription hooks
-export { useSubscribeGames } from './hooks/useSubscribeGames';
+export { useSubscribeGameTokens } from './hooks/useSubscribeGameTokens';
 export { useSubscribeMiniGames } from './hooks/useSubscribeMiniGames';
 export { useSubscribeSettings } from './hooks/useSubscribeSettings';
 export { useSubscribeObjectives } from './hooks/useSubscribeObjectives';
 
 // Stores (for advanced usage)
-export { useMergedGamesStore } from './stores/mergedGamesStore';
+export { useGameTokensStore } from './stores/gameTokensStore';
 export { useMiniGamesStore } from './stores/miniGamesStore';
 export { useSettingsStore } from './stores/settingsStore';
 export { useObjectivesStore } from './stores/objectivesStore';

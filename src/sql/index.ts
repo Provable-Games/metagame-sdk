@@ -1,8 +1,8 @@
 // SQL query hooks
-export { useGames } from './hooks/useGames';
+export { useGameTokens } from './hooks/useGameTokens';
 export { useMiniGames } from './hooks/useMiniGames';
-export { useMetaGames } from './hooks/useMetaGames';
-export { useGameSettings } from './hooks/useGameSettings';
+export { useSettings } from './hooks/useSettings';
+export { useObjectives } from './hooks/useObjectives';
 
 // SQL queries (for advanced usage)
 export * from './queries/sql';

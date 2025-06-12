@@ -1,4 +1,8 @@
 import { feltToString } from '../lib';
+import type { GameTokenData, GameMetadata, GameSettings, GameObjective } from '../types';
+
+// Re-export from shared types for consistency
+export type { GameTokenData, GameMetadata, GameSettings, GameObjective };
 
 export interface EntityData {
   entityId: string;
@@ -11,63 +15,361 @@ export interface EntityData {
   SettingsData?: any;
   ObjectiveData?: any;
   Owners?: any;
+  GameMetadata?: any;
+  TokenRenderer?: any;
+  TokenClientUrl?: any;
+  MinterRegistryId?: any;
   [key: string]: any; // Allow for additional properties
 }
 
-export interface GameTokenData {
-  contract_address: string | undefined;
-  game_id: string | undefined;
-  game_over: boolean | undefined;
-  lifecycle: {
-    start: string | undefined;
-    end: string | undefined;
-  };
-  minted_at: string | undefined;
-  minted_by: string | undefined;
-  owner: string | undefined;
-  settings_id: string | undefined;
-  soulbound: boolean | undefined;
-  completed_all_objectives: boolean | undefined;
-  token_id: string;
-  player_name: string | undefined;
-  metadata: any | undefined;
-  context: any | undefined;
-  settings_data: any | undefined;
-  score: number;
-  objective_ids: string[];
-  gameMetadata:
-    | {
-        game_id: string;
-        contract_address: string;
-        creator_address: string;
-        name: string;
-        description: string;
-        developer: string;
-        publisher: string;
-        genre: string;
-        image: string;
-        color?: string;
-      }
-    | undefined;
+// New interface for objectives lookup
+export interface ObjectiveLookup {
+  objective_id: string;
+  data: string;
 }
 
-// New interface for objectives lookup
-export interface ObjectivesLookup {
-  [objective_id: string]: {
-    data: string;
-    game_id: number;
+// Helper function to get objectives for a token
+export const getObjectivesForToken = (
+  tokenId: string,
+  entities: EntityData[]
+): ObjectiveLookup[] => {
+  const objectives: ObjectiveLookup[] = [];
+
+  entities.forEach((entity) => {
+    if (entity.TokenObjective && entity.TokenObjective.id === tokenId) {
+      const objectiveId = entity.TokenObjective.objective_id;
+
+      // Find the corresponding ObjectiveData
+      const objectiveData = entities.find(
+        (e) => e.ObjectiveData && e.ObjectiveData.objective_id === objectiveId
+      );
+
+      if (objectiveData?.ObjectiveData) {
+        objectives.push({
+          objective_id: objectiveId,
+          data: objectiveData.ObjectiveData.data || '',
+        });
+      }
+    }
+  });
+
+  return objectives;
+};
+
+// Helper function to get settings for a token
+export const getSettingsForToken = (
+  settingsId: string,
+  entities: EntityData[]
+): { name: string; description: string; data: any } | undefined => {
+  const settingsEntity = entities.find(
+    (entity) => entity.SettingsData && entity.SettingsData.settings_id === settingsId
+  );
+
+  if (settingsEntity?.SettingsData) {
+    const rawSettings = settingsEntity.SettingsData.data || settingsEntity.SettingsData;
+    return parseSettingsData(rawSettings);
+  }
+
+  return undefined;
+};
+
+// Helper function to get game metadata for a token
+export const getGameMetadataForToken = (
+  gameId: string,
+  entities: EntityData[]
+): GameMetadata | undefined => {
+  const gameEntity = entities.find(
+    (entity) => entity.GameMetadata && entity.GameMetadata.id === gameId
+  );
+
+  if (gameEntity?.GameMetadata) {
+    return {
+      game_id: Number(gameEntity.GameMetadata.id) || 0,
+      contract_address: gameEntity.GameMetadata.contract_address || '',
+      creator_token_id: gameEntity.GameMetadata.creator_token_id || '',
+      name: feltToString(gameEntity.GameMetadata.name) || '',
+      description: gameEntity.GameMetadata.description || '',
+      developer: feltToString(gameEntity.GameMetadata.developer) || '',
+      publisher: feltToString(gameEntity.GameMetadata.publisher) || '',
+      genre: feltToString(gameEntity.GameMetadata.genre) || '',
+      image: gameEntity.GameMetadata.image || '',
+      color: gameEntity.GameMetadata.color,
+    };
+  }
+
+  return undefined;
+};
+
+// Helper function to get objectives data by objective ID
+export const getObjectiveDataById = (objectiveId: string, entities: EntityData[]): string => {
+  const objectiveEntity = entities.find(
+    (entity) => entity.ObjectiveData && entity.ObjectiveData.objective_id === objectiveId
+  );
+
+  return objectiveEntity?.ObjectiveData?.data || '';
+};
+
+export const parseContextData = (
+  rawContext: any
+): { name: string; description: string; contexts: any } => {
+  if (!rawContext) {
+    return { name: '', description: '', contexts: {} };
+  }
+
+  try {
+    // If it's already an object, use it directly
+    if (typeof rawContext === 'object' && rawContext !== null) {
+      return {
+        name: rawContext.Name || rawContext.name || '',
+        description: rawContext.Description || rawContext.description || '',
+        contexts: rawContext.contexts || rawContext,
+      };
+    }
+
+    // If it's a string, try to parse it as JSON
+    if (typeof rawContext === 'string') {
+      const parsed = JSON.parse(rawContext);
+      return {
+        name: parsed.Name || parsed.name || '',
+        description: parsed.Description || parsed.description || '',
+        contexts: parsed.contexts || parsed,
+      };
+    }
+
+    // Fallback
+    return { name: '', description: '', contexts: rawContext };
+  } catch (error) {
+    console.warn('Failed to parse context data:', error);
+    return { name: '', description: '', contexts: {} };
+  }
+};
+
+export const parseSettingsData = (
+  rawSettings: any
+): { name: string; description: string; data: any } => {
+  if (!rawSettings) {
+    return { name: '', description: '', data: {} };
+  }
+
+  try {
+    // If it's already an object, use it directly
+    if (typeof rawSettings === 'object' && rawSettings !== null) {
+      return {
+        name: rawSettings.Name || rawSettings.name || '',
+        description: rawSettings.Description || rawSettings.description || '',
+        data: rawSettings.data || rawSettings.Settings || rawSettings,
+      };
+    }
+
+    // If it's a string, try to parse it as JSON
+    if (typeof rawSettings === 'string') {
+      const parsed = JSON.parse(rawSettings);
+      return {
+        name: parsed.Name || parsed.name || '',
+        description: parsed.Description || parsed.description || '',
+        data: parsed.data || parsed.Settings || parsed,
+      };
+    }
+
+    // Fallback
+    return { name: '', description: '', data: rawSettings };
+  } catch (error) {
+    console.warn('Failed to parse settings data:', error);
+    return { name: '', description: '', data: {} };
+  }
+};
+
+// Transform a single entity into a GameTokenData object
+export const transformEntityToGameToken = (
+  tokenId: string,
+  entities: EntityData[]
+): GameTokenData => {
+  const tokenEntities = entities.filter((entity) => {
+    return (
+      (entity.TokenMetadata && entity.TokenMetadata.id === tokenId) ||
+      (entity.Owners && entity.Owners.token_id === tokenId) ||
+      (entity.TokenPlayerName && entity.TokenPlayerName.id === tokenId) ||
+      (entity.TokenObjective && entity.TokenObjective.id === tokenId) ||
+      (entity.TokenContextData && entity.TokenContextData.token_id === tokenId) ||
+      (entity.ScoreUpdate && entity.ScoreUpdate.token_id === tokenId) ||
+      (entity.TokenRenderer && entity.TokenRenderer.id === tokenId) ||
+      (entity.TokenClientUrl && entity.TokenClientUrl.id === tokenId)
+    );
+  });
+
+  const merged: GameTokenData = {
+    game_id: undefined,
+    game_over: undefined,
+    lifecycle: {
+      start: undefined,
+      end: undefined,
+    },
+    minted_at: undefined,
+    minted_by: undefined,
+    minted_by_address: undefined,
+    owner: undefined,
+    settings_id: undefined,
+    soulbound: undefined,
+    completed_all_objectives: undefined,
+    token_id: Number(tokenId) || 0,
+    player_name: undefined,
+    metadata: undefined,
+    context: undefined,
+    settings: undefined,
+    score: 0,
+    objective_ids: [],
+    renderer: undefined,
+    client_url: undefined,
+    gameMetadata: undefined,
   };
-}
+
+  tokenEntities.forEach((entity) => {
+    if (entity.TokenMetadata) {
+      merged.game_id = Number(entity.TokenMetadata.game_id);
+      merged.game_over = entity.TokenMetadata.game_over;
+      merged.lifecycle = {
+        start: Number(entity.TokenMetadata['lifecycle.start']) || undefined,
+        end: Number(entity.TokenMetadata['lifecycle.end']) || undefined,
+      };
+      merged.minted_at = Number(entity.TokenMetadata.minted_at) || undefined;
+      merged.minted_by = Number(entity.TokenMetadata.minted_by) || undefined;
+      merged.settings_id = Number(entity.TokenMetadata.settings_id) || undefined;
+      merged.soulbound = entity.TokenMetadata.soulbound;
+      merged.completed_all_objectives = entity.TokenMetadata.completed_all_objectives;
+      merged.metadata = entity.TokenMetadata.metadata;
+
+      // Get settings data if settings_id exists
+      if (entity.TokenMetadata.settings_id) {
+        merged.settings = getSettingsForToken(
+          entity.TokenMetadata.settings_id.toString(),
+          entities
+        );
+      }
+
+      // Get game metadata if game_id exists
+      if (entity.TokenMetadata.game_id) {
+        merged.gameMetadata = getGameMetadataForToken(
+          entity.TokenMetadata.game_id.toString(),
+          entities
+        );
+      }
+
+      // Get minter address if minted_by exists
+      if (entity.TokenMetadata.minted_by) {
+        const minterEntity = entities.find(
+          (e) =>
+            e.MinterRegistryId?.id &&
+            Number(e.MinterRegistryId.id) === Number(entity.TokenMetadata.minted_by)
+        );
+        if (minterEntity?.MinterRegistryId?.contract_address) {
+          merged.minted_by_address = minterEntity.MinterRegistryId.contract_address;
+        }
+      }
+    }
+
+    if (entity.Owners) {
+      merged.owner = entity.Owners.owner || entity.Owners.owner_address;
+      merged.token_id = entity.Owners.token_id?.toString() || merged.token_id;
+    }
+
+    if (entity.TokenPlayerName) {
+      const playerName = entity.TokenPlayerName.player_name || entity.TokenPlayerName.name;
+      merged.player_name = feltToString(playerName);
+    }
+
+    if (entity.TokenObjective) {
+      const objectiveId = entity.TokenObjective.objective_id || entity.TokenObjective.id;
+      if (objectiveId && !merged.objective_ids!.includes(objectiveId)) {
+        merged.objective_ids!.push(objectiveId);
+      }
+    }
+
+    if (entity.ScoreUpdate) {
+      merged.score = entity.ScoreUpdate.score || entity.ScoreUpdate.value || 0;
+    }
+
+    if (entity.TokenContextData) {
+      const rawContext = entity.TokenContextData.data || entity.TokenContextData.context;
+      const parsedContext = parseContextData(rawContext);
+      merged.context = {
+        name: parsedContext.name,
+        description: parsedContext.description,
+        contexts: parsedContext.contexts,
+      };
+    }
+
+    if (entity.SettingsData) {
+      const rawSettings = entity.SettingsData.data || entity.SettingsData;
+      const parsedSettings = parseSettingsData(rawSettings);
+      merged.settings = {
+        name: parsedSettings.name,
+        description: parsedSettings.description,
+        data: parsedSettings.data,
+      };
+    }
+
+    if (entity.TokenRenderer) {
+      merged.renderer = entity.TokenRenderer.renderer_address;
+    }
+
+    if (entity.TokenClientUrl) {
+      merged.client_url = entity.TokenClientUrl.client_url;
+    }
+
+    // Merge MinterRegistryId to populate minted_by_address
+    if (entity.MinterRegistryId && merged.minted_by) {
+      if (Number(entity.MinterRegistryId.id) === merged.minted_by) {
+        merged.minted_by_address = entity.MinterRegistryId.contract_address;
+      }
+    }
+  });
+
+  // Remove duplicates from arrays
+  merged.objective_ids = [...new Set(merged.objective_ids)];
+
+  return merged;
+};
+
+// Transform multiple entities into GameTokenData objects
+export const transformEntitiesToGameTokens = (
+  entities: EntityData[]
+): Record<string, GameTokenData> => {
+  const gameTokens: Record<string, GameTokenData> = {};
+
+  // Get all unique token IDs
+  const tokenIds = new Set<string>();
+
+  entities.forEach((entity) => {
+    if (entity.TokenMetadata?.id) tokenIds.add(entity.TokenMetadata.id.toString());
+    if (entity.Owners?.token_id) tokenIds.add(entity.Owners.token_id.toString());
+    if (entity.TokenPlayerName?.id) tokenIds.add(entity.TokenPlayerName.id.toString());
+    if (entity.TokenObjective?.id) tokenIds.add(entity.TokenObjective.id.toString());
+    if (entity.TokenContextData?.token_id)
+      tokenIds.add(entity.TokenContextData.token_id.toString());
+    if (entity.ScoreUpdate?.token_id) tokenIds.add(entity.ScoreUpdate.token_id.toString());
+    if (entity.TokenRenderer?.id) tokenIds.add(entity.TokenRenderer.id.toString());
+    if (entity.TokenClientUrl?.id) tokenIds.add(entity.TokenClientUrl.id.toString());
+  });
+
+  // Transform each token
+  tokenIds.forEach((tokenId) => {
+    gameTokens[tokenId] = transformEntityToGameToken(tokenId, entities);
+  });
+
+  return gameTokens;
+};
 
 // New interface for the complete result
 export interface GameTokenResult {
   gameTokens: GameTokenData[];
-  objectivesLookup: ObjectivesLookup;
+  objectivesLookup: Record<string, { data: string; game_id: any }>;
 }
 
 // Build objectives lookup table from entities
-export function buildObjectivesLookup(entities: EntityData[]): ObjectivesLookup {
-  const lookup: ObjectivesLookup = {};
+export function buildObjectivesLookup(
+  entities: EntityData[]
+): Record<string, { data: string; game_id: any }> {
+  const lookup: Record<string, { data: string; game_id: any }> = {};
 
   entities.forEach((entity) => {
     if (entity.ObjectiveData?.objective_id) {
@@ -93,15 +395,15 @@ export function buildMiniGamesLookup(
     if (entity.GameMetadata?.id && entity.GameMetadata?.contract_address) {
       const gameId = entity.GameMetadata.id.toString();
       lookup[gameId] = {
-        game_id: gameId,
+        game_id: Number(entity.GameMetadata.id) || 0,
         contract_address: entity.GameMetadata.contract_address,
-        creator_address: entity.GameMetadata.creator_address,
-        name: entity.GameMetadata.name,
-        description: entity.GameMetadata.description,
-        developer: entity.GameMetadata.developer,
-        publisher: entity.GameMetadata.publisher,
-        genre: entity.GameMetadata.genre,
-        image: entity.GameMetadata.image,
+        creator_token_id: entity.GameMetadata.creator_token_id || '',
+        name: feltToString(entity.GameMetadata.name) || '',
+        description: entity.GameMetadata.description || '',
+        developer: feltToString(entity.GameMetadata.developer) || '',
+        publisher: feltToString(entity.GameMetadata.publisher) || '',
+        genre: feltToString(entity.GameMetadata.genre) || '',
+        image: entity.GameMetadata.image || '',
         color: entity.GameMetadata.color,
       };
     }
@@ -114,7 +416,7 @@ export function buildMiniGamesLookup(
 // Helper function to get objectives data for a game
 export function getObjectivesForGame(
   game: GameTokenData,
-  objectivesLookup: ObjectivesLookup
+  objectivesLookup: Record<string, { data: string; game_id: any }>
 ): string[] {
   if (!game.objective_ids || game.objective_ids.length === 0) {
     return [];
@@ -250,7 +552,6 @@ export function mergeGameEntities(
   const gameTokens = Array.from(groupedByToken.entries()).map(([tokenId, tokenEntities]) => {
     // Initialize with all fields explicitly set
     const merged: GameTokenData = {
-      contract_address: undefined,
       game_id: undefined,
       game_over: undefined,
       lifecycle: {
@@ -259,17 +560,20 @@ export function mergeGameEntities(
       },
       minted_at: undefined,
       minted_by: undefined,
+      minted_by_address: undefined,
       owner: undefined,
       settings_id: undefined,
       soulbound: undefined,
       completed_all_objectives: undefined,
-      token_id: tokenId,
+      token_id: Number(tokenId) || 0,
       player_name: undefined,
       metadata: undefined,
       context: undefined,
-      settings_data: undefined,
+      settings: undefined,
       score: 0,
       objective_ids: [],
+      renderer: undefined,
+      client_url: undefined,
       gameMetadata: undefined,
     };
 
@@ -279,12 +583,12 @@ export function mergeGameEntities(
         merged.game_id = entity.TokenMetadata.game_id;
         merged.game_over = entity.TokenMetadata.game_over;
         merged.lifecycle = {
-          start: entity.TokenMetadata['lifecycle.start'],
-          end: entity.TokenMetadata['lifecycle.end'],
+          start: Number(entity.TokenMetadata['lifecycle.start']) || undefined,
+          end: Number(entity.TokenMetadata['lifecycle.end']) || undefined,
         };
-        merged.minted_at = entity.TokenMetadata.minted_at;
-        merged.minted_by = entity.TokenMetadata.minted_by;
-        merged.settings_id = entity.TokenMetadata.settings_id;
+        merged.minted_at = Number(entity.TokenMetadata.minted_at) || undefined;
+        merged.minted_by = Number(entity.TokenMetadata.minted_by) || undefined;
+        merged.settings_id = Number(entity.TokenMetadata.settings_id) || undefined;
         merged.soulbound = entity.TokenMetadata.soulbound;
         merged.completed_all_objectives = entity.TokenMetadata.completed_all_objectives;
         merged.metadata = entity.TokenMetadata.metadata;
@@ -316,33 +620,64 @@ export function mergeGameEntities(
         merged.token_id = entity.ScoreUpdate.token_id?.toString() || merged.token_id;
       }
 
-      // Merge TokenContextData
+      // Merge TokenContextData with parsing
       if (entity.TokenContextData) {
-        merged.context = entity.TokenContextData.data || entity.TokenContextData.context;
+        const rawContext = entity.TokenContextData.data || entity.TokenContextData.context;
+
+        // Parse context data to extract name, description, and contexts
+        const parsedContext = parseContextData(rawContext);
+        merged.context = {
+          name: parsedContext.name,
+          description: parsedContext.description,
+          contexts: parsedContext.contexts,
+        };
       }
 
-      // Merge SettingsData
+      // Merge SettingsData with parsing
       if (entity.SettingsData) {
-        merged.settings_data = entity.SettingsData.data || entity.SettingsData;
-        merged.settings_id = entity.SettingsData.settings_id?.toString() || merged.settings_id;
+        const rawSettings = entity.SettingsData.data || entity.SettingsData;
+        const parsedSettings = parseSettingsData(rawSettings);
+        merged.settings = {
+          name: parsedSettings.name,
+          description: parsedSettings.description,
+          data: parsedSettings.data,
+        };
+        merged.settings_id = Number(entity.SettingsData.settings_id) || undefined;
       }
 
       // Auto-lookup SettingsData for TokenMetadata with settings_id
-      if (entity.TokenMetadata?.settings_id && !merged.settings_data) {
+      if (entity.TokenMetadata?.settings_id && !merged.settings) {
         // Find SettingsData entity with matching settings_id
         const settingsEntity = tokenEntities.find(
           (e) =>
             e.SettingsData?.settings_id?.toString() === entity.TokenMetadata.settings_id?.toString()
         );
         if (settingsEntity?.SettingsData) {
-          merged.settings_data = settingsEntity.SettingsData.data || settingsEntity.SettingsData;
+          const rawSettings = settingsEntity.SettingsData.data || settingsEntity.SettingsData;
+          const parsedSettings = parseSettingsData(rawSettings);
+          merged.settings = {
+            name: parsedSettings.name,
+            description: parsedSettings.description,
+            data: parsedSettings.data,
+          };
         }
       }
 
-      // Merge GameRegistry
-      if (entity.GameRegistry) {
-        merged.contract_address =
-          entity.GameRegistry.contract_address || entity.GameRegistry.address;
+      // Merge TokenRenderer
+      if (entity.TokenRenderer) {
+        merged.renderer = entity.TokenRenderer.renderer_address;
+      }
+
+      // Merge TokenClientUrl
+      if (entity.TokenClientUrl) {
+        merged.client_url = entity.TokenClientUrl.client_url;
+      }
+
+      // Merge MinterRegistryId to populate minted_by_address
+      if (entity.MinterRegistryId && merged.minted_by) {
+        if (Number(entity.MinterRegistryId.id) === merged.minted_by) {
+          merged.minted_by_address = entity.MinterRegistryId.contract_address;
+        }
       }
     });
 
@@ -379,13 +714,13 @@ export function filterGames(
     }
 
     if (filters.gameAddresses && filters.gameAddresses.length > 0) {
-      if (!filters.gameAddresses.includes(game.contract_address || '')) {
+      if (!filters.gameAddresses.includes(game.gameMetadata?.contract_address || '')) {
         return false;
       }
     }
 
     if (filters.tokenIds && filters.tokenIds.length > 0) {
-      if (!filters.tokenIds.includes(game.token_id || '')) {
+      if (!filters.tokenIds.includes(game.token_id.toString())) {
         return false;
       }
     }
@@ -465,7 +800,7 @@ export function mergeGameEntitiesOptimized(entities: EntityData[]): GameTokenRes
 
     // Combine all batch results
     const allGames: GameTokenData[] = [];
-    const combinedLookup: ObjectivesLookup = {};
+    const combinedLookup: Record<string, { data: string; game_id: any }> = {};
 
     batches.forEach((batch) => {
       allGames.push(...batch.gameTokens);

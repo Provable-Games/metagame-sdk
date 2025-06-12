@@ -1,15 +1,14 @@
 import { useMemo } from 'react';
 import { useAccount, useConnect } from '@starknet-react/core';
-import {
-  useMiniGames,
-  useOwnedGames,
-  useOwnedGamesWithScores,
-  useEternumQuests,
-  useSubscribeGameScores,
-  useSubscribeTokens,
-  useGameSettingsMetadata,
-  useSubscribeScores,
-} from 'metagame-sdk';
+import {} from // useMiniGames,
+// useOwnedGames,
+// useOwnedGamesWithScores,
+// useEternumQuests,
+// useSubscribeGameScores,
+// useSubscribeTokens,
+// useSubscribeScores,
+'metagame-sdk';
+// import { useSettings, useMiniGames } from 'metagame-sdk/sql';
 import { useDojoSDK } from '@dojoengine/sdk/react';
 
 import { displayAddress } from './lib/index';
@@ -21,7 +20,10 @@ function App() {
 
   const queryAddress = useMemo(() => address, [address]);
 
-  const { data: miniGames } = useMiniGames({});
+  // const { data: miniGames } = useMiniGames({
+  //   namespace: 's1_eternum', // Add required namespace
+  // });
+  const miniGames: any[] = []; // Placeholder
 
   const queryGameAddresses = useMemo(
     () => miniGames?.map((game) => game?.contract_address),
@@ -34,41 +36,42 @@ function App() {
   //   gameAddresses: queryGameAddresses,
   // });
 
-  const { data: ownedGamesWithScores } = useOwnedGamesWithScores({
-    address: queryAddress,
-    gameAddress: queryGameAddress,
-    metagame: {
-      namespace: 's1_eternum',
-      model: 'Quest',
-      attribute: 'quest_tile_id',
-      key: 'game_token_id',
-    },
-  });
+  // const { data: ownedGamesWithScores } = useOwnedGamesWithScores({
+  //   address: queryAddress,
+  //   gameAddress: queryGameAddress,
+  //   metagame: {
+  //     namespace: 's1_eternum',
+  //     model: 'Quest',
+  //     attribute: 'quest_tile_id',
+  //     key: 'game_token_id',
+  //   },
+  // });
 
-  console.log(ownedGamesWithScores);
+  // console.log(ownedGamesWithScores);
 
-  const { data: eternumQuests } = useEternumQuests({
-    eternumNamespace: 's1_eternum',
-    questTileIds: ownedGamesWithScores?.map((game) => game.metagame_data?.toString() ?? '') ?? [],
-  });
+  // const { data: eternumQuests } = useEternumQuests({
+  //   eternumNamespace: 's1_eternum',
+  //   questTileIds: ownedGamesWithScores?.map((game) => game.metagame_data?.toString() ?? '') ?? [],
+  // });
 
-  const { entities: gameScores } = useSubscribeGameScores({
-    gameAddress: queryGameAddress,
-    gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
-  });
+  // const { entities: gameScores } = useSubscribeGameScores({
+  //   gameAddress: queryGameAddress,
+  //   gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  // });
 
-  console.log(gameScores);
+  // console.log(gameScores);
 
-  const { scores } = useSubscribeScores({
-    gameAddress: queryGameAddress,
-    // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
-  });
+  // const { scores } = useSubscribeScores({
+  //   gameAddress: queryGameAddress,
+  //   // gameIds: ownedGamesWithScores?.map((game) => game.token_id.toString() ?? '') ?? [],
+  // });
 
-  console.log(scores);
+  // console.log(scores);
 
-  const { data: gameSettingsMetadata } = useGameSettingsMetadata({
-    gameAddresses: [queryGameAddress],
-  });
+  // const { data: gameSettingsMetadata } = useSettings({
+  //   gameAddresses: queryGameAddresses,
+  // });
+  const gameSettingsMetadata: any[] = []; // Placeholder
 
   console.log(gameSettingsMetadata);
 
@@ -118,7 +121,7 @@ function App() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {miniGames.map((game, index: number) => (
+            {miniGames?.map((game, index: number) => (
               <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {game.name}
@@ -162,7 +165,7 @@ function App() {
       </div>
       <h1 className="text-2xl font-bold">Game Scores</h1>
       <div className="flex flex-row gap-5 overflow-x-auto p-4">
-        {ownedGamesWithScores.map((game: any, index: number) => {
+        {/* {ownedGamesWithScores.map((game: any, index: number) => {
           const quest = eternumQuests.find((quest) => quest.quest_tile_id === game.metagame_data);
           return (
             <div
@@ -191,7 +194,7 @@ function App() {
               </div>
             </div>
           );
-        })}
+        })} */}
       </div>
     </div>
   );

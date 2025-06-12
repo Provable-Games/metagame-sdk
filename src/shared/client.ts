@@ -1,6 +1,5 @@
 import { SchemaType } from '@dojoengine/sdk';
 import { createDojoStore } from '@dojoengine/sdk/react';
-import { Account, RpcProvider } from 'starknet';
 import { init, SDK } from '@dojoengine/sdk';
 
 import { MetagameConfig } from './types';

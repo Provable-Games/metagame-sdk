@@ -1,9 +1,8 @@
-// Dojo client and setup
-export { useMetagame, MetagameProvider } from './provider';
+// ===== CLIENT AND SETUP =====
 export { MetagameClient } from './client';
-export { getMetagameClient, initMetagame } from './singleton';
+export { getMetagameClient, initMetagame, resetMetagame } from './singleton';
 
-// Utilities
+// ===== UTILITIES =====
 export {
   mergeGameEntities,
   filterGames,
@@ -16,15 +15,28 @@ export {
   buildObjectivesLookup,
   buildMiniGamesLookup,
   getObjectivesForGame,
+  parseContextData,
+  parseSettingsData,
 } from './utils/dataTransformers';
 
-// Lib utilities
+// ===== LIB UTILITIES =====
 export { feltToString, stringToFelt, bigintToHex, indexAddress } from './lib';
 
-// Types
+// ===== TYPES =====
+export type { EntityData, GameTokenResult, ObjectiveLookup } from './utils/dataTransformers';
+export type { MetagameConfig } from './types/config';
+
+// Unified types (re-export from shared types)
 export type {
-  EntityData,
   GameTokenData,
-  GameTokenResult,
-  ObjectivesLookup,
-} from './utils/dataTransformers';
+  GameMetadata,
+  GameSettings,
+  GameObjective,
+  Game,
+  MiniGame,
+  MetaGame,
+} from './types';
+
+// Entity and lookup types
+export type * from './types/entities';
+export type * from './types/lookup';

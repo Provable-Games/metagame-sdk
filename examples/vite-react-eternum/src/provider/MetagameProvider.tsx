@@ -4,30 +4,31 @@ import {
   MetagameClient,
   MetagameProvider as MetagameProviderSDK,
 } from 'metagame-sdk';
-import { useProvider } from '@starknet-react/core';
 import { dojoConfig } from '../../dojoConfig';
 import { SchemaType } from '../bindings/models.gen';
 import { useDojoSDK } from '@dojoengine/sdk/react';
 
 export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
-  const { provider } = useProvider();
   const {
     sdk: { client },
   } = useDojoSDK();
+
   useEffect(() => {
     async function initialize() {
-      const metagameClient = initMetagame<SchemaType>({
+      // Simple initialization - no provider required!
+      // Can optionally pass existing dojoSDK client for better integration
+      const metagameClient = await initMetagame<SchemaType>({
         toriiUrl: dojoConfig.toriiUrl,
-        provider: provider,
         toriiClient: client,
+        worldAddress: dojoConfig.manifest.world.address,
       });
 
       setMetagameClient(metagameClient);
     }
 
     initialize();
-  }, []);
+  }, [client]);
 
   if (!metagameClient) {
     return <div>Loading...</div>;

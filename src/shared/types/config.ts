@@ -1,5 +1,4 @@
 import { SDK, SchemaType } from '@dojoengine/sdk';
-import { ProviderInterface } from 'starknet';
 import { ToriiClient } from '@dojoengine/torii-client';
 
 /**
@@ -7,7 +6,6 @@ import { ToriiClient } from '@dojoengine/torii-client';
  */
 export interface MetagameConfig<T extends SchemaType> {
   toriiUrl: string;
-  provider: ProviderInterface;
   dojoSDK?: SDK<T>;
   toriiClient?: ToriiClient;
   store?: any;

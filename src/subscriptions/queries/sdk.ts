@@ -14,6 +14,10 @@ export const gamesQuery = ({ namespace }: { namespace: string }) => {
           `${namespace}-SettingsData`,
           `${namespace}-TokenObjective`,
           `${namespace}-ObjectiveData`,
+          `${namespace}-TokenRenderer`,
+          `${namespace}-TokenClientUrl`,
+          `${namespace}-GameMetadata`,
+          `${namespace}-MinterRegistryId`,
         ],
         []
       ).build()
@@ -28,6 +32,10 @@ export const gamesQuery = ({ namespace }: { namespace: string }) => {
       `${namespace}-SettingsData`,
       `${namespace}-TokenObjective`,
       `${namespace}-ObjectiveData`,
+      `${namespace}-TokenRenderer`,
+      `${namespace}-TokenClientUrl`,
+      `${namespace}-GameMetadata`,
+      `${namespace}-MinterRegistryId`,
     ])
     .includeHashedKeys()
     .withLimit(10000);
@@ -55,8 +63,8 @@ export const settingsQuery = ({
   limit?: number;
 }) => {
   return new ToriiQueryBuilder()
-    .withClause(KeysClause([`${namespace}-SettingsData`], []).build())
-    .withEntityModels([`${namespace}-SettingsData`])
+    .withClause(KeysClause([`${namespace}-SettingsData`, `${namespace}-GameMetadata`], []).build())
+    .withEntityModels([`${namespace}-SettingsData`, `${namespace}-GameMetadata`])
     .includeHashedKeys()
     .withLimit(limit);
 };
@@ -69,8 +77,8 @@ export const objectivesQuery = ({
   limit?: number;
 }) => {
   return new ToriiQueryBuilder()
-    .withClause(KeysClause([`${namespace}-ObjectiveData`], []).build())
-    .withEntityModels([`${namespace}-ObjectiveData`])
+    .withClause(KeysClause([`${namespace}-ObjectiveData`, `${namespace}-GameMetadata`], []).build())
+    .withEntityModels([`${namespace}-ObjectiveData`, `${namespace}-GameMetadata`])
     .includeHashedKeys()
     .withLimit(limit);
 };

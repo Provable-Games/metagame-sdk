@@ -15,7 +15,7 @@ export interface MiniGamesLookup {
 }
 
 export interface SettingsLookup {
-  [settings_id: string]: {
+  [settings_id: number]: {
     game_id: number;
     gameMetadata: {
       game_id: string;

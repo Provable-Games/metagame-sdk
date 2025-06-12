@@ -1,4 +1,4 @@
-// SQL query result types
+// SQL query result types - Updated to match subscription structure
 export interface GameSettings {
   name: string;
   description: string;
@@ -6,30 +6,48 @@ export interface GameSettings {
 }
 
 export interface Game {
-  contract_address: string;
-  game_id: number;
-  game_over: boolean;
-  lifecycle_end: number;
-  lifecycle_start: number;
-  minted_at: number;
-  minted_by: string;
-  owner: string;
-  settings_id: number;
-  settings_data: GameSettings | null;
-  soulbound: boolean;
-  completed_all_objectives: boolean;
+  game_id: number | undefined;
+  game_over: boolean | undefined;
+  lifecycle: {
+    start: number | undefined;
+    end: number | undefined;
+  };
+  minted_at: number | undefined;
+  minted_by: number | undefined;
+  minted_by_address: string | undefined;
+  owner: string | undefined;
+  settings_id: number | undefined;
+  soulbound: boolean | undefined;
+  completed_all_objectives: boolean | undefined;
   token_id: number;
-  player_name: string;
-  metadata: string;
+  player_name: string | undefined;
+  metadata: any | undefined;
+  context: { name: string; description: string; contexts: any } | undefined;
+  settings: { name: string; description: string; data: any } | undefined;
   score: number;
-  objective_ids: number[];
-  objectives_data: string[];
+  objective_ids: string[];
+  renderer: string | undefined;
+  client_url: string | undefined;
+  gameMetadata:
+    | {
+        game_id: number;
+        contract_address: string;
+        creator_token_id: number;
+        name: string;
+        description: string;
+        developer: string;
+        publisher: string;
+        genre: string;
+        image: string;
+        color?: string;
+      }
+    | undefined;
 }
 
 export interface MiniGame {
   game_id: number;
   contract_address: string;
-  creator_address: string;
+  creator_token_id: number;
   name: string;
   description: string;
   developer: string;
@@ -42,7 +60,7 @@ export interface MiniGame {
 export interface MetaGame {
   game_id: number;
   contract_address: string;
-  creator_address: string;
+  creator_token_id: number;
   name: string;
   description: string;
   developer: string;
