@@ -117,27 +117,37 @@ export const parseContextData = (
   }
 
   try {
+    let name = '';
+    let description = '';
+    let contexts: any = {};
+
     // If it's already an object, use it directly
     if (typeof rawContext === 'object' && rawContext !== null) {
-      return {
-        name: rawContext.Name || rawContext.name || '',
-        description: rawContext.Description || rawContext.description || '',
-        contexts: rawContext.contexts || rawContext,
-      };
-    }
-
-    // If it's a string, try to parse it as JSON
-    if (typeof rawContext === 'string') {
+      name = rawContext.Name || rawContext.name || '';
+      description = rawContext.Description || rawContext.description || '';
+      // Prefer .contexts if present, else use the object itself
+      contexts = rawContext.contexts || rawContext;
+    } else if (typeof rawContext === 'string') {
       const parsed = JSON.parse(rawContext);
-      return {
-        name: parsed.Name || parsed.name || '',
-        description: parsed.Description || parsed.description || '',
-        contexts: parsed.contexts || parsed,
-      };
+      name = parsed.Name || parsed.name || '';
+      description = parsed.Description || parsed.description || '';
+      contexts = parsed.contexts || parsed;
+    } else {
+      contexts = rawContext;
     }
 
-    // Fallback
-    return { name: '', description: '', contexts: rawContext };
+    // Unwrap Contexts key if present
+    if (contexts.Contexts && typeof contexts.Contexts === 'object') {
+      contexts = contexts.Contexts;
+    }
+
+    // Remove name/description keys from contexts if present
+    if (typeof contexts === 'object' && contexts !== null) {
+      const { name, Name, description, Description, ...rest } = contexts;
+      contexts = rest;
+    }
+
+    return { name, description, contexts };
   } catch (error) {
     console.warn('Failed to parse context data:', error);
     return { name: '', description: '', contexts: {} };
