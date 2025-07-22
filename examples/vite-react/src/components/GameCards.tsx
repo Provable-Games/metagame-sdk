@@ -1,10 +1,13 @@
 import React from 'react';
 import { useSubscribeGameTokens } from 'metagame-sdk/subscriptions';
+import { useGameTokens } from 'metagame-sdk/sql';
 
 const GameCards: React.FC = () => {
   const { games } = useSubscribeGameTokens({});
+  const { data: gamesFromSQL } = useGameTokens({});
 
   console.log('games', games);
+  console.log('gamesFromSQL', gamesFromSQL);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

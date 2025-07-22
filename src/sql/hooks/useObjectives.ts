@@ -46,24 +46,25 @@ export const useObjectives = ({
 
     return rawObjectivesData.map((objective: any) => {
       // Build gameMetadata object if available
-      const gameMetadata = objective.game_id
+      const gameMetadata = objective.game_address
         ? {
-            game_id: Number(objective.game_id) || 0,
+            game_id: Number(objective.id) || 0,
             contract_address: objective.contract_address || '',
-            creator_token_id: Number(objective.creator_token_id) || 0,
-            name: feltToString(objective.name) || '',
+            name: objective.name || '',
             description: objective.description || '',
-            developer: feltToString(objective.developer) || '',
-            publisher: feltToString(objective.publisher) || '',
-            genre: feltToString(objective.genre) || '',
+            developer: objective.developer || '',
+            publisher: objective.publisher || '',
+            genre: objective.genre || '',
             image: objective.image || '',
             color: objective.color,
+            client_url: objective.client_url,
+            renderer_address: objective.renderer_address,
           }
         : undefined;
 
       return {
         objective_id: objective.objective_id?.toString() || '',
-        data: objective.data || '',
+        data: objective.objective_data || objective.data || '', // Support both new and legacy field names
         gameMetadata,
       };
     });

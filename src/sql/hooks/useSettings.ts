@@ -42,25 +42,28 @@ export const useSettings = ({
     refetch,
   } = useSqlQuery<GameSettings>(client.getConfig().toriiUrl, query, logging);
 
+  console.log('rawSettingsData', rawSettingsData);
+
   const settingsData = useMemo(() => {
     if (!rawSettingsData || !rawSettingsData.length) return [];
 
     return rawSettingsData.map((settings: any) => {
-      const settingsData = settings.data;
+      const settingsData = settings.settings_data || settings.data; // Support both new and legacy field names
       const parsedSettingsData = parseSettingsData(settingsData);
 
-      const gameMetadata = settings.game_id
+      const gameMetadata = settings.game_address
         ? {
-            game_id: Number(settings.game_id) || 0,
+            game_id: Number(settings.id) || 0,
             contract_address: settings.contract_address || '',
-            creator_token_id: Number(settings.creator_token_id) || 0,
-            name: feltToString(settings.name) || '',
+            name: settings.name || '',
             description: settings.description || '',
-            developer: feltToString(settings.developer) || '',
-            publisher: feltToString(settings.publisher) || '',
-            genre: feltToString(settings.genre) || '',
+            developer: settings.developer || '',
+            publisher: settings.publisher || '',
+            genre: settings.genre || '',
             image: settings.image || '',
             color: settings.color,
+            client_url: settings.client_url,
+            renderer_address: settings.renderer_address,
           }
         : undefined;
 

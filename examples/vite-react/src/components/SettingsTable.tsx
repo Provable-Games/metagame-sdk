@@ -1,11 +1,14 @@
 import React from 'react';
 import { useSubscribeSettings } from 'metagame-sdk/subscriptions';
+import { useSettings } from 'metagame-sdk/sql';
 import { displayAddress } from '../lib/index';
 
 const SettingsTable: React.FC = () => {
   const { settings } = useSubscribeSettings({});
+  const { data: settingsFromSQL } = useSettings({});
 
   console.log(settings);
+  console.log(settingsFromSQL);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

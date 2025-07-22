@@ -1,11 +1,14 @@
 import React from 'react';
 import { useSubscribeObjectives } from 'metagame-sdk/subscriptions';
+import { useObjectives } from 'metagame-sdk/sql';
 import { displayAddress } from '../lib/index';
 
 const ObjectivesTable: React.FC = () => {
   const { objectives } = useSubscribeObjectives({});
+  const { data: objectivesFromSQL } = useObjectives({});
 
   console.log('objectives', objectives);
+  console.log('objectivesFromSQL', objectivesFromSQL);
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Objectives</h1>

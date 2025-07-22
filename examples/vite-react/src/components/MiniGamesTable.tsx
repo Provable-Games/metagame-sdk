@@ -1,11 +1,14 @@
 import React from 'react';
 import { useSubscribeMiniGames } from 'metagame-sdk/subscriptions';
+import { useMiniGames } from 'metagame-sdk/sql';
 import { displayAddress } from '../lib/index';
 
 const MiniGamesTable: React.FC = () => {
   const { miniGames } = useSubscribeMiniGames({});
+  const { data: miniGamesFromSQL } = useMiniGames({});
 
   console.log(miniGames);
+  console.log(miniGamesFromSQL);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

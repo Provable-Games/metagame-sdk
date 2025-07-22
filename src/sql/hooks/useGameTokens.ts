@@ -25,7 +25,7 @@ export const useGameTokens = ({
 }: GameTokensQueryParams): SqlQueryResult<GameTokenData> => {
   const client = getMetagameClient();
   const toriiUrl = client.getConfig().toriiUrl;
-  
+
   console.log('[useGameTokens] Using toriiUrl:', toriiUrl);
 
   const query = gamesQuery({
@@ -45,6 +45,8 @@ export const useGameTokens = ({
     refetch,
   } = useSqlQuery(toriiUrl, query, true);
 
+  console.log('rawGameData', rawGameData);
+
   const error = queryError;
 
   const gameScores = useMemo(() => {
@@ -62,14 +64,15 @@ export const useGameTokens = ({
         ? {
             game_id: Number(game.game_metadata_id) || 0,
             contract_address: game.game_metadata_contract_address || '',
-            creator_token_id: Number(game.game_metadata_creator_token_id) || 0,
-            name: feltToString(game.game_metadata_name) || '',
+            name: game.game_metadata_name || '',
             description: game.game_metadata_description || '',
-            developer: feltToString(game.game_metadata_developer) || '',
-            publisher: feltToString(game.game_metadata_publisher) || '',
-            genre: feltToString(game.game_metadata_genre) || '',
+            developer: game.game_metadata_developer || '',
+            publisher: game.game_metadata_publisher || '',
+            genre: game.game_metadata_genre || '',
             image: game.game_metadata_image || '',
             color: game.game_metadata_color,
+            client_url: game.game_metadata_client_url,
+            renderer_address: game.game_metadata_renderer_address,
           }
         : undefined;
 
@@ -77,8 +80,8 @@ export const useGameTokens = ({
         game_id: Number(game.game_id),
         game_over: game.game_over,
         lifecycle: {
-          start: Number(game['lifecycle.start']) || undefined,
-          end: Number(game['lifecycle.end']) || undefined,
+          start: Number(game.lifecycle_start) || undefined,
+          end: Number(game.lifecycle_end) || undefined,
         },
         minted_at: Number(game.minted_at) || undefined,
         minted_by: Number(game.minted_by) || undefined,
