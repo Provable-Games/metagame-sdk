@@ -32,7 +32,7 @@ export interface SubscriptionResult<T> {
  * Base hook for subscribing to entity queries
  */
 export function useEventSubscription<S extends SchemaType, T = any>(
-  client: MetagameClient<S>,
+  client: MetagameClient<S> | null,
   options: UseEventSubscriptionOptions
 ): UseEventSubscriptionResult<T> {
   const { query, namespace, enabled = true, logging = false, transform } = options;
@@ -62,6 +62,12 @@ export function useEventSubscription<S extends SchemaType, T = any>(
     let _unsubscribe: (() => void) | undefined;
     const _subscribe = async () => {
       try {
+        if (!client) {
+          setEntities(null);
+          setIsSubscribed(false);
+          return;
+        }
+
         if (logging) {
           console.log('Subscribing to query:', memoizedQuery);
         }
@@ -111,7 +117,7 @@ export function useEventSubscription<S extends SchemaType, T = any>(
     setIsSubscribed(false);
     setError(undefined);
 
-    if (enabled) {
+    if (enabled && client) {
       _subscribe();
     } else {
       setEntities(null);

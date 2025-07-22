@@ -71,9 +71,30 @@ export const useGameTokensStore = create<GameTokensState>()(
     // Initialize store with bulk data (like from initial query)
     initializeStore: (entities: EntityData[]) => {
       console.log('gameTokensStore: initializeStore called with', entities.length, 'entities');
+      
+      // Debug: Log entity types distribution
+      if (process.env.NODE_ENV === 'development') {
+        const entityTypes: Record<string, number> = {};
+        entities.forEach(entity => {
+          Object.keys(entity).forEach(key => {
+            if (key !== 'entityId' && entity[key]) {
+              entityTypes[key] = (entityTypes[key] || 0) + 1;
+            }
+          });
+        });
+        console.log('gameTokensStore: Entity types distribution:', entityTypes);
+      }
+      
       const { gameTokens, relationshipMaps } = buildMergedGamesFromEntities(entities);
       console.log('gameTokensStore: built', Object.keys(gameTokens).length, 'game tokens');
-      console.log('gameTokensStore: sample game tokens:', Object.values(gameTokens).slice(0, 2));
+      
+      // Debug: Log token ID mappings
+      if (process.env.NODE_ENV === 'development' && Object.keys(gameTokens).length < 20) {
+        console.log('gameTokensStore: Token ID -> token_id mappings:');
+        Object.entries(gameTokens).forEach(([key, token]) => {
+          console.log(`  Key: ${key} -> token_id: ${token.token_id}`);
+        });
+      }
 
       set({
         gameTokens,
@@ -89,9 +110,9 @@ export const useGameTokensStore = create<GameTokensState>()(
       const state = get();
       const { gameTokens, relationshipMaps } = state;
 
-      // Special handling for MinterRegistryId - need to update all tokens minted by this minter
-      if (entity.MinterRegistryId?.id) {
-        const minterId = entity.MinterRegistryId.id.toString();
+      // Special handling for MinterRegistryUpdate - need to update all tokens minted by this minter
+      if (entity.MinterRegistryUpdate?.id) {
+        const minterId = entity.MinterRegistryUpdate.id.toString();
         const updatedGames = { ...gameTokens };
         const updatedMaps = { ...relationshipMaps };
         let hasUpdates = false;
@@ -105,7 +126,7 @@ export const useGameTokensStore = create<GameTokensState>()(
           if (game.minted_by && Number(minterId) === game.minted_by) {
             updatedGames[tokenId] = {
               ...game,
-              minted_by_address: entity.MinterRegistryId!.contract_address,
+              minted_by_address: entity.MinterRegistryUpdate!.minter_address,
             };
             hasUpdates = true;
           }
@@ -171,7 +192,6 @@ export const useGameTokensStore = create<GameTokensState>()(
               gameMetadata: {
                 game_id: gameMetadata.game_id,
                 contract_address: gameMetadata.contract_address,
-                creator_token_id: gameMetadata.creator_token_id,
                 name: gameMetadata.name,
                 description: gameMetadata.description,
                 developer: gameMetadata.developer,
@@ -179,6 +199,8 @@ export const useGameTokensStore = create<GameTokensState>()(
                 genre: gameMetadata.genre,
                 image: gameMetadata.image,
                 color: gameMetadata.color,
+                client_url: gameMetadata.client_url,
+                renderer_address: gameMetadata.renderer_address,
               },
             };
             hasUpdates = true;
@@ -203,6 +225,7 @@ export const useGameTokensStore = create<GameTokensState>()(
 
     // Clear all data
     clearStore: () => {
+      console.log('[gameTokensStore] Clearing store data');
       set({
         gameTokens: {},
         relationshipMaps: {
@@ -275,6 +298,12 @@ export const useGameTokensStore = create<GameTokensState>()(
   }))
 );
 
+// Helper function to ensure consistent token ID formatting
+function normalizeTokenId(tokenId: string | number | undefined): string {
+  if (tokenId === undefined || tokenId === null) return '';
+  return String(tokenId);
+}
+
 // Helper functions
 function buildMergedGamesFromEntities(entities: EntityData[]): {
   gameTokens: Record<string, GameTokenData>;
@@ -303,6 +332,14 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 
   entities.forEach((entity) => {
     const tokenIds = findAffectedTokenIds(entity, relationshipMaps);
+    
+    if (process.env.NODE_ENV === 'development' && tokenIds.length > 0) {
+      // Log entity grouping for debugging
+      const entityType = Object.keys(entity).find(key => key !== 'entityId' && entity[key]);
+      if (entityType === 'TokenMetadataUpdate' || entityType === 'OwnersUpdate') {
+        console.log(`Entity ${entityType} affects tokens:`, tokenIds);
+      }
+    }
 
     tokenIds.forEach((tokenId) => {
       if (!groupedByToken.has(tokenId)) {
@@ -316,7 +353,36 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
   const gameTokens: Record<string, GameTokenData> = {};
 
   groupedByToken.forEach((tokenEntities, tokenId) => {
-    gameTokens[tokenId] = createMergedGameFromEntities(tokenId, tokenEntities, relationshipMaps);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`\n=== Creating merged game for token ${tokenId} ===`);
+      console.log(`Total entities for this token: ${tokenEntities.length}`);
+      tokenEntities.forEach(entity => {
+        const entityType = Object.keys(entity).find(key => key !== 'entityId' && entity[key]);
+        if (entityType) {
+          console.log(`- ${entityType}:`, entity[entityType]);
+        }
+      });
+    }
+    
+    const mergedGame = createMergedGameFromEntities(tokenId, tokenEntities, relationshipMaps);
+    
+    // Validate that the token_id matches the key
+    if (String(mergedGame.token_id) !== tokenId) {
+      console.warn(`Token ID mismatch: key=${tokenId}, token_id=${mergedGame.token_id}. Using key as token_id.`);
+      mergedGame.token_id = Number(tokenId) || 0;
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Final merged game for token ${tokenId}:`, {
+        token_id: mergedGame.token_id,
+        game_id: mergedGame.game_id,
+        lifecycle: mergedGame.lifecycle,
+        settings_id: mergedGame.settings_id,
+        minted_at: mergedGame.minted_at,
+      });
+    }
+    
+    gameTokens[tokenId] = mergedGame;
   });
 
   return { gameTokens, relationshipMaps };
@@ -325,53 +391,53 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 function findAffectedTokenIds(entity: EntityData, maps: RelationshipMaps): string[] {
   const tokenIds: string[] = [];
 
-  // Direct token ID references
-  if (entity.TokenMetadata?.id) {
-    tokenIds.push(entity.TokenMetadata.id.toString());
+  // Direct token ID references - use consistent String() conversion
+  if (entity.TokenMetadataUpdate?.id) {
+    tokenIds.push(String(entity.TokenMetadataUpdate.id));
   }
-  if (entity.TokenObjective?.id) {
-    tokenIds.push(entity.TokenObjective.id.toString());
+  if (entity.ObjectiveUpdate?.token_id) {
+    tokenIds.push(String(entity.ObjectiveUpdate.token_id));
   }
-  if (entity.Owners?.token_id) {
-    tokenIds.push(entity.Owners.token_id.toString());
+  if (entity.OwnersUpdate?.token_id) {
+    tokenIds.push(String(entity.OwnersUpdate.token_id));
   }
-  if (entity.TokenPlayerName?.id) {
-    tokenIds.push(entity.TokenPlayerName.id.toString());
+  if (entity.TokenPlayerNameUpdate?.id) {
+    tokenIds.push(String(entity.TokenPlayerNameUpdate.id));
   }
-  if (entity.TokenContextData?.token_id) {
-    tokenIds.push(entity.TokenContextData.token_id.toString());
+  if (entity.TokenContextUpdate?.id) {
+    tokenIds.push(String(entity.TokenContextUpdate.id));
   }
-  if (entity.ScoreUpdate?.token_id) {
-    tokenIds.push(entity.ScoreUpdate.token_id.toString());
+  if (entity.TokenScoreUpdate?.id) {
+    tokenIds.push(String(entity.TokenScoreUpdate.id));
   }
-  if (entity.TokenRenderer?.id) {
-    tokenIds.push(entity.TokenRenderer.id.toString());
+  if (entity.TokenRendererUpdate?.id) {
+    tokenIds.push(String(entity.TokenRendererUpdate.id));
   }
-  if (entity.TokenClientUrl?.id) {
-    tokenIds.push(entity.TokenClientUrl.id.toString());
+  if (entity.TokenClientUrlUpdate?.id) {
+    tokenIds.push(String(entity.TokenClientUrlUpdate.id));
   }
 
   // Relationship-based references
-  if (entity.ObjectiveData?.objective_id) {
+  if (entity.ObjectiveCreated?.objective_id) {
     const relatedTokenIds =
-      maps.objectiveToTokens.get(entity.ObjectiveData.objective_id.toString()) || [];
+      maps.objectiveToTokens.get(entity.ObjectiveCreated.objective_id.toString()) || [];
     tokenIds.push(...relatedTokenIds);
   }
 
-  if (entity.SettingsData?.settings_id) {
+  if (entity.SettingsCreated?.settings_id) {
     const relatedTokenIds =
-      maps.settingsToTokens.get(entity.SettingsData.settings_id.toString()) || [];
+      maps.settingsToTokens.get(entity.SettingsCreated.settings_id.toString()) || [];
     tokenIds.push(...relatedTokenIds);
   }
 
-  if (entity.GameRegistry?.id) {
-    const relatedTokenIds = maps.gameToTokens.get(entity.GameRegistry.id.toString()) || [];
+  if (entity.GameRegistryUpdate?.id) {
+    const relatedTokenIds = maps.gameToTokens.get(entity.GameRegistryUpdate.id.toString()) || [];
     tokenIds.push(...relatedTokenIds);
   }
 
-  // For MinterRegistryId, we need to find all tokens that were minted by this minter
+  // For MinterRegistryUpdate, we need to find all tokens that were minted by this minter
   // This requires checking all tokens in the store (less efficient but necessary)
-  if (entity.MinterRegistryId?.id) {
+  if (entity.MinterRegistryUpdate?.id) {
     // We'll handle this in the updateEntity function by checking all tokens
     // For now, we'll return an empty array and let the store update handle it
     // This is because we need access to the current gameTokens to find matches
@@ -382,9 +448,9 @@ function findAffectedTokenIds(entity: EntityData, maps: RelationshipMaps): strin
 
 function updateRelationshipMaps(entity: EntityData, maps: RelationshipMaps): void {
   // Update objective mapping (one objective can have multiple tokens)
-  if (entity.TokenObjective?.objective_id && entity.TokenObjective?.id) {
-    const objectiveId = entity.TokenObjective.objective_id.toString();
-    const tokenId = entity.TokenObjective.id.toString();
+  if (entity.ObjectiveUpdate?.objective_id && entity.ObjectiveUpdate?.token_id) {
+    const objectiveId = String(entity.ObjectiveUpdate.objective_id);
+    const tokenId = String(entity.ObjectiveUpdate.token_id);
 
     if (!maps.objectiveToTokens.has(objectiveId)) {
       maps.objectiveToTokens.set(objectiveId, []);
@@ -397,9 +463,9 @@ function updateRelationshipMaps(entity: EntityData, maps: RelationshipMaps): voi
   }
 
   // Update settings mapping (one setting can have multiple tokens)
-  if (entity.TokenMetadata?.settings_id && entity.TokenMetadata?.id) {
-    const settingsId = entity.TokenMetadata.settings_id.toString();
-    const tokenId = entity.TokenMetadata.id.toString();
+  if (entity.TokenMetadataUpdate?.settings_id && entity.TokenMetadataUpdate?.id) {
+    const settingsId = entity.TokenMetadataUpdate.settings_id.toString();
+    const tokenId = entity.TokenMetadataUpdate.id.toString();
 
     if (!maps.settingsToTokens.has(settingsId)) {
       maps.settingsToTokens.set(settingsId, []);
@@ -412,9 +478,9 @@ function updateRelationshipMaps(entity: EntityData, maps: RelationshipMaps): voi
   }
 
   // Update game mapping
-  if (entity.TokenMetadata?.game_id && entity.TokenMetadata?.id) {
-    const gameId = entity.TokenMetadata.game_id.toString();
-    const tokenId = entity.TokenMetadata.id.toString();
+  if (entity.TokenMetadataUpdate?.game_id && entity.TokenMetadataUpdate?.id) {
+    const gameId = entity.TokenMetadataUpdate.game_id.toString();
+    const tokenId = entity.TokenMetadataUpdate.id.toString();
 
     if (!maps.gameToTokens.has(gameId)) {
       maps.gameToTokens.set(gameId, []);
@@ -426,19 +492,19 @@ function updateRelationshipMaps(entity: EntityData, maps: RelationshipMaps): voi
     }
   }
 
-  // Store SettingsData entities by their settings_id
-  if (entity.SettingsData?.settings_id) {
-    maps.settingsDataById.set(entity.SettingsData.settings_id.toString(), entity);
+  // Store SettingsCreated entities by their settings_id
+  if (entity.SettingsCreated?.settings_id) {
+    maps.settingsDataById.set(entity.SettingsCreated.settings_id.toString(), entity);
   }
 
-  // Store ObjectiveData entities by their objective_id
-  if (entity.ObjectiveData?.objective_id) {
-    maps.objectiveDataById.set(entity.ObjectiveData.objective_id.toString(), entity);
+  // Store ObjectiveCreated entities by their objective_id
+  if (entity.ObjectiveCreated?.objective_id) {
+    maps.objectiveDataById.set(entity.ObjectiveCreated.objective_id.toString(), entity);
   }
 
-  // Store MinterRegistryId entities by their id
-  if (entity.MinterRegistryId?.id) {
-    maps.minterRegistryById.set(entity.MinterRegistryId.id.toString(), entity);
+  // Store MinterRegistryUpdate entities by their id
+  if (entity.MinterRegistryUpdate?.id) {
+    maps.minterRegistryById.set(entity.MinterRegistryUpdate.id.toString(), entity);
   }
 }
 
@@ -477,7 +543,29 @@ function createMergedGameFromEntities(
 ): GameTokenData {
   const merged = createEmptyMergedGame(tokenId);
 
-  entities.forEach((entity) => {
+  // Sort entities to process TokenMetadataUpdate last to ensure it has priority
+  const sortedEntities = [...entities].sort((a, b) => {
+    const aHasTokenMetadata = !!a.TokenMetadataUpdate;
+    const bHasTokenMetadata = !!b.TokenMetadataUpdate;
+    if (aHasTokenMetadata && !bHasTokenMetadata) return 1;
+    if (!aHasTokenMetadata && bHasTokenMetadata) return -1;
+    
+    // If both have TokenMetadataUpdate, sort by minted_at (newer last)
+    if (aHasTokenMetadata && bHasTokenMetadata) {
+      const aMintedAt = Number(a.TokenMetadataUpdate!.minted_at) || 0;
+      const bMintedAt = Number(b.TokenMetadataUpdate!.minted_at) || 0;
+      return aMintedAt - bMintedAt;
+    }
+    
+    return 0;
+  });
+
+  sortedEntities.forEach((entity) => {
+    // Log each entity being processed for this token
+    if (process.env.NODE_ENV === 'development') {
+      const entityType = Object.keys(entity).find(key => key !== 'entityId' && entity[key]);
+      console.log(`Processing ${entityType} for token ${tokenId}:`, entity);
+    }
     updateMergedGameData(merged, entity, relationshipMaps);
   });
 
@@ -493,27 +581,63 @@ function updateMergedGameData(
   relationshipMaps?: RelationshipMaps
 ): void {
   // Same logic as in dataTransformers merging
-  if (entity.TokenMetadata) {
-    merged.game_id = Number(entity.TokenMetadata.game_id);
-    merged.game_over = entity.TokenMetadata.game_over;
+  if (entity.TokenMetadataUpdate) {
+    // Log if we're processing a TokenMetadataUpdate
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Processing TokenMetadataUpdate for token ${entity.TokenMetadataUpdate.id}:`, {
+        game_id: entity.TokenMetadataUpdate.game_id,
+        minted_at: entity.TokenMetadataUpdate.minted_at,
+        lifecycle_start: entity.TokenMetadataUpdate.lifecycle_start,
+        lifecycle_end: entity.TokenMetadataUpdate.lifecycle_end,
+        soulbound: entity.TokenMetadataUpdate.soulbound,
+      });
+    }
+    merged.game_id = Number(entity.TokenMetadataUpdate.game_id);
+    merged.game_over = entity.TokenMetadataUpdate.game_over;
+    // Debug lifecycle parsing
+    const lifecycleStart = entity.TokenMetadataUpdate.lifecycle_start || entity.TokenMetadataUpdate['lifecycle.start'];
+    const lifecycleEnd = entity.TokenMetadataUpdate.lifecycle_end || entity.TokenMetadataUpdate['lifecycle.end'];
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`TokenMetadataUpdate lifecycle parsing for token ${merged.token_id}:`, {
+        raw_entity: entity.TokenMetadataUpdate,
+        lifecycle_start: entity.TokenMetadataUpdate.lifecycle_start,
+        lifecycle_end: entity.TokenMetadataUpdate.lifecycle_end,
+        'lifecycle.start': entity.TokenMetadataUpdate['lifecycle.start'],
+        'lifecycle.end': entity.TokenMetadataUpdate['lifecycle.end'],
+        parsedStart: lifecycleStart,
+        parsedEnd: lifecycleEnd,
+        willSetStart: lifecycleStart ? Number(lifecycleStart) : undefined,
+        willSetEnd: lifecycleEnd ? Number(lifecycleEnd) : undefined,
+      });
+    }
+    
+    // Ensure proper conversion of lifecycle values
+    const startValue = lifecycleStart ? Number(lifecycleStart) : undefined;
+    const endValue = lifecycleEnd ? Number(lifecycleEnd) : undefined;
+    
     merged.lifecycle = {
-      start: Number(entity.TokenMetadata['lifecycle.start']) || undefined,
-      end: Number(entity.TokenMetadata['lifecycle.end']) || undefined,
+      start: startValue,
+      end: endValue,
     };
-    merged.minted_at = Number(entity.TokenMetadata.minted_at) || undefined;
-    merged.minted_by = Number(entity.TokenMetadata.minted_by) || undefined;
-    merged.settings_id = Number(entity.TokenMetadata.settings_id) || undefined;
-    merged.soulbound = entity.TokenMetadata.soulbound;
-    merged.completed_all_objectives = entity.TokenMetadata.completed_all_objectives;
-    merged.metadata = entity.TokenMetadata.metadata;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Set lifecycle for token ${merged.token_id}:`, merged.lifecycle);
+    }
+    merged.minted_at = Number(entity.TokenMetadataUpdate.minted_at) || undefined;
+    merged.minted_by = Number(entity.TokenMetadataUpdate.minted_by) || undefined;
+    merged.settings_id = entity.TokenMetadataUpdate.settings_id !== undefined ? Number(entity.TokenMetadataUpdate.settings_id) : undefined;
+    merged.soulbound = entity.TokenMetadataUpdate.soulbound;
+    merged.completed_all_objectives = entity.TokenMetadataUpdate.completed_all_objectives;
+    // TokenMetadataUpdate doesn't have a metadata field in Cairo events
 
     // Look up and include SettingsData if we have a settings_id
-    if (entity.TokenMetadata.settings_id && relationshipMaps) {
+    if (entity.TokenMetadataUpdate.settings_id && relationshipMaps) {
       const settingsEntity = relationshipMaps.settingsDataById.get(
-        entity.TokenMetadata.settings_id.toString()
+        entity.TokenMetadataUpdate.settings_id.toString()
       );
-      if (settingsEntity?.SettingsData) {
-        const rawSettings = settingsEntity.SettingsData.data || settingsEntity.SettingsData;
+      if (settingsEntity?.SettingsCreated) {
+        const rawSettings = settingsEntity.SettingsCreated.settings_data;
         const parsedSettings = parseSettingsData(rawSettings);
         merged.settings = {
           name: parsedSettings.name,
@@ -524,14 +648,13 @@ function updateMergedGameData(
     }
 
     // Look up and include GameMetadata if we have a game_id
-    if (entity.TokenMetadata.game_id) {
+    if (entity.TokenMetadataUpdate.game_id) {
       const miniGamesStore = useMiniGamesStore.getState();
-      const gameMetadata = miniGamesStore.getMiniGameData(entity.TokenMetadata.game_id);
+      const gameMetadata = miniGamesStore.getMiniGameData(entity.TokenMetadataUpdate.game_id);
       if (gameMetadata) {
         merged.gameMetadata = {
           game_id: gameMetadata.game_id,
           contract_address: gameMetadata.contract_address,
-          creator_token_id: gameMetadata.creator_token_id,
           name: gameMetadata.name,
           description: gameMetadata.description,
           developer: gameMetadata.developer,
@@ -539,47 +662,49 @@ function updateMergedGameData(
           genre: gameMetadata.genre,
           image: gameMetadata.image,
           color: gameMetadata.color,
+          client_url: gameMetadata.client_url,
+          renderer_address: gameMetadata.renderer_address,
         };
       }
     }
 
     // Look up and include MinterRegistryId if we have a minted_by
-    if (entity.TokenMetadata.minted_by && relationshipMaps) {
+    if (entity.TokenMetadataUpdate.minted_by && relationshipMaps) {
       const minterEntity = relationshipMaps.minterRegistryById.get(
-        entity.TokenMetadata.minted_by.toString()
+        entity.TokenMetadataUpdate.minted_by.toString()
       );
-      if (minterEntity?.MinterRegistryId) {
-        merged.minted_by_address = minterEntity.MinterRegistryId.contract_address;
+      if (minterEntity?.MinterRegistryUpdate) {
+        merged.minted_by_address = minterEntity.MinterRegistryUpdate.minter_address;
       }
     }
   }
 
-  if (entity.Owners) {
-    merged.owner = entity.Owners.owner || entity.Owners.owner_address;
-    merged.token_id = Number(entity.Owners.token_id) || merged.token_id;
+  if (entity.OwnersUpdate) {
+    merged.owner = entity.OwnersUpdate.owner;
+    // Don't overwrite token_id - it's already set from the tokenId parameter
   }
 
-  if (entity.TokenPlayerName) {
-    const playerName = entity.TokenPlayerName.player_name || entity.TokenPlayerName.name;
+  if (entity.TokenPlayerNameUpdate) {
+    const playerName = entity.TokenPlayerNameUpdate.player_name;
     merged.player_name = feltToString(playerName) || undefined;
   }
 
-  if (entity.TokenObjective) {
-    const objectiveId = entity.TokenObjective.objective_id || entity.TokenObjective.id;
-    if (objectiveId && !merged.objective_ids!.includes(objectiveId)) {
-      merged.objective_ids!.push(objectiveId);
+  if (entity.ObjectiveUpdate) {
+    const objectiveId = entity.ObjectiveUpdate.objective_id;
+    if (objectiveId && !merged.objective_ids!.includes(String(objectiveId))) {
+      merged.objective_ids!.push(String(objectiveId));
 
       // Store simplified approach: just store the objective_id
       // ObjectiveData lookup will be handled separately via the helper functions
     }
   }
 
-  if (entity.ScoreUpdate) {
-    merged.score = entity.ScoreUpdate.score || entity.ScoreUpdate.value || 0;
+  if (entity.TokenScoreUpdate) {
+    merged.score = Number(entity.TokenScoreUpdate.score) || 0;
   }
 
-  if (entity.TokenContextData) {
-    const rawContext = entity.TokenContextData.data || entity.TokenContextData.context;
+  if (entity.TokenContextUpdate) {
+    const rawContext = entity.TokenContextUpdate.context_data;
 
     // Parse context data to extract name, description, and contexts
     const parsedContext = parseContextData(rawContext);
@@ -590,8 +715,8 @@ function updateMergedGameData(
     };
   }
 
-  if (entity.SettingsData) {
-    const rawSettings = entity.SettingsData.data || entity.SettingsData;
+  if (entity.SettingsCreated) {
+    const rawSettings = entity.SettingsCreated.settings_data;
     const parsedSettings = parseSettingsData(rawSettings);
     merged.settings = {
       name: parsedSettings.name,
@@ -604,29 +729,30 @@ function updateMergedGameData(
   //   merged.contract_address = entity.GameRegistry.contract_address || entity.GameRegistry.address;
   // }
 
-  if (entity.TokenRenderer) {
-    merged.renderer = entity.TokenRenderer.renderer_address;
+  if (entity.TokenRendererUpdate) {
+    merged.renderer = entity.TokenRendererUpdate.renderer_address;
   }
 
-  if (entity.TokenClientUrl) {
-    merged.client_url = entity.TokenClientUrl.client_url;
+  if (entity.TokenClientUrlUpdate) {
+    merged.client_url = entity.TokenClientUrlUpdate.client_url;
   }
 
   // Handle GameMetadata entities directly (when they come from mini games subscription)
-  if (entity.GameMetadata) {
+  if (entity.GameMetadataUpdate) {
     // If this game token matches the GameMetadata game_id, update the gameMetadata
-    if (merged.game_id && merged.game_id.toString() === entity.GameMetadata.id?.toString()) {
+    if (merged.game_id && merged.game_id.toString() === entity.GameMetadataUpdate.id?.toString()) {
       merged.gameMetadata = {
-        game_id: Number(entity.GameMetadata.id) || 0,
-        contract_address: entity.GameMetadata.contract_address || '',
-        creator_token_id: entity.GameMetadata.creator_token_id || '',
-        name: feltToString(entity.GameMetadata.name) || '',
-        description: entity.GameMetadata.description || '', // description is already a string
-        developer: feltToString(entity.GameMetadata.developer) || '',
-        publisher: feltToString(entity.GameMetadata.publisher) || '',
-        genre: feltToString(entity.GameMetadata.genre) || '',
-        image: entity.GameMetadata.image || '',
-        color: entity.GameMetadata.color,
+        game_id: Number(entity.GameMetadataUpdate.id) || 0,
+        contract_address: entity.GameMetadataUpdate.contract_address || '',
+        name: feltToString(entity.GameMetadataUpdate.name) || '',
+        description: entity.GameMetadataUpdate.description || '', // description is already a string
+        developer: feltToString(entity.GameMetadataUpdate.developer) || '',
+        publisher: feltToString(entity.GameMetadataUpdate.publisher) || '',
+        genre: feltToString(entity.GameMetadataUpdate.genre) || '',
+        image: entity.GameMetadataUpdate.image || '',
+        color: entity.GameMetadataUpdate.color,
+        client_url: entity.GameMetadataUpdate.client_url,
+        renderer_address: entity.GameMetadataUpdate.renderer_address,
       };
     }
   }

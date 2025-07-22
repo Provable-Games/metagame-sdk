@@ -10,8 +10,10 @@
     "preview": "bunx --bun vite preview"
   },
   "dependencies": {
-    "@cartridge/connector": "^0.6.0",
+    "@cartridge/connector": "0.7.13",
+    "@cartridge/presets": "^0.5.2",
     "@dojoengine/core": "1.5.5",
+    "@dojoengine/predeployed-connector": "1.5.5",
     "@starknet-react/core": "^3.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

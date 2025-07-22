@@ -3,8 +3,6 @@ import { createDojoStore } from '@dojoengine/sdk/react';
 import { init, SDK } from '@dojoengine/sdk';
 
 import { MetagameConfig } from './types';
-import { executeSqlQuery } from '../sql/services/sqlService';
-import { miniGamesQuery } from '../sql/queries/sql';
 
 // Default configuration that matches the example app
 export const DEFAULT_DOJO_CONFIG = {
@@ -54,7 +52,7 @@ export class MetagameClient<T extends SchemaType> {
 
     this.store = createDojoStore<T>();
 
-    this.namespace = 'denshokan_0_0_1';
+    this.namespace = 'relayer_0_0_1';
     this.contractAddress = '0x50d5db3a00209bbcd8b7f5fbec727d36515485fb2859c257616d019a166f99';
   }
 
@@ -83,6 +81,7 @@ export class MetagameClient<T extends SchemaType> {
    * Get the configuration
    */
   getConfig(): MetagameConfig<T> {
+    console.log('[MetagameClient.getConfig] Returning config with toriiUrl:', this.config.toriiUrl);
     return this.config;
   }
 

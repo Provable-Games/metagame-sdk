@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useEntitySubscription } from '../../shared/dojo/hooks/useEntitySubscription';
 import { useEventSubscription } from '../../shared/dojo/hooks/useEventSubscription';
 import { useGameTokensStore } from '../stores/gameTokensStore';
 import { useMiniGamesStore } from '../stores/miniGamesStore';
 import { gamesQuery } from '../queries/sdk';
 import { type GameTokenData } from '../../shared/utils/dataTransformers';
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
 
 export interface UseSubscribeGameTokensParams {
@@ -94,7 +93,7 @@ export function useSubscribeGameTokens(
   const defaultSortOrder = sortBy === 'score' || sortBy === 'minted_at' ? 'desc' : 'asc';
   const sortOrder = pagination?.sortOrder ?? defaultSortOrder;
 
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
 
   // Get store state and actions
   const {
@@ -111,24 +110,8 @@ export function useSubscribeGameTokens(
   // Get mini games store for metadata lookup
   const { getMiniGameData } = useMiniGamesStore();
 
-  // Subscribe to entity changes with custom callback
-  const { entities, error, isSubscribed } = useEntitySubscription(client, {
-    query: gamesQuery({ namespace: client.getNamespace() }),
-    namespace: client.getNamespace(),
-    enabled,
-    transform: (entity: any) => {
-      const { entityId, models } = entity;
-      const transformed = {
-        entityId,
-        ...models[client.getNamespace()],
-      };
-
-      // Call our store's updateEntity for real-time updates
-      updateEntity(transformed);
-
-      return transformed;
-    },
-  });
+  // Create query only if client is available
+  const query = client ? gamesQuery({ namespace: client.getNamespace() }) : null;
 
   // Subscribe to events for real-time updates with custom callback
   const {
@@ -136,15 +119,29 @@ export function useSubscribeGameTokens(
     isSubscribed: isSubscribedEvents,
     error: errorEvents,
   } = useEventSubscription(client, {
-    query: gamesQuery({ namespace: client.getNamespace() }),
-    namespace: client.getNamespace(),
-    enabled,
+    query: query || { keys: [], entityModels: [], eventModels: [] },
+    namespace: client?.getNamespace() || '',
+    enabled: enabled && !!client,
     transform: (entity: any) => {
+      if (!client) return entity;
+      
       const { entityId, models } = entity;
+      console.log('Raw models from subscription:', models);
       const transformed = {
         entityId,
         ...models[client.getNamespace()],
       };
+      
+      // Log specific TokenMetadataUpdate events
+      if (transformed.TokenMetadataUpdate) {
+        console.log('TokenMetadataUpdate event received:', {
+          id: transformed.TokenMetadataUpdate.id,
+          game_id: transformed.TokenMetadataUpdate.game_id,
+          lifecycle_start: transformed.TokenMetadataUpdate.lifecycle_start,
+          lifecycle_end: transformed.TokenMetadataUpdate.lifecycle_end,
+          all_fields: transformed.TokenMetadataUpdate,
+        });
+      }
 
       // Call our store's updateEntity for real-time updates
       updateEntity(transformed);
@@ -153,15 +150,18 @@ export function useSubscribeGameTokens(
     },
   });
 
+  console.log(query);
+  console.log(events);
+
   // Handle initial load only
   useEffect(() => {
     if (!enabled) return;
 
-    if (entities && entities.length > 0) {
-      console.log('useSubscribeGameTokens: Initial load with', entities.length, 'entities');
-      initializeStore(entities);
+    if (events && events.length > 0) {
+      console.log('useSubscribeGameTokens: Initial load with', events.length, 'entities');
+      initializeStore(events);
     }
-  }, [entities, initializeStore, enabled]);
+  }, [events, initializeStore, enabled]);
 
   // Clear store when disabled
   useEffect(() => {
@@ -249,7 +249,13 @@ export function useSubscribeGameTokens(
       'useSubscribeGameTokens: filtered and sorted games:',
       sortedGames.length,
       `sorted by ${sortBy} ${sortOrder}`,
-      sortedGames.slice(0, 3) // Log first 3 for debugging
+      sortedGames.slice(0, 3).map(game => ({
+        token_id: game.token_id,
+        game_id: game.game_id,
+        lifecycle: game.lifecycle,
+        settings_id: game.settings_id,
+        minted_at: game.minted_at,
+      })) // Log key fields for first 3 games
     );
     console.log('useSubscribeGameTokens: store state:', {
       gameTokens: Object.keys(gameTokens).length,
@@ -355,10 +361,41 @@ export function useSubscribeGameTokens(
     ]
   );
 
+  // Return empty state if client is not ready
+  if (!client) {
+    return {
+      // Subscription status
+      isSubscribing: false,
+      error: null,
+      isInitialized: false,
+      lastUpdated: 0,
+
+      // Store data (empty)
+      games: [],
+      allGames: [],
+      getGameByTokenId: getGameTokenByTokenId,
+
+      // Pagination controls (default state)
+      pagination: {
+        currentPage: 0,
+        pageSize,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+        goToPage,
+        nextPage,
+        previousPage,
+        firstPage,
+        lastPage,
+      },
+    };
+  }
+
   return {
     // Subscription status
-    isSubscribing: isSubscribed && isSubscribedEvents,
-    error: error || errorEvents || null,
+    isSubscribing: isSubscribedEvents,
+    error: errorEvents || null,
     isInitialized,
     lastUpdated,
 

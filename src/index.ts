@@ -1,7 +1,7 @@
 // ===== CORE SDK SETUP (Root Level Exports) =====
 // These are the essential functions and types needed to set up the SDK
 export { MetagameClient } from './shared/client';
-export { getMetagameClient, initMetagame, resetMetagame } from './shared/singleton';
+export { getMetagameClient, getMetagameClientSafe, isMetagameReady, initMetagame, resetMetagame } from './shared/singleton';
 export { useMetagame, MetagameProvider } from './shared/provider';
 
 // ===== ESSENTIAL TYPES =====

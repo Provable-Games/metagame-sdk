@@ -4,27 +4,38 @@ import {
   MetagameClient,
   MetagameProvider as MetagameProviderSDK,
 } from 'metagame-sdk';
-import { dojoConfig } from '../../dojoConfig';
+import { useNetwork } from '@starknet-react/core';
+import { ChainId, CHAINS } from '../dojo/setup/networks';
+import { feltToString } from 'metagame-sdk';
+import { manifests } from '../dojo/setup/config';
 
 export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
+  const { chain } = useNetwork();
 
   useEffect(() => {
+    const chainId = feltToString(chain.id);
+    const selectedChainConfig = CHAINS[chainId as ChainId];
+    const manifest = manifests[chainId as ChainId];
+
     async function initialize() {
-      // Simple initialization - no provider required!
+      console.log(`[MetagameProvider] Initializing for network: ${chainId}`);
+      console.log(`[MetagameProvider] toriiUrl: ${selectedChainConfig.toriiUrl}`);
+
+      // Simple initialization - SDK now handles network changes automatically!
       const metagameClient = await initMetagame({
-        toriiUrl: dojoConfig.toriiUrl,
-        worldAddress: dojoConfig.manifest.world.address, // Automatic dojoSDK creation
-        // Optional: Override defaults if needed
-        // relayUrl: dojoConfig.relayUrl,
-        // domain: { name: 'CUSTOM_WORLD', version: '1.0', chainId: 'KATANA', revision: '1' }
+        toriiUrl: selectedChainConfig.toriiUrl!,
+        worldAddress: manifest.world.address,
       });
 
+      console.log(
+        `[MetagameProvider] Metagame client initialized with toriiUrl: ${metagameClient.getToriiUrl()}`
+      );
       setMetagameClient(metagameClient);
     }
 
     initialize();
-  }, []);
+  }, [chain]);
 
   if (!metagameClient) {
     return <div>Loading...</div>;

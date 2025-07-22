@@ -40,6 +40,9 @@ export function useSqlQuery<T>(
     setError(null);
 
     try {
+      if (logging) {
+        console.log('[useSqlQuery] Executing query with toriiUrl:', toriiUrl);
+      }
       const result = await executeSqlQuery<T>(toriiUrl, query, logging);
       setData(result.data);
       setError(result.error);

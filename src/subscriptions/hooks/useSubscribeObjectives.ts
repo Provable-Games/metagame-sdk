@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useObjectivesStore } from '../stores/objectivesStore';
 import { objectivesQuery } from '../queries/sdk';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
+import { type GameMetadata } from '../../shared/types';
 
 export interface UseSubscribeObjectivesParams {
   enabled?: boolean;
@@ -41,18 +42,7 @@ type ObjectivesRecord = Record<
   {
     data: string;
     game_id: number;
-    gameMetadata: {
-      game_id: number;
-      contract_address: string;
-      creator_token_id: number;
-      name: string;
-      description: string;
-      developer: string;
-      publisher: string;
-      genre: string;
-      image: string;
-      color?: string;
-    } | null;
+    gameMetadata: GameMetadata | null;
   }
 >;
 

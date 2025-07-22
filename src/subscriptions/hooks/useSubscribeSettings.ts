@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
 import { settingsQuery } from '../queries/sdk';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
+import { type GameMetadata } from '../../shared/types';
 
 export interface UseSubscribeSettingsParams {
   enabled?: boolean;
@@ -40,18 +41,7 @@ type SettingsRecord = Record<
   string,
   {
     game_id: number;
-    gameMetadata: {
-      game_id: number;
-      contract_address: string;
-      creator_token_id: number;
-      name: string;
-      description: string;
-      developer: string;
-      publisher: string;
-      genre: string;
-      image: string;
-      color?: string;
-    } | null;
+    gameMetadata: GameMetadata | null;
     name: string;
     description: string;
     data: any;

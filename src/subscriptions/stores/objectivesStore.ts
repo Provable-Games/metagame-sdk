@@ -3,7 +3,7 @@ import { useMiniGamesStore } from './miniGamesStore';
 
 export interface ObjectiveEntity {
   entityId: string;
-  ObjectiveData?: {
+  ObjectiveCreated?: {
     objective_id: number;
     game_id: number;
     data: string;
@@ -17,7 +17,6 @@ export interface ObjectivesLookup {
     gameMetadata: {
       game_id: number;
       contract_address: string;
-      creator_token_id: number;
       name: string;
       description: string;
       developer: string;
@@ -25,6 +24,8 @@ export interface ObjectivesLookup {
       genre: string;
       image: string;
       color?: string;
+      client_url?: string;
+      renderer_address?: string;
     } | null;
   };
 }
@@ -59,15 +60,15 @@ function buildObjectivesFromEntities(entities: ObjectiveEntity[]): ObjectivesLoo
   const miniGamesStore = useMiniGamesStore.getState();
 
   entities.forEach((entity) => {
-    if (entity.ObjectiveData?.objective_id) {
-      const objectiveId = entity.ObjectiveData.objective_id.toString();
-      const gameId = entity.ObjectiveData.game_id;
+    if (entity.ObjectiveCreated?.objective_id) {
+      const objectiveId = entity.ObjectiveCreated.objective_id.toString();
+      const gameId = entity.ObjectiveCreated.game_id;
 
       // Get the complete mini game data
       const gameMetadata = miniGamesStore.getMiniGameData(gameId);
 
       objectives[objectiveId] = {
-        data: entity.ObjectiveData.data,
+        data: entity.ObjectiveCreated.data,
         game_id: gameId,
         gameMetadata: gameMetadata,
       };
@@ -98,17 +99,17 @@ export const useObjectivesStore = create<ObjectivesState>((set, get) => ({
   },
 
   updateEntity: (entity: ObjectiveEntity) => {
-    if (!entity.ObjectiveData?.objective_id) return;
+    if (!entity.ObjectiveCreated?.objective_id) return;
 
-    const objectiveId = entity.ObjectiveData.objective_id.toString();
-    const gameId = entity.ObjectiveData.game_id;
+    const objectiveId = entity.ObjectiveCreated.objective_id.toString();
+    const gameId = entity.ObjectiveCreated.game_id;
 
     // Get the mini games store to get complete game metadata
     const miniGamesStore = useMiniGamesStore.getState();
     const gameMetadata = miniGamesStore.getMiniGameData(gameId);
 
-    const objectiveData = {
-      data: entity.ObjectiveData.data,
+    const objectiveDataForStore = {
+      data: entity.ObjectiveCreated.data,
       game_id: gameId,
       gameMetadata: gameMetadata,
     };
@@ -116,7 +117,7 @@ export const useObjectivesStore = create<ObjectivesState>((set, get) => ({
     set((state) => ({
       objectives: {
         ...state.objectives,
-        [objectiveId]: objectiveData,
+        [objectiveId]: objectiveDataForStore,
       },
       lastUpdated: Date.now(),
     }));

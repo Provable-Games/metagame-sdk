@@ -5,6 +5,8 @@ import { displayAddress } from '../lib/index';
 const MiniGamesTable: React.FC = () => {
   const { miniGames } = useSubscribeMiniGames({});
 
+  console.log(miniGames);
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Mini Games Available</h1>

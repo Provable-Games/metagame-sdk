@@ -5,37 +5,37 @@ export const gamesQuery = ({ namespace }: { namespace: string }) => {
     .withClause(
       KeysClause(
         [
-          `${namespace}-Owners`,
-          `${namespace}-TokenMetadata`,
-          `${namespace}-GameRegistry`,
-          `${namespace}-TokenPlayerName`,
-          `${namespace}-ScoreUpdate`,
-          `${namespace}-TokenContextData`,
-          `${namespace}-SettingsData`,
-          `${namespace}-TokenObjective`,
-          `${namespace}-ObjectiveData`,
-          `${namespace}-TokenRenderer`,
-          `${namespace}-TokenClientUrl`,
-          `${namespace}-GameMetadata`,
-          `${namespace}-MinterRegistryId`,
+          `${namespace}-OwnersUpdate`,
+          `${namespace}-TokenMetadataUpdate`,
+          `${namespace}-GameRegistryUpdate`,
+          `${namespace}-TokenPlayerNameUpdate`,
+          `${namespace}-TokenScoreUpdate`,
+          `${namespace}-TokenContextUpdate`,
+          `${namespace}-SettingsCreated`,
+          `${namespace}-ObjectiveUpdate`,
+          `${namespace}-ObjectiveCreated`,
+          `${namespace}-TokenRendererUpdate`,
+          `${namespace}-TokenClientUrlUpdate`,
+          `${namespace}-GameMetadataUpdate`,
+          `${namespace}-MinterRegistryUpdate`,
         ],
         []
       ).build()
     )
     .withEntityModels([
-      `${namespace}-Owners`,
-      `${namespace}-TokenMetadata`,
-      `${namespace}-GameRegistry`,
-      `${namespace}-TokenPlayerName`,
-      `${namespace}-ScoreUpdate`,
-      `${namespace}-TokenContextData`,
-      `${namespace}-SettingsData`,
-      `${namespace}-TokenObjective`,
-      `${namespace}-ObjectiveData`,
-      `${namespace}-TokenRenderer`,
-      `${namespace}-TokenClientUrl`,
-      `${namespace}-GameMetadata`,
-      `${namespace}-MinterRegistryId`,
+      `${namespace}-OwnersUpdate`,
+      `${namespace}-TokenMetadataUpdate`,
+      `${namespace}-GameRegistryUpdate`,
+      `${namespace}-TokenPlayerNameUpdate`,
+      `${namespace}-TokenScoreUpdate`,
+      `${namespace}-TokenContextUpdate`,
+      `${namespace}-SettingsCreated`,
+      `${namespace}-ObjectiveUpdate`,
+      `${namespace}-ObjectiveCreated`,
+      `${namespace}-TokenRendererUpdate`,
+      `${namespace}-TokenClientUrlUpdate`,
+      `${namespace}-GameMetadataUpdate`,
+      `${namespace}-MinterRegistryUpdate`,
     ])
     .includeHashedKeys()
     .withLimit(10000);
@@ -49,8 +49,8 @@ export const miniGamesQuery = ({
   limit?: number;
 }) => {
   return new ToriiQueryBuilder()
-    .withClause(KeysClause([`${namespace}-GameMetadata`], []).build())
-    .withEntityModels([`${namespace}-GameMetadata`])
+    .withClause(KeysClause([`${namespace}-GameMetadataUpdate`], []).build())
+    .withEntityModels([`${namespace}-GameMetadataUpdate`])
     .includeHashedKeys()
     .withLimit(limit);
 };
@@ -63,8 +63,10 @@ export const settingsQuery = ({
   limit?: number;
 }) => {
   return new ToriiQueryBuilder()
-    .withClause(KeysClause([`${namespace}-SettingsData`, `${namespace}-GameMetadata`], []).build())
-    .withEntityModels([`${namespace}-SettingsData`, `${namespace}-GameMetadata`])
+    .withClause(
+      KeysClause([`${namespace}-SettingsCreated`, `${namespace}-GameMetadataUpdate`], []).build()
+    )
+    .withEntityModels([`${namespace}-SettingsCreated`, `${namespace}-GameMetadataUpdate`])
     .includeHashedKeys()
     .withLimit(limit);
 };
@@ -77,8 +79,10 @@ export const objectivesQuery = ({
   limit?: number;
 }) => {
   return new ToriiQueryBuilder()
-    .withClause(KeysClause([`${namespace}-ObjectiveData`, `${namespace}-GameMetadata`], []).build())
-    .withEntityModels([`${namespace}-ObjectiveData`, `${namespace}-GameMetadata`])
+    .withClause(
+      KeysClause([`${namespace}-ObjectiveCreated`, `${namespace}-GameMetadataUpdate`], []).build()
+    )
+    .withEntityModels([`${namespace}-ObjectiveCreated`, `${namespace}-GameMetadataUpdate`])
     .includeHashedKeys()
     .withLimit(limit);
 };

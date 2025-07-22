@@ -34,7 +34,6 @@ export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniG
       const filteredGame: GameMetadata = {
         game_id: Number(game.id) || 0,
         contract_address: game.contract_address || '',
-        creator_token_id: Number(game.creator_token_id) || 0,
         name: feltToString(game.name) || '',
         description: game.description || '',
         developer: feltToString(game.developer) || '',
@@ -42,6 +41,8 @@ export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniG
         genre: feltToString(game.genre) || '',
         image: game.image || '',
         color: game.color,
+        client_url: game.client_url,
+        renderer_address: game.renderer_address,
       };
       return filteredGame;
     });
