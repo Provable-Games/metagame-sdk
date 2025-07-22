@@ -29,7 +29,7 @@ const PaginatedGamesList: React.FC = () => {
   } = useSubscribeGameTokens({
     // Optional filters
     soulbound: false,
-    hasContext: true,
+    // hasContext: true,
 
     // Built-in pagination with sorting
     pagination: {

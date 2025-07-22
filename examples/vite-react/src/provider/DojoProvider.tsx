@@ -57,6 +57,8 @@ export const DojoProvider = ({ children }: { children: ReactNode }) => {
     initialize();
   }, []);
 
+  console.log(dojoConfig);
+
   return (
     <DojoSdkProvider sdk={sdk!} dojoConfig={dojoConfig} clientFn={setupWorld}>
       {children}

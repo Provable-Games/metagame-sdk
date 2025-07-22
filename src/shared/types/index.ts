@@ -33,7 +33,6 @@ export interface GameTokenData {
     | {
         game_id: number;
         contract_address: string;
-        creator_token_id: number;
         name: string;
         description: string;
         developer: string;
@@ -41,6 +40,8 @@ export interface GameTokenData {
         genre: string;
         image: string;
         color?: string;
+        client_url?: string;
+        renderer_address?: string;
       }
     | undefined;
 }
@@ -48,7 +49,6 @@ export interface GameTokenData {
 export interface GameMetadata {
   game_id: number;
   contract_address: string;
-  creator_token_id: number;
   name: string;
   description: string;
   developer: string;
@@ -56,6 +56,8 @@ export interface GameMetadata {
   genre: string;
   image: string;
   color?: string;
+  client_url?: string;
+  renderer_address?: string;
 }
 
 export interface GameSettings {

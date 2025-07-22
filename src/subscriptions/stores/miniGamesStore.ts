@@ -3,10 +3,9 @@ import { feltToString } from '../../shared/lib';
 
 export interface MiniGameEntity {
   entityId: string;
-  GameMetadata?: {
+  GameMetadataUpdate?: {
     id: string | number; // This is the game_id
     contract_address: string;
-    creator_token_id: string | number;
     name: string;
     description: string;
     developer: string;
@@ -14,6 +13,8 @@ export interface MiniGameEntity {
     genre: string;
     image: string;
     color?: string;
+    client_url?: string;
+    renderer_address?: string;
   };
 }
 
@@ -21,7 +22,6 @@ export interface MiniGamesLookup {
   [game_id: string]: {
     game_id: number;
     contract_address: string;
-    creator_token_id: number;
     name: string;
     description: string;
     developer: string;
@@ -29,6 +29,8 @@ export interface MiniGamesLookup {
     genre: string;
     image: string;
     color?: string;
+    client_url?: string;
+    renderer_address?: string;
   };
 }
 
@@ -69,20 +71,20 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
     const miniGames: MiniGamesLookup = {};
 
     entities.forEach((entity) => {
-      const gameMetadata = entity.GameMetadata;
-      if (gameMetadata) {
-        const gameId = String(gameMetadata.id);
+      if (entity.GameMetadataUpdate) {
+        const gameId = String(entity.GameMetadataUpdate.id);
         const processedGame = {
-          game_id: Number(gameMetadata.id) || 0,
-          contract_address: gameMetadata.contract_address || '',
-          creator_token_id: Number(gameMetadata.creator_token_id) || 0,
-          name: feltToString(gameMetadata.name) || '',
-          description: gameMetadata.description || '',
-          developer: feltToString(gameMetadata.developer) || '',
-          publisher: feltToString(gameMetadata.publisher) || '',
-          genre: feltToString(gameMetadata.genre) || '',
-          image: gameMetadata.image || '',
-          color: gameMetadata.color,
+          game_id: Number(entity.GameMetadataUpdate.id) || 0,
+          contract_address: entity.GameMetadataUpdate.contract_address || '',
+          name: entity.GameMetadataUpdate.name || '',
+          description: entity.GameMetadataUpdate.description || '',
+          developer: entity.GameMetadataUpdate.developer || '',
+          publisher: entity.GameMetadataUpdate.publisher || '',
+          genre: entity.GameMetadataUpdate.genre || '',
+          image: entity.GameMetadataUpdate.image || '',
+          color: entity.GameMetadataUpdate.color,
+          client_url: entity.GameMetadataUpdate.client_url,
+          renderer_address: entity.GameMetadataUpdate.renderer_address,
         };
 
         miniGames[gameId] = processedGame;
@@ -101,24 +103,28 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
   },
 
   updateEntity: (entity: MiniGameEntity) => {
-    if (!entity.GameMetadata) return;
+    if (!entity.GameMetadataUpdate) return;
 
     const state = get();
-    const gameId = entity.GameMetadata.id.toString();
+    console.log(entity);
+    const gameId = entity.GameMetadataUpdate.id.toString();
+
+    console.log(entity);
 
     const updatedMiniGames = {
       ...state.miniGames,
       [gameId]: {
-        game_id: Number(entity.GameMetadata.id),
-        contract_address: entity.GameMetadata.contract_address,
-        creator_token_id: Number(entity.GameMetadata.creator_token_id) || 0,
-        name: feltToString(entity.GameMetadata.name),
-        description: entity.GameMetadata.description || '', // description is already a string
-        developer: feltToString(entity.GameMetadata.developer),
-        publisher: feltToString(entity.GameMetadata.publisher),
-        genre: feltToString(entity.GameMetadata.genre),
-        image: entity.GameMetadata.image || '',
-        color: entity.GameMetadata.color,
+        game_id: Number(entity.GameMetadataUpdate.id),
+        contract_address: entity.GameMetadataUpdate.contract_address,
+        name: entity.GameMetadataUpdate.name,
+        description: entity.GameMetadataUpdate.description || '', // description is already a string
+        developer: entity.GameMetadataUpdate.developer,
+        publisher: entity.GameMetadataUpdate.publisher,
+        genre: entity.GameMetadataUpdate.genre,
+        image: entity.GameMetadataUpdate.image || '',
+        color: entity.GameMetadataUpdate.color,
+        client_url: entity.GameMetadataUpdate.client_url,
+        renderer_address: entity.GameMetadataUpdate.renderer_address,
       },
     };
 
@@ -139,20 +145,20 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
 
   updateMiniGames: (entities: MiniGameEntity[]) => {
     const miniGames = entities.reduce((acc, entity) => {
-      const gameMetadata = entity.GameMetadata;
-      if (gameMetadata) {
-        const gameId = String(gameMetadata.id);
+      if (entity.GameMetadataUpdate) {
+        const gameId = String(entity.GameMetadataUpdate.id);
         const processedGame = {
-          game_id: Number(gameMetadata.id) || 0,
-          contract_address: gameMetadata.contract_address || '',
-          creator_token_id: Number(gameMetadata.creator_token_id) || 0,
-          name: feltToString(gameMetadata.name) || '',
-          description: gameMetadata.description || '',
-          developer: feltToString(gameMetadata.developer) || '',
-          publisher: feltToString(gameMetadata.publisher) || '',
-          genre: feltToString(gameMetadata.genre) || '',
-          image: gameMetadata.image || '',
-          color: gameMetadata.color,
+          game_id: Number(entity.GameMetadataUpdate.id) || 0,
+          contract_address: entity.GameMetadataUpdate.contract_address || '',
+          name: entity.GameMetadataUpdate.name || '',
+          description: entity.GameMetadataUpdate.description || '',
+          developer: entity.GameMetadataUpdate.developer || '',
+          publisher: entity.GameMetadataUpdate.publisher || '',
+          genre: entity.GameMetadataUpdate.genre || '',
+          image: entity.GameMetadataUpdate.image || '',
+          color: entity.GameMetadataUpdate.color,
+          client_url: entity.GameMetadataUpdate.client_url,
+          renderer_address: entity.GameMetadataUpdate.renderer_address,
         };
 
         acc[gameId] = processedGame;
@@ -175,14 +181,6 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
       filtered = Object.fromEntries(
         Object.entries(filtered).filter(([_, game]) =>
           filter.gameAddresses!.includes(game.contract_address)
-        )
-      );
-    }
-
-    if (filter.creatorTokenId !== undefined) {
-      filtered = Object.fromEntries(
-        Object.entries(filtered).filter(
-          ([_, game]) => game.creator_token_id === filter.creatorTokenId
         )
       );
     }

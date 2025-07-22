@@ -15,7 +15,7 @@ export * from './queries/sdk';
 
 // Types
 export type {
-  GameEntity,
+  EntityData,
   MiniGameEntity,
   SettingsEntity,
   ObjectiveEntity,

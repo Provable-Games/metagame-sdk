@@ -1,8 +1,9 @@
-import { getMetagameClient } from '../../shared/singleton';
-import { useEntitySubscription } from '../../shared/dojo/hooks/useEntitySubscription';
+import { getMetagameClientSafe } from '../../shared/singleton';
+import { useEventSubscription } from '../../shared/dojo/hooks/useEventSubscription';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useMiniGamesStore } from '../stores/miniGamesStore';
 import { miniGamesQuery } from '../queries/sdk';
+import { type GameMetadata } from '../../shared/types';
 
 export interface UseSubscribeMiniGamesParams {
   enabled?: boolean;
@@ -35,21 +36,7 @@ export interface PaginationControls {
   lastPage: () => void; // Go to last page
 }
 
-type MiniGamesRecord = Record<
-  string,
-  {
-    game_id: number;
-    contract_address: string;
-    creator_token_id: number;
-    name: string;
-    description: string;
-    developer: string;
-    publisher: string;
-    genre: string;
-    image: string;
-    color?: string;
-  }
->;
+type MiniGamesRecord = Record<string, GameMetadata>;
 
 export interface UseSubscribeMiniGamesResult {
   // Subscription status
@@ -70,7 +57,7 @@ export interface UseSubscribeMiniGamesResult {
 export function useSubscribeMiniGames(
   params: UseSubscribeMiniGamesParams = {}
 ): UseSubscribeMiniGamesResult {
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
   const { enabled = true, logging = false, gameAddresses, creatorTokenId, pagination } = params;
 
   // Pagination state
@@ -81,26 +68,40 @@ export function useSubscribeMiniGames(
   const sortBy = pagination?.sortBy ?? 'name';
   const sortOrder = pagination?.sortOrder ?? 'asc';
 
-  const query = miniGamesQuery({ namespace: client.getNamespace() });
+  // Create query only if client is available
+  const query = client ? miniGamesQuery({ namespace: client.getNamespace() }) : null;
 
-  const { entities, isSubscribed, error } = useEntitySubscription(client, {
-    query,
-    namespace: client.getNamespace(),
-    enabled,
+  console.log(query);
+  console.log('client', client);
+
+  const {
+    entities: events,
+    isSubscribed,
+    error,
+  } = useEventSubscription(client, {
+    query: query || { keys: [], entityModels: [], eventModels: [] },
+    namespace: client?.getNamespace() || '',
+    enabled: enabled && !!client,
     logging,
     transform: (entity: any) => {
+      if (!client) return entity;
+
       const { entityId, models } = entity;
+      console.log(models);
       const transformed = {
         entityId,
         ...models[client.getNamespace()],
       };
 
       // Call our store's updateEntity for real-time updates
+      console.log('transformed', transformed);
       updateEntity(transformed);
 
       return transformed;
     },
   });
+
+  console.log(events, error, isSubscribed);
 
   const {
     initializeStore,
@@ -114,11 +115,11 @@ export function useSubscribeMiniGames(
 
   // Initialize store with all entities on first load
   useEffect(() => {
-    if (entities && entities.length > 0) {
-      console.log('Initializing mini games store with', entities.length, 'entities');
-      initializeStore(entities);
+    if (events && events.length > 0) {
+      console.log('Initializing mini games store with', events.length, 'entities');
+      initializeStore(events);
     }
-  }, [entities, initializeStore]);
+  }, [events, initializeStore]);
 
   // Apply filters to get filtered mini games (updated for new structure)
   const filteredMiniGames = getMiniGamesByFilter({
@@ -151,10 +152,6 @@ export function useSubscribeMiniGames(
         case 'genre':
           aValue = (gameA.genre || '').toLowerCase();
           bValue = (gameB.genre || '').toLowerCase();
-          break;
-        case 'creator_token_id':
-          aValue = gameA.creator_token_id || 0;
-          bValue = gameB.creator_token_id || 0;
           break;
         default:
           return 0;
@@ -251,6 +248,37 @@ export function useSubscribeMiniGames(
       lastPage,
     ]
   );
+
+  // Return empty state if client is not ready
+  if (!client) {
+    return {
+      // Subscription status
+      isSubscribed: false,
+      error: null,
+
+      // Store data (empty)
+      miniGames: {},
+      allMiniGames: {},
+      getMiniGameData,
+      getMiniGameByContractAddress,
+      isInitialized: false,
+
+      // Pagination controls (default state)
+      pagination: {
+        currentPage: 0,
+        pageSize,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+        goToPage,
+        nextPage,
+        previousPage,
+        firstPage,
+        lastPage,
+      },
+    };
+  }
 
   return {
     // Subscription status

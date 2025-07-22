@@ -25,8 +25,6 @@ const Navigation: React.FC = () => {
   const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
   const { chain } = useNetwork();
 
-  console.log(chain);
-
   // Network configurations
   const networks = [
     {
@@ -77,6 +75,8 @@ const Navigation: React.FC = () => {
     { path: '/settings', label: 'Settings' },
     { path: '/objectives', label: 'Objectives' },
   ];
+
+  console.log(connectors, address);
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">

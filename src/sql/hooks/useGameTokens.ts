@@ -24,6 +24,9 @@ export const useGameTokens = ({
   offset = 0,
 }: GameTokensQueryParams): SqlQueryResult<GameTokenData> => {
   const client = getMetagameClient();
+  const toriiUrl = client.getConfig().toriiUrl;
+  
+  console.log('[useGameTokens] Using toriiUrl:', toriiUrl);
 
   const query = gamesQuery({
     namespace: client.getNamespace(),
@@ -40,7 +43,7 @@ export const useGameTokens = ({
     loading,
     error: queryError,
     refetch,
-  } = useSqlQuery(client.getConfig().toriiUrl, query);
+  } = useSqlQuery(toriiUrl, query, true);
 
   const error = queryError;
 

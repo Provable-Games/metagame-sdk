@@ -1,110 +1,45 @@
-import { StarknetConfig, jsonRpcProvider } from '@starknet-react/core';
-import { ControllerConnector } from '@cartridge/connector';
+'use client';
+import { useEffect, useState, useMemo } from 'react';
 import { Chain } from '@starknet-react/chains';
-import { CHAINS, ChainId, DojoChainConfig, getDefaultChainId } from '../dojo/setup/networks';
-import { manifests, namespace } from '../dojo/setup/config';
-import { useMemo, useRef } from 'react';
-import { DojoManifest } from '../dojo/hooks/useDojoSystem';
-import { SessionPolicies } from '@cartridge/controller';
-import { stringToFelt, toTitleCase } from '../lib';
+import { jsonRpcProvider, StarknetConfig, argent, braavos } from '@starknet-react/core';
+import React from 'react';
+import { ChainId, CHAINS, getDefaultChainId } from '../dojo/setup/networks';
+import {
+  predeployedAccounts,
+  PredeployedAccountsConnector,
+} from '@dojoengine/predeployed-connector';
+import { initializeController } from '../dojo/setup/controller';
+import { manifests } from '../dojo/setup/config';
 
-// Helper function to clean up Cartridge iframes
-function cleanupCartridgeIframes() {
-  try {
-    const iframes = document.querySelectorAll(
-      'iframe[src*="cartridge"], iframe[src*="keychain"], iframe[src*="profile"]'
-    );
-    iframes.forEach((iframe) => iframe.remove());
-
-    const containers = document.querySelectorAll('[data-cartridge], .cartridge-container');
-    containers.forEach((container) => container.remove());
-  } catch (error) {
-    console.error('Error cleaning up Cartridge iframes:', error);
+// Initialize controller outside component
+const initController = () => {
+  if (getDefaultChainId() === ChainId.KATANA_LOCAL) {
+    return undefined;
   }
-}
 
-function useDynamicControllerConnector(networkConfig: DojoChainConfig) {
-  const previousConnectorRef = useRef<ControllerConnector | null>(null);
-
-  return useMemo(() => {
-    // Clean up any existing Cartridge iframes first
-    cleanupCartridgeIframes();
-
-    // Clean up previous connector reference
-    if (previousConnectorRef.current) {
-      previousConnectorRef.current = null;
-    }
-
-    // Get all available networks for the connector
+  try {
     const chainRpcUrls: { rpcUrl: string }[] = Object.values(CHAINS)
       .filter((chain) => chain.chainId !== ChainId.KATANA_LOCAL)
       .map((chain) => ({
         rpcUrl: chain?.chain?.rpcUrls.default.http[0] ?? '',
       }));
 
-    console.log(chainRpcUrls);
+    return initializeController(chainRpcUrls, getDefaultChainId(), manifests[getDefaultChainId()]);
+  } catch (error) {
+    console.error(`Failed to initialize controller for chain ${getDefaultChainId()}:`, error);
+    return undefined;
+  }
+};
 
-    const _makeControllerPolicies = (manifest: DojoManifest): SessionPolicies => {
-      const policies: SessionPolicies = { contracts: {} };
-      // contracts
-      manifest?.contracts?.forEach((contract: any) => {
-        if (!policies.contracts) policies.contracts = {};
-        policies.contracts[contract.address] = {
-          methods: contract.systems
-            // .filter((system: string) => !exclusions.includes(system))
-            .map((system: string) => ({
-              name: toTitleCase(system), // You'll need to implement toTitleCase
-              entrypoint: system,
-              description: `${contract.tag}::${system}()`,
-            })),
-        };
-      });
+// Initialize controller once
+const controller = initController();
 
-      return policies;
-    };
+export function StarknetProvider({ children }: { children: React.ReactNode }) {
+  const [predeployedConnectors, setPredeployedConnectors] = useState<
+    PredeployedAccountsConnector[]
+  >([]);
+  const defaultChainId = getDefaultChainId();
 
-    // Create connector
-    let connector: ControllerConnector;
-    try {
-      const policies = _makeControllerPolicies(manifests[networkConfig.chainId as ChainId]);
-      connector = new ControllerConnector({
-        policies: policies,
-        namespace: namespace[networkConfig.chainId as ChainId],
-        slot: networkConfig.toriiTokensUrl,
-        preset: 'loot-survivor',
-        chains: chainRpcUrls,
-        defaultChainId: stringToFelt(networkConfig.chainId as string).toString(),
-        // tokens: [],
-      });
-
-      // Try to manually create the iframe if it doesn't exist in DOM
-      const keychainIframe = (connector as any).controller?.iframes?.keychain;
-      if (keychainIframe && keychainIframe.iframe && !document.contains(keychainIframe.iframe)) {
-        try {
-          if (keychainIframe.container && document.contains(keychainIframe.container)) {
-            keychainIframe.container.appendChild(keychainIframe.iframe);
-          } else if (keychainIframe.container) {
-            document.body.appendChild(keychainIframe.container);
-          } else {
-            document.body.appendChild(keychainIframe.iframe);
-          }
-        } catch (error) {
-          console.error('Error manually appending iframe:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error creating ControllerConnector:', error);
-      throw error;
-    }
-
-    // Store reference for next cleanup
-    previousConnectorRef.current = connector;
-
-    return connector;
-  }, [networkConfig]);
-}
-
-export const StarknetProvider = ({ children }: { children: React.ReactNode }) => {
   // Create provider with memoization
   const provider = jsonRpcProvider({
     rpc: (chain: Chain) => {
@@ -131,8 +66,21 @@ export const StarknetProvider = ({ children }: { children: React.ReactNode }) =>
     },
   });
 
-  const defaultChainId = getDefaultChainId();
+  // Initialize predeployed accounts for Katana
+  useEffect(() => {
+    if (defaultChainId === ChainId.KATANA_LOCAL) {
+      const rpcUrl = CHAINS[defaultChainId]?.chain?.rpcUrls.default.http[0];
+      if (rpcUrl) {
+        predeployedAccounts({
+          rpc: rpcUrl,
+          id: 'katana',
+          name: 'Katana',
+        }).then(setPredeployedConnectors);
+      }
+    }
+  }, [defaultChainId]);
 
+  // Prepare chains based on environment
   const chains = useMemo(() => {
     if (defaultChainId === ChainId.KATANA_LOCAL) {
       return [CHAINS[ChainId.KATANA_LOCAL].chain!];
@@ -143,11 +91,30 @@ export const StarknetProvider = ({ children }: { children: React.ReactNode }) =>
       .filter(Boolean); // Filter out any undefined chains
   }, [defaultChainId]);
 
-  const controllerConnector = useDynamicControllerConnector(CHAINS[defaultChainId]);
+  // Combine all available connectors
+  const connectors = useMemo(() => {
+    const availableConnectors = [];
+
+    if (getDefaultChainId() !== ChainId.KATANA_LOCAL && controller) {
+      availableConnectors.push(controller);
+      // availableConnectors.push(argent());
+      // availableConnectors.push(braavos());
+    }
+
+    return [...availableConnectors, ...predeployedConnectors].filter(Boolean);
+  }, [predeployedConnectors]);
+
+  // Get default provider chain
+  const defaultChain = CHAINS[defaultChainId]?.chain;
+
+  if (!defaultChain) {
+    console.error(`No chain configuration found for ${defaultChainId}`);
+    return null;
+  }
 
   return (
-    <StarknetConfig chains={chains} connectors={[controllerConnector]} provider={provider}>
+    <StarknetConfig autoConnect chains={chains} connectors={connectors} provider={provider}>
       {children}
     </StarknetConfig>
   );
-};
+}

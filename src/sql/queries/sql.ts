@@ -11,7 +11,7 @@ export const miniGamesQuery = ({
 }) => {
   return `
   SELECT *
-  FROM '${namespace}-GameMetadata'
+  FROM '${namespace}-GameMetadataUpdate'
   ${gameAddresses ? `WHERE contract_address IN (${gameAddresses.map((address) => `'${address}'`).join(',')})` : ''}
   LIMIT ${limit}
   OFFSET ${offset}
@@ -104,19 +104,19 @@ export const gamesQuery = ({
     gm.genre as game_metadata_genre,
     gm.image as game_metadata_image,
     gm.color as game_metadata_color
-  FROM '${namespace}-Owners' o
-  LEFT JOIN '${namespace}-TokenMetadata' tm ON tm.id = o.token_id
-  LEFT JOIN '${namespace}-GameRegistry' gr on gr.id = tm.game_id
-  LEFT JOIN '${namespace}-ScoreUpdate' s on s.token_id = o.token_id
-  LEFT JOIN '${namespace}-TokenPlayerName' pn on pn.id = o.token_id
-  LEFT JOIN '${namespace}-TokenContextData' tc on tc.token_id = o.token_id
-  LEFT JOIN '${namespace}-SettingsData' sd on sd.settings_id = tm.settings_id
-  LEFT JOIN '${namespace}-TokenObjective' tobj ON tobj.id = o.token_id
-  LEFT JOIN '${namespace}-ObjectiveData' od ON od.objective_id = tobj.objective_id AND od.game_id = tm.game_id
-  LEFT JOIN '${namespace}-GameMetadata' gm on gm.id = tm.game_id
-  LEFT JOIN '${namespace}-TokenRenderer' tr on tr.id = o.token_id
-  LEFT JOIN '${namespace}-TokenClientUrl' tcu on tcu.id = o.token_id
-  LEFT JOIN '${namespace}-MinterRegistryId' mr on mr.id = tm.minted_by
+  FROM '${namespace}-OwnersUpdate' o
+  LEFT JOIN '${namespace}-TokenMetadataUpdate' tm ON tm.id = o.token_id
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.id = tm.game_id
+  LEFT JOIN '${namespace}-TokenScoreUpdate' s on s.token_id = o.token_id
+  LEFT JOIN '${namespace}-TokenPlayerNameUpdate' pn on pn.id = o.token_id
+  LEFT JOIN '${namespace}-TokenContextUpdate' tc on tc.token_id = o.token_id
+  LEFT JOIN '${namespace}-SettingsCreated' sd on sd.settings_id = tm.settings_id
+  LEFT JOIN '${namespace}-ObjectiveUpdate' tobj ON tobj.id = o.token_id
+  LEFT JOIN '${namespace}-ObjectiveCreated' od ON od.objective_id = tobj.objective_id AND od.game_id = tm.game_id
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = tm.game_id
+  LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = o.token_id
+  LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = o.token_id
+  LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
   LEFT JOIN tokens t ON SUBSTR(t.token_id, INSTR(t.token_id, ':') + 1) = o.token_id
   ${whereClause}
   GROUP BY 
@@ -143,9 +143,9 @@ export const gameSettingsQuery = ({
 }: GameSettingsQueryParams) => {
   let query = `
   SELECT *
-  FROM '${namespace}-SettingsData' sd
-  LEFT JOIN '${namespace}-GameRegistry' gr on gr.id = sd.game_id
-  LEFT JOIN '${namespace}-GameMetadata' gm on gm.id = gr.id
+  FROM '${namespace}-SettingsCreated' sd
+  LEFT JOIN '${namespace}-GameIdMappingUpdate' gr on gr.id = sd.game_id
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
   `;
 
   const conditions = [];
@@ -186,9 +186,9 @@ export const objectivesQuery = ({
 }: ObjectivesQueryParams) => {
   let query = `
   SELECT *
-  FROM '${namespace}-ObjectiveData' od
-  LEFT JOIN '${namespace}-GameRegistry' gr on gr.id = od.game_id
-  LEFT JOIN '${namespace}-GameMetadata' gm on gm.id = gr.id
+  FROM '${namespace}-ObjectiveCreated' od
+  LEFT JOIN '${namespace}-GameIdMappingUpdate' gr on gr.id = od.game_id
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
   `;
 
   const conditions = [];

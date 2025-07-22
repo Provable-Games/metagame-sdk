@@ -19,17 +19,23 @@ export const MetagameProvider = ({ children }: { children: ReactNode }) => {
     const manifest = manifests[chainId as ChainId];
 
     async function initialize() {
-      // Simple initialization - no provider required!
+      console.log(`[MetagameProvider] Initializing for network: ${chainId}`);
+      console.log(`[MetagameProvider] toriiUrl: ${selectedChainConfig.toriiUrl}`);
+
+      // Simple initialization - SDK now handles network changes automatically!
       const metagameClient = await initMetagame({
         toriiUrl: selectedChainConfig.toriiUrl!,
         worldAddress: manifest.world.address,
       });
 
+      console.log(
+        `[MetagameProvider] Metagame client initialized with toriiUrl: ${metagameClient.getToriiUrl()}`
+      );
       setMetagameClient(metagameClient);
     }
 
     initialize();
-  }, []);
+  }, [chain]);
 
   if (!metagameClient) {
     return <div>Loading...</div>;

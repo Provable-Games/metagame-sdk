@@ -5,37 +5,37 @@ export const gamesQuery = ({ namespace }: { namespace: string }) => {
     .withClause(
       KeysClause(
         [
-          `${namespace}-Owners`,
+          `${namespace}-OwnersUpdate`,
           `${namespace}-TokenMetadataUpdate`,
-          `${namespace}-GameIdMappingUpdate`,
-          `${namespace}-PlayerNameUpdate`,
-          `${namespace}-ScoreUpdate`,
-          `${namespace}-ContextUpdated`,
+          `${namespace}-GameRegistryUpdate`,
+          `${namespace}-TokenPlayerNameUpdate`,
+          `${namespace}-TokenScoreUpdate`,
+          `${namespace}-TokenContextUpdate`,
           `${namespace}-SettingsCreated`,
           `${namespace}-ObjectiveUpdate`,
           `${namespace}-ObjectiveCreated`,
           `${namespace}-TokenRendererUpdate`,
-          `${namespace}-ClientUrlUpdate`,
+          `${namespace}-TokenClientUrlUpdate`,
           `${namespace}-GameMetadataUpdate`,
-          `${namespace}-MinterAdded`,
+          `${namespace}-MinterRegistryUpdate`,
         ],
         []
       ).build()
     )
     .withEntityModels([
-      `${namespace}-Owners`,
+      `${namespace}-OwnersUpdate`,
       `${namespace}-TokenMetadataUpdate`,
-      `${namespace}-GameIdMappingUpdate`,
-      `${namespace}-PlayerNameUpdate`,
-      `${namespace}-ScoreUpdate`,
-      `${namespace}-ContextUpdated`,
+      `${namespace}-GameRegistryUpdate`,
+      `${namespace}-TokenPlayerNameUpdate`,
+      `${namespace}-TokenScoreUpdate`,
+      `${namespace}-TokenContextUpdate`,
       `${namespace}-SettingsCreated`,
       `${namespace}-ObjectiveUpdate`,
       `${namespace}-ObjectiveCreated`,
       `${namespace}-TokenRendererUpdate`,
-      `${namespace}-ClientUrlUpdate`,
+      `${namespace}-TokenClientUrlUpdate`,
       `${namespace}-GameMetadataUpdate`,
-      `${namespace}-MinterAdded`,
+      `${namespace}-MinterRegistryUpdate`,
     ])
     .includeHashedKeys()
     .withLimit(10000);

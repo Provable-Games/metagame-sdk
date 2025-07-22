@@ -3,7 +3,7 @@ import { useMiniGamesStore } from './miniGamesStore';
 
 export interface SettingsEntity {
   entityId: string;
-  SettingsData?: {
+  SettingsCreated?: {
     settings_id: number;
     game_id?: number;
     data: any; // Settings data can be object or string
@@ -40,7 +40,6 @@ export interface SettingsLookup {
     gameMetadata: {
       game_id: number;
       contract_address: string;
-      creator_token_id: number;
       name: string;
       description: string;
       developer: string;
@@ -48,6 +47,8 @@ export interface SettingsLookup {
       genre: string;
       image: string;
       color?: string;
+      client_url?: string;
+      renderer_address?: string;
     } | null;
     name: string;
     description: string;
@@ -84,10 +85,10 @@ function buildSettingsFromEntities(entities: SettingsEntity[]): SettingsLookup {
   const miniGamesStore = useMiniGamesStore.getState();
 
   entities.forEach((entity) => {
-    if (entity.SettingsData?.settings_id) {
-      const settingsId = entity.SettingsData.settings_id.toString();
-      const parsedData = parseSettingsData(entity.SettingsData.data);
-      const gameId = entity.SettingsData.game_id || 0;
+    if (entity.SettingsCreated?.settings_id) {
+      const settingsId = entity.SettingsCreated.settings_id.toString();
+      const parsedData = parseSettingsData(entity.SettingsCreated.data);
+      const gameId = entity.SettingsCreated.game_id || 0;
 
       // Get the complete mini game data
       const gameMetadata = miniGamesStore.getMiniGameData(gameId);
@@ -126,11 +127,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   updateEntity: (entity: SettingsEntity) => {
-    if (!entity.SettingsData?.settings_id) return;
+    if (!entity.SettingsCreated?.settings_id) return;
 
-    const settingsId = entity.SettingsData.settings_id.toString();
-    const parsedData = parseSettingsData(entity.SettingsData.data);
-    const gameId = entity.SettingsData.game_id || 0;
+    const settingsId = entity.SettingsCreated.settings_id.toString();
+    const parsedData = parseSettingsData(entity.SettingsCreated.data);
+    const gameId = entity.SettingsCreated.game_id || 0;
 
     // Get the mini games store to get complete game metadata
     const miniGamesStore = useMiniGamesStore.getState();
