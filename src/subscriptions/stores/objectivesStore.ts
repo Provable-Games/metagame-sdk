@@ -4,9 +4,12 @@ import { useMiniGamesStore } from './miniGamesStore';
 export interface ObjectiveEntity {
   entityId: string;
   ObjectiveCreated?: {
-    objective_id: number;
-    game_id: number;
-    data: string;
+    objective_id: number | string;
+    game_id?: number | string;
+    game_address?: string;
+    creator_address?: string;
+    objective_data: string;
+    data?: string; // Legacy field for backward compatibility
   };
 }
 
@@ -62,13 +65,26 @@ function buildObjectivesFromEntities(entities: ObjectiveEntity[]): ObjectivesLoo
   entities.forEach((entity) => {
     if (entity.ObjectiveCreated?.objective_id) {
       const objectiveId = entity.ObjectiveCreated.objective_id.toString();
-      const gameId = entity.ObjectiveCreated.game_id;
-
-      // Get the complete mini game data
-      const gameMetadata = miniGamesStore.getMiniGameData(gameId);
+      
+      // Get objective data (from objective_data or legacy data field)
+      const objectiveData = entity.ObjectiveCreated.objective_data || entity.ObjectiveCreated.data || '';
+      
+      // First try to get game_id directly, then try to find by game_address
+      let gameId = Number(entity.ObjectiveCreated.game_id) || 0;
+      let gameMetadata = null;
+      
+      if (gameId && gameId !== 0) {
+        gameMetadata = miniGamesStore.getMiniGameData(gameId);
+      } else if (entity.ObjectiveCreated.game_address) {
+        // Try to find game by contract address
+        gameMetadata = miniGamesStore.getMiniGameByContractAddress(entity.ObjectiveCreated.game_address);
+        if (gameMetadata) {
+          gameId = gameMetadata.game_id;
+        }
+      }
 
       objectives[objectiveId] = {
-        data: entity.ObjectiveCreated.data,
+        data: objectiveData,
         game_id: gameId,
         gameMetadata: gameMetadata,
       };
@@ -102,14 +118,37 @@ export const useObjectivesStore = create<ObjectivesState>((set, get) => ({
     if (!entity.ObjectiveCreated?.objective_id) return;
 
     const objectiveId = entity.ObjectiveCreated.objective_id.toString();
-    const gameId = entity.ObjectiveCreated.game_id;
-
+    
+    // Get objective data (from objective_data or legacy data field)
+    const objectiveData = entity.ObjectiveCreated.objective_data || entity.ObjectiveCreated.data || '';
+    
     // Get the mini games store to get complete game metadata
     const miniGamesStore = useMiniGamesStore.getState();
-    const gameMetadata = miniGamesStore.getMiniGameData(gameId);
+    
+    // First try to get game_id directly, then try to find by game_address
+    let gameId = Number(entity.ObjectiveCreated.game_id) || 0;
+    let gameMetadata = null;
+    
+    if (gameId && gameId !== 0) {
+      gameMetadata = miniGamesStore.getMiniGameData(gameId);
+    } else if (entity.ObjectiveCreated.game_address) {
+      // Try to find game by contract address
+      gameMetadata = miniGamesStore.getMiniGameByContractAddress(entity.ObjectiveCreated.game_address);
+      if (gameMetadata) {
+        gameId = gameMetadata.game_id;
+      }
+    }
+    
+    console.log('Objective update:', {
+      objectiveId,
+      gameId,
+      game_address: entity.ObjectiveCreated.game_address,
+      objectiveData,
+      gameMetadata
+    });
 
     const objectiveDataForStore = {
-      data: entity.ObjectiveCreated.data,
+      data: objectiveData,
       game_id: gameId,
       gameMetadata: gameMetadata,
     };

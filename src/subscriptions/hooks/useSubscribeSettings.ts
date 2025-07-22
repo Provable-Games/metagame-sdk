@@ -101,6 +101,8 @@ export function useSubscribeSettings(
     },
   });
 
+  console.log('settings entities', entities);
+
   const {
     initializeStore,
     updateEntity,

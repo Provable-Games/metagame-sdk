@@ -81,6 +81,8 @@ export function useSubscribeObjectives(
 
   const query = objectivesQuery({ namespace: client.getNamespace() });
 
+  console.log('objectives query', query);
+
   const { entities, isSubscribed, error } = useEventSubscription(client, {
     query,
     namespace: client.getNamespace(),
@@ -93,12 +95,16 @@ export function useSubscribeObjectives(
         ...models[client.getNamespace()],
       };
 
+      console.log('objectives entity', transformed);
+
       // Call our store's updateEntity for real-time updates
       updateEntity(transformed);
 
       return transformed;
     },
   });
+
+  console.log('objectives entities', entities);
 
   const {
     initializeStore,

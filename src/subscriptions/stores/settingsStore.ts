@@ -4,32 +4,43 @@ import { useMiniGamesStore } from './miniGamesStore';
 export interface SettingsEntity {
   entityId: string;
   SettingsCreated?: {
-    settings_id: number;
-    game_id?: number;
-    data: any; // Settings data can be object or string
+    settings_id: number | string;
+    game_id?: number | string;
+    game_address?: string;
+    creator_address?: string;
+    settings_data: any; // Settings data can be object or string
+    data?: any; // Legacy field for backward compatibility
   };
 }
 
 // Helper function to parse and normalize settings data
 const parseSettingsData = (rawData: any): { name: string; description: string; data: any } => {
-  if (!rawData) return { name: '', description: '', data: {} };
+  if (!rawData) {
+    console.log('parseSettingsData: No raw data provided');
+    return { name: '', description: '', data: {} };
+  }
 
   try {
     // If it's already an object, use it directly
     const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+    
+    console.log('parseSettingsData: Parsed data:', parsed);
 
     // Handle the current structure: {Name, Description, Settings: {}}
     const name = parsed.Name || '';
     const description = parsed.Description || '';
     const settings = parsed.Settings || parsed; // Fallback to the whole object if no Settings key
 
-    return {
+    const result = {
       name,
       description,
       data: settings,
     };
+    
+    console.log('parseSettingsData: Result:', result);
+    return result;
   } catch (error) {
-    console.warn('Failed to parse settings data:', error);
+    console.warn('Failed to parse settings data:', error, 'Raw data:', rawData);
     return { name: '', description: '', data: rawData };
   }
 };
@@ -87,11 +98,21 @@ function buildSettingsFromEntities(entities: SettingsEntity[]): SettingsLookup {
   entities.forEach((entity) => {
     if (entity.SettingsCreated?.settings_id) {
       const settingsId = entity.SettingsCreated.settings_id.toString();
-      const parsedData = parseSettingsData(entity.SettingsCreated.data);
-      const gameId = entity.SettingsCreated.game_id || 0;
-
-      // Get the complete mini game data
-      const gameMetadata = miniGamesStore.getMiniGameData(gameId);
+      const parsedData = parseSettingsData(entity.SettingsCreated.settings_data || entity.SettingsCreated.data);
+      
+      // First try to get game_id directly, then try to find by game_address
+      let gameId = Number(entity.SettingsCreated.game_id) || 0;
+      let gameMetadata = null;
+      
+      if (gameId && gameId !== 0) {
+        gameMetadata = miniGamesStore.getMiniGameData(gameId);
+      } else if (entity.SettingsCreated.game_address) {
+        // Try to find game by contract address
+        gameMetadata = miniGamesStore.getMiniGameByContractAddress(entity.SettingsCreated.game_address);
+        if (gameMetadata) {
+          gameId = gameMetadata.game_id;
+        }
+      }
 
       settings[settingsId] = {
         game_id: gameId,
@@ -130,8 +151,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (!entity.SettingsCreated?.settings_id) return;
 
     const settingsId = entity.SettingsCreated.settings_id.toString();
-    const parsedData = parseSettingsData(entity.SettingsCreated.data);
-    const gameId = entity.SettingsCreated.game_id || 0;
+    const parsedData = parseSettingsData(entity.SettingsCreated.settings_data || entity.SettingsCreated.data);
+    const gameId = Number(entity.SettingsCreated.game_id) || 0;
 
     // Get the mini games store to get complete game metadata
     const miniGamesStore = useMiniGamesStore.getState();
