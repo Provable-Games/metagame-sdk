@@ -31,9 +31,6 @@ export const DojoProvider = ({ children }: { children: ReactNode }) => {
     toriiUrl: selectedChainConfig.toriiUrl,
   });
 
-  console.log(manifests);
-  console.log(chainId);
-
   useEffect(() => {
     async function initialize() {
       const dojoSdk = await init<SchemaType>({
@@ -55,9 +52,7 @@ export const DojoProvider = ({ children }: { children: ReactNode }) => {
     }
 
     initialize();
-  }, []);
-
-  console.log(dojoConfig);
+  }, [selectedChainConfig, chainId]);
 
   return (
     <DojoSdkProvider sdk={sdk!} dojoConfig={dojoConfig} clientFn={setupWorld}>

@@ -1,3 +1,5 @@
+import { padAddress } from '../../shared/lib';
+
 export const miniGamesQuery = ({
   namespace,
   gameAddresses,
@@ -32,6 +34,7 @@ interface GamesQueryParams {
   gameAddresses?: string[];
   tokenIds?: string[];
   hasContext?: boolean;
+  mintedByAddress?: string;
   limit?: number;
   offset?: number;
 }
@@ -42,6 +45,7 @@ export const gamesQuery = ({
   gameAddresses,
   tokenIds,
   hasContext,
+  mintedByAddress,
   limit = 100,
   offset = 0,
 }: GamesQueryParams) => {
@@ -59,11 +63,15 @@ export const gamesQuery = ({
   }
 
   if (tokenIds && tokenIds.length > 0) {
-    conditions.push(`o.id IN (${tokenIds.map((id) => `'${id}'`).join(',')})`);
+    conditions.push(`tm.id IN (${tokenIds.map((id) => `'${id}'`).join(',')})`);
   }
 
   if (hasContext) {
     conditions.push(`tm.has_context = 1`);
+  }
+
+  if (mintedByAddress) {
+    conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
   }
 
   // Create WHERE clause only if there are conditions

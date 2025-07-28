@@ -36,3 +36,18 @@ export const bigintToHex = (v: BigNumberish | null | undefined): `0x${string}` =
 export function indexAddress(address: string) {
   return address.replace(/^0x0+/, '0x');
 }
+
+export function padAddress(address: string) {
+  if (address && address !== '') {
+    const length = address.length;
+    const neededLength = 66 - length;
+    let zeros = '';
+    for (var i = 0; i < neededLength; i++) {
+      zeros += '0';
+    }
+    const newHex = address.substring(0, 2) + zeros + address.substring(2);
+    return newHex;
+  } else {
+    return '';
+  }
+}

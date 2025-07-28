@@ -22,6 +22,7 @@ export interface UseSubscribeGameTokensParams {
   objective_id?: string;
   enabled?: boolean;
   pollingInterval?: number;
+  minted_by_address?: string; // Add minted by address
 
   // Pagination parameters
   pagination?: {
@@ -79,6 +80,7 @@ export function useSubscribeGameTokens(
     soulbound,
     objective_id,
     pagination,
+    minted_by_address,
   } = params;
 
   // Ensure mini games store is initialized for gameMetadata relationships
@@ -111,7 +113,10 @@ export function useSubscribeGameTokens(
   const { getMiniGameData } = useMiniGamesStore();
 
   // Create query only if client is available
-  const query = client ? gamesQuery({ namespace: client.getNamespace() }) : null;
+  const query = useMemo(() => {
+    if (!client) return null;
+    return gamesQuery({ namespace: client.getNamespace() });
+  }, [client]);
 
   // Subscribe to events for real-time updates with custom callback
   const {
@@ -124,14 +129,14 @@ export function useSubscribeGameTokens(
     enabled: enabled && !!client,
     transform: (entity: any) => {
       if (!client) return entity;
-      
+
       const { entityId, models } = entity;
       console.log('Raw models from subscription:', models);
       const transformed = {
         entityId,
         ...models[client.getNamespace()],
       };
-      
+
       // Log specific TokenMetadataUpdate events
       if (transformed.TokenMetadataUpdate) {
         console.log('TokenMetadataUpdate event received:', {
@@ -182,6 +187,7 @@ export function useSubscribeGameTokens(
       completed_all_objectives,
       soulbound,
       objective_id,
+      minted_by_address,
     });
 
     // Populate gameMetadata from mini games store
@@ -249,7 +255,7 @@ export function useSubscribeGameTokens(
       'useSubscribeGameTokens: filtered and sorted games:',
       sortedGames.length,
       `sorted by ${sortBy} ${sortOrder}`,
-      sortedGames.slice(0, 3).map(game => ({
+      sortedGames.slice(0, 3).map((game) => ({
         token_id: game.token_id,
         game_id: game.game_id,
         lifecycle: game.lifecycle,

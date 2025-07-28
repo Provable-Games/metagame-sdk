@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, ReactNode, useMemo } from 'react';
 import {
   initMetagame,
   MetagameClient,
@@ -13,9 +13,17 @@ export const MetagameProvider = ({ children }: { children: ReactNode }) => {
   const [metagameClient, setMetagameClient] = useState<MetagameClient<any> | null>(null);
   const { chain } = useNetwork();
 
+  const chainId = useMemo(() => {
+    return feltToString(chain?.id);
+  }, [chain]);
+
+  // Get the chain config for the current chain
+  const selectedChainConfig = useMemo(() => {
+    return CHAINS[chainId! as ChainId];
+  }, [chainId]);
+
   useEffect(() => {
-    const chainId = feltToString(chain.id);
-    const selectedChainConfig = CHAINS[chainId as ChainId];
+    console.log('selectedChainConfig', selectedChainConfig);
     const manifest = manifests[chainId as ChainId];
 
     async function initialize() {
@@ -35,7 +43,7 @@ export const MetagameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     initialize();
-  }, [chain]);
+  }, [selectedChainConfig, chainId]);
 
   if (!metagameClient) {
     return <div>Loading...</div>;

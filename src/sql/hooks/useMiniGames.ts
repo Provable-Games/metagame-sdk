@@ -2,7 +2,7 @@ import { miniGamesQuery } from '../queries/sql';
 import { useSqlQuery } from '../services/sqlService';
 import { useCallback, useMemo } from 'react';
 import { feltToString } from '../../shared/lib';
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import type { GameMetadata } from '../../shared/types';
 
 interface UseMiniGamesProps {
@@ -13,21 +13,24 @@ interface UseMiniGamesProps {
 }
 
 export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniGamesProps) => {
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
 
-  const query = miniGamesQuery({
-    namespace: client.getNamespace(),
-    gameAddresses,
-    limit,
-    offset,
-  });
+  const query = useMemo(() => {
+    if (!client) return null;
+    return miniGamesQuery({
+      namespace: client.getNamespace(),
+      gameAddresses,
+      limit,
+      offset,
+    });
+  }, [client, gameAddresses, limit, offset]);
 
   const {
     data: miniGamesData,
     loading: miniGamesLoading,
     error: miniGamesError,
     refetch: miniGamesRefetch,
-  } = useSqlQuery(client.getConfig().toriiUrl, query);
+  } = useSqlQuery(client?.getConfig().toriiUrl || '', query);
 
   const gameData = useMemo(() => {
     return miniGamesData.map((game: any) => {

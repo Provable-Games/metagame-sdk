@@ -1,4 +1,4 @@
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import { useEventSubscription } from '../../shared/dojo/hooks/useEventSubscription';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useObjectivesStore } from '../stores/objectivesStore';
@@ -65,7 +65,7 @@ export interface UseSubscribeObjectivesResult {
 export function useSubscribeObjectives(
   params: UseSubscribeObjectivesParams = {}
 ): UseSubscribeObjectivesResult {
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
   const { enabled = true, logging = false, gameAddresses, objectiveIds, pagination } = params;
 
   // Ensure mini games store is initialized for gameMetadata relationships
@@ -79,16 +79,21 @@ export function useSubscribeObjectives(
   const sortBy = pagination?.sortBy ?? 'game_id';
   const sortOrder = pagination?.sortOrder ?? 'asc';
 
-  const query = objectivesQuery({ namespace: client.getNamespace() });
+  const query = useMemo(() => {
+    if (!client) return null;
+    return objectivesQuery({ namespace: client.getNamespace() });
+  }, [client]);
 
   console.log('objectives query', query);
 
   const { entities, isSubscribed, error } = useEventSubscription(client, {
-    query,
-    namespace: client.getNamespace(),
-    enabled,
+    query: query || { keys: [], entityModels: [], eventModels: [] },
+    namespace: client?.getNamespace() || '',
+    enabled: enabled && !!client,
     logging,
     transform: (entity: any) => {
+      if (!client) return entity;
+
       const { entityId, models } = entity;
       const transformed = {
         entityId,
@@ -242,6 +247,37 @@ export function useSubscribeObjectives(
       lastPage,
     ]
   );
+
+  // Return empty state if client is not ready
+  if (!client) {
+    return {
+      // Subscription status
+      isSubscribed: false,
+      error: null,
+
+      // Store data (empty)
+      objectives: {},
+      allObjectives: {},
+      getObjectiveData,
+      getObjectivesForGame,
+      isInitialized: false,
+
+      // Pagination controls (default state)
+      pagination: {
+        currentPage: 0,
+        pageSize,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+        goToPage,
+        nextPage,
+        previousPage,
+        firstPage,
+        lastPage,
+      },
+    };
+  }
 
   return {
     // Subscription status

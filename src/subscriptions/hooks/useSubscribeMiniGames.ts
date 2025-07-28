@@ -69,7 +69,10 @@ export function useSubscribeMiniGames(
   const sortOrder = pagination?.sortOrder ?? 'asc';
 
   // Create query only if client is available
-  const query = client ? miniGamesQuery({ namespace: client.getNamespace() }) : null;
+  const query = useMemo(() => {
+    if (!client) return null;
+    return miniGamesQuery({ namespace: client.getNamespace() });
+  }, [client]);
 
   console.log(query);
   console.log('client', client);

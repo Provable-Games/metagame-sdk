@@ -2,7 +2,7 @@ import { gamesQuery } from '../queries/sql';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
 import { feltToString } from '../../shared/lib';
 import { useMemo } from 'react';
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import { parseSettingsData, parseContextData } from '../../shared/utils/dataTransformers';
 import type { GameTokenData } from '../../shared/types';
 
@@ -11,6 +11,7 @@ interface GameTokensQueryParams {
   gameAddresses?: string[];
   tokenIds?: string[];
   hasContext?: boolean;
+  mintedByAddress?: string;
   limit?: number;
   offset?: number;
 }
@@ -20,23 +21,28 @@ export const useGameTokens = ({
   gameAddresses,
   tokenIds,
   hasContext,
+  mintedByAddress,
   limit = 100,
   offset = 0,
 }: GameTokensQueryParams): SqlQueryResult<GameTokenData> => {
-  const client = getMetagameClient();
-  const toriiUrl = client.getConfig().toriiUrl;
+  const client = getMetagameClientSafe();
+  const toriiUrl = client?.getConfig().toriiUrl || '';
 
   console.log('[useGameTokens] Using toriiUrl:', toriiUrl);
 
-  const query = gamesQuery({
-    namespace: client.getNamespace(),
-    owner,
-    gameAddresses,
-    tokenIds,
-    hasContext,
-    limit,
-    offset,
-  });
+  const query = useMemo(() => {
+    if (!client) return null;
+    return gamesQuery({
+      namespace: client.getNamespace(),
+      owner,
+      gameAddresses,
+      tokenIds,
+      hasContext,
+      mintedByAddress,
+      limit,
+      offset,
+    });
+  }, [client, owner, gameAddresses, tokenIds, hasContext, mintedByAddress, limit, offset]);
 
   const {
     data: rawGameData,

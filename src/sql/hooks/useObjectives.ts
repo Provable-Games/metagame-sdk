@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
 import { objectivesQuery } from '../queries/sql';
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import { feltToString } from '../../shared/lib';
 import type { GameObjective } from '../../shared/types';
 
@@ -20,26 +20,25 @@ export const useObjectives = ({
   offset = 0,
   logging = false,
 }: UseGameObjectivesProps): SqlQueryResult<GameObjective> => {
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
 
-  const query = useMemo(
-    () =>
-      objectivesQuery({
-        namespace: client.getNamespace(),
-        gameAddresses,
-        objectiveIds,
-        limit,
-        offset,
-      }),
-    [gameAddresses, objectiveIds, limit, offset]
-  );
+  const query = useMemo(() => {
+    if (!client) return null;
+    return objectivesQuery({
+      namespace: client.getNamespace(),
+      gameAddresses,
+      objectiveIds,
+      limit,
+      offset,
+    });
+  }, [client, gameAddresses, objectiveIds, limit, offset]);
 
   const {
     data: rawObjectivesData,
     loading,
     error,
     refetch,
-  } = useSqlQuery<GameObjective>(client.getConfig().toriiUrl, query, logging);
+  } = useSqlQuery<GameObjective>(client?.getConfig().toriiUrl || '', query, logging);
 
   const objectivesData = useMemo(() => {
     if (!rawObjectivesData || !rawObjectivesData.length) return [];

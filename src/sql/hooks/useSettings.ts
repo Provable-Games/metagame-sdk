@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
 import { gameSettingsQuery } from '../queries/sql';
-import { getMetagameClient } from '../../shared/singleton';
+import { getMetagameClientSafe } from '../../shared/singleton';
 import { parseSettingsData } from '../../shared/utils/dataTransformers';
 import { feltToString } from '../../shared/lib';
 import type { GameSettings } from '../../shared/types';
@@ -21,26 +21,25 @@ export const useSettings = ({
   offset = 0,
   logging = false,
 }: UseSettingsProps): SqlQueryResult<GameSettings> => {
-  const client = getMetagameClient();
+  const client = getMetagameClientSafe();
 
-  const query = useMemo(
-    () =>
-      gameSettingsQuery({
-        namespace: client.getNamespace(),
-        gameAddresses,
-        settingsIds,
-        limit,
-        offset,
-      }),
-    [gameAddresses, settingsIds, limit, offset]
-  );
+  const query = useMemo(() => {
+    if (!client) return null;
+    return gameSettingsQuery({
+      namespace: client.getNamespace(),
+      gameAddresses,
+      settingsIds,
+      limit,
+      offset,
+    });
+  }, [client, gameAddresses, settingsIds, limit, offset]);
 
   const {
     data: rawSettingsData,
     loading,
     error,
     refetch,
-  } = useSqlQuery<GameSettings>(client.getConfig().toriiUrl, query, logging);
+  } = useSqlQuery<GameSettings>(client?.getConfig().toriiUrl || '', query, logging);
 
   console.log('rawSettingsData', rawSettingsData);
 

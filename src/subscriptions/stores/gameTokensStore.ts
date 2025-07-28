@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { feltToString } from '../../shared/lib';
+import { feltToString, padAddress } from '../../shared/lib';
 import type { GameTokenData, EntityData } from '../../shared/utils/dataTransformers';
 import { parseContextData, parseSettingsData } from '../../shared/utils/dataTransformers';
 import { useMiniGamesStore } from './miniGamesStore';
@@ -47,6 +47,7 @@ interface GameTokensState {
     completed_all_objectives?: boolean;
     soulbound?: boolean;
     objective_id?: string;
+    minted_by_address?: string;
   }) => GameTokenData[];
   getGameTokenByTokenId: (tokenId: string) => GameTokenData | undefined;
 }
@@ -287,7 +288,11 @@ export const useGameTokensStore = create<GameTokensState>()(
           return false;
         if (filter.soulbound !== undefined && game.soulbound !== filter.soulbound) return false;
         if (filter.objective_id && !game.objective_ids?.includes(filter.objective_id)) return false;
-
+        if (
+          filter.minted_by_address &&
+          game.minted_by_address !== padAddress(filter.minted_by_address)
+        )
+          return false;
         return true;
       });
     },
