@@ -89,7 +89,7 @@ export const useGameTokens = ({
         minted_by: Number(game.minted_by) || undefined,
         minted_by_address: game.minted_by_address,
         owner: game.owner,
-        settings_id: Number(game.settings_id) || undefined,
+        settings_id: Number(game.settings_id) ?? undefined,
         soulbound: Boolean(game.soulbound),
         completed_all_objectives: Boolean(game.completed_all_objectives),
         token_id: Number(game.token_id) || 0,
