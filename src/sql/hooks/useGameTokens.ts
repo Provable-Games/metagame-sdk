@@ -28,8 +28,6 @@ export const useGameTokens = ({
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
 
-  console.log('[useGameTokens] Using toriiUrl:', toriiUrl);
-
   const query = useMemo(() => {
     if (!client) return null;
     return gamesQuery({
@@ -50,8 +48,6 @@ export const useGameTokens = ({
     error: queryError,
     refetch,
   } = useSqlQuery(toriiUrl, query, true);
-
-  console.log('rawGameData', rawGameData);
 
   const error = queryError;
 

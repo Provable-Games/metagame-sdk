@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useMiniGamesStore } from './miniGamesStore';
+import { logger } from '../../shared/utils/logger';
 
 export interface SettingsEntity {
   entityId: string;
@@ -16,7 +17,7 @@ export interface SettingsEntity {
 // Helper function to parse and normalize settings data
 const parseSettingsData = (rawData: any): { name: string; description: string; data: any } => {
   if (!rawData) {
-    console.log('parseSettingsData: No raw data provided');
+    logger.debug('parseSettingsData: No raw data provided');
     return { name: '', description: '', data: {} };
   }
 
@@ -24,7 +25,7 @@ const parseSettingsData = (rawData: any): { name: string; description: string; d
     // If it's already an object, use it directly
     const parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
     
-    console.log('parseSettingsData: Parsed data:', parsed);
+    logger.debug('parseSettingsData: Parsed data:', parsed);
 
     // Handle the current structure: {Name, Description, Settings: {}}
     const name = parsed.Name || '';
@@ -37,10 +38,10 @@ const parseSettingsData = (rawData: any): { name: string; description: string; d
       data: settings,
     };
     
-    console.log('parseSettingsData: Result:', result);
+    logger.debug('parseSettingsData: Result:', result);
     return result;
   } catch (error) {
-    console.warn('Failed to parse settings data:', error, 'Raw data:', rawData);
+    logger.warn('Failed to parse settings data:', error, 'Raw data:', rawData);
     return { name: '', description: '', data: rawData };
   }
 };
@@ -124,7 +125,7 @@ function buildSettingsFromEntities(entities: SettingsEntity[]): SettingsLookup {
     }
   });
 
-  console.log('Built settings lookup from', entities.length, 'entities:', settings);
+  logger.debug('Built settings lookup from', entities.length, 'entities:', settings);
   return settings;
 }
 

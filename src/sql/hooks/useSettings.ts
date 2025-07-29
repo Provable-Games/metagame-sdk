@@ -41,8 +41,6 @@ export const useSettings = ({
     refetch,
   } = useSqlQuery<GameSettings>(client?.getConfig().toriiUrl || '', query, logging);
 
-  console.log('rawSettingsData', rawSettingsData);
-
   const settingsData = useMemo(() => {
     if (!rawSettingsData || !rawSettingsData.length) return [];
 

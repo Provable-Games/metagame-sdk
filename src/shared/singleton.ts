@@ -2,6 +2,7 @@ import { SchemaType } from '@dojoengine/sdk';
 import { MetagameClient } from './client';
 import { MetagameConfig } from './types/config';
 import { clearAllStores } from '../subscriptions/stores';
+import { logger } from './utils/logger';
 
 // Store the singleton instance
 let metagameClientInstance: MetagameClient<any> | null = null;
@@ -23,9 +24,9 @@ export async function initMetagame<T extends SchemaType>(
       currentConfig.worldAddress !== config.worldAddress;
     
     if (configChanged) {
-      console.log('[initMetagame] Config changed, reinitializing SDK');
-      console.log('[initMetagame] Old config:', { toriiUrl: currentConfig.toriiUrl, worldAddress: currentConfig.worldAddress });
-      console.log('[initMetagame] New config:', { toriiUrl: config.toriiUrl, worldAddress: config.worldAddress });
+      logger.info('[initMetagame] Config changed, reinitializing SDK');
+      logger.info('[initMetagame] Old config:', { toriiUrl: currentConfig.toriiUrl, worldAddress: currentConfig.worldAddress });
+      logger.info('[initMetagame] New config:', { toriiUrl: config.toriiUrl, worldAddress: config.worldAddress });
       
       // Mark as initializing to prevent errors during transition
       isInitializing = true;
@@ -39,6 +40,11 @@ export async function initMetagame<T extends SchemaType>(
     } else {
       return metagameClientInstance as MetagameClient<T>;
     }
+  }
+
+  // Configure logger if provided
+  if (config.logging !== undefined) {
+    logger.configure(config.logging);
   }
 
   isInitializing = true;
@@ -63,9 +69,9 @@ export function initMetagameSync<T extends SchemaType>(
       currentConfig.worldAddress !== config.worldAddress;
     
     if (configChanged) {
-      console.log('[initMetagameSync] Config changed, reinitializing SDK');
-      console.log('[initMetagameSync] Old config:', { toriiUrl: currentConfig.toriiUrl, worldAddress: currentConfig.worldAddress });
-      console.log('[initMetagameSync] New config:', { toriiUrl: config.toriiUrl, worldAddress: config.worldAddress });
+      logger.info('[initMetagameSync] Config changed, reinitializing SDK');
+      logger.info('[initMetagameSync] Old config:', { toriiUrl: currentConfig.toriiUrl, worldAddress: currentConfig.worldAddress });
+      logger.info('[initMetagameSync] New config:', { toriiUrl: config.toriiUrl, worldAddress: config.worldAddress });
       
       // Clear all stores when config changes
       clearAllStores();
@@ -76,6 +82,11 @@ export function initMetagameSync<T extends SchemaType>(
     } else {
       return metagameClientInstance as MetagameClient<T>;
     }
+  }
+
+  // Configure logger if provided
+  if (config.logging !== undefined) {
+    logger.configure(config.logging);
   }
 
   metagameClientInstance = new MetagameClient<T>(config);
@@ -94,7 +105,7 @@ export function getMetagameClient<T extends SchemaType>(): MetagameClient<T> {
       'Metagame SDK is not initialized. Call initMetagame() before using getMetagameClient().'
     );
   }
-  console.log('[getMetagameClient] Returning singleton instance with toriiUrl:', metagameClientInstance.getToriiUrl());
+  logger.debug('[getMetagameClient] Returning singleton instance with toriiUrl:', metagameClientInstance.getToriiUrl());
   return metagameClientInstance as MetagameClient<T>;
 }
 
@@ -104,7 +115,7 @@ export function getMetagameClient<T extends SchemaType>(): MetagameClient<T> {
  */
 export function getMetagameClientSafe<T extends SchemaType>(): MetagameClient<T> | null {
   if (!metagameClientInstance || !isInitialized || isInitializing) {
-    console.log('[getMetagameClientSafe] SDK not ready:', { 
+    logger.debug('[getMetagameClientSafe] SDK not ready:', { 
       hasInstance: !!metagameClientInstance, 
       isInitialized, 
       isInitializing 
@@ -126,7 +137,7 @@ export function isMetagameReady(): boolean {
  * Useful for testing or when you need to reinitialize with different config
  */
 export function resetMetagame(): void {
-  console.log('[resetMetagame] Resetting SDK instance and clearing stores');
+  logger.info('[resetMetagame] Resetting SDK instance and clearing stores');
   clearAllStores();
   metagameClientInstance = null;
   isInitialized = false;

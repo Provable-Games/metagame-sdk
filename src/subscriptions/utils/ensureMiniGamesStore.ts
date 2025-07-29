@@ -22,7 +22,7 @@ export function useEnsureMiniGamesStore() {
   useEffect(() => {
     const unsubscribe = useMiniGamesStore.subscribe((state, prevState) => {
       if (state.lastUpdated > 0 && state.lastUpdated !== prevState.lastUpdated) {
-        console.log('Mini games store updated, refreshing gameMetadata in other stores');
+        // console.log('Mini games store updated, refreshing gameMetadata in other stores');
         refreshGameMetadata();
       }
     });
@@ -40,5 +40,5 @@ export function useEnsureMiniGamesStore() {
 export function refreshGameMetadataInStores() {
   // This could be used to trigger a refresh of gameMetadata in other stores
   // For now, we'll rely on the real-time updates and the lookup in updateMergedGameData
-  console.log('Mini games store updated - gameMetadata will be refreshed on next access');
+  // console.log('Mini games store updated - gameMetadata will be refreshed on next access');
 }

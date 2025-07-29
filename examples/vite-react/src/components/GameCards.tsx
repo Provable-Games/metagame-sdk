@@ -9,6 +9,7 @@ const GameCards: React.FC = () => {
   const { data: gamesFromSQL } = useGameTokens({
     // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
     // tokenIds: ['0x000000000000000000000000000000000000000000000000000000000000000a'],
+    owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
   });
 
   console.log('games', games);

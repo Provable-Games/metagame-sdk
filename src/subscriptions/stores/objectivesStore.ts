@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { useMiniGamesStore } from './miniGamesStore';
+import { logger } from '../../shared/utils/logger';
 
 export interface ObjectiveEntity {
   entityId: string;
@@ -91,7 +92,7 @@ function buildObjectivesFromEntities(entities: ObjectiveEntity[]): ObjectivesLoo
     }
   });
 
-  console.log('Built objectives lookup from', entities.length, 'entities:', objectives);
+  logger.debug('Built objectives lookup from', entities.length, 'entities:', objectives);
   return objectives;
 }
 
@@ -139,7 +140,7 @@ export const useObjectivesStore = create<ObjectivesState>((set, get) => ({
       }
     }
     
-    console.log('Objective update:', {
+    logger.debug('Objective update:', {
       objectiveId,
       gameId,
       game_address: entity.ObjectiveCreated.game_address,

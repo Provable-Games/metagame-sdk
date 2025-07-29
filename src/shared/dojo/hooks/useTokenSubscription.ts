@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { SchemaType } from '@dojoengine/sdk';
 import { MetagameClient } from '../../client';
 import { getMetagameClient } from '../../singleton';
+import { logger } from '../../utils/logger';
 
 export interface UseTokenSubscriptionOptions {
   contractAddress: string;
@@ -58,7 +59,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
     const _subscribe = async () => {
       try {
         if (logging) {
-          console.log('Subscribing to contract:', contractAddress);
+          logger.debug('Subscribing to contract:', contractAddress);
         }
 
         const { dojoSDK } = client.getConfig();
@@ -69,7 +70,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
             'dojoSDK is required for entity subscriptions. Please provide dojoSDK when initializing the MetagameClient.'
           );
           setError(error);
-          console.error(error.message);
+          logger.error(error.message);
           return;
         }
 
@@ -77,7 +78,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
           [contractAddress],
           [],
           (response: any) => {
-            console.log('response:', response);
+            logger.debug('response:', response);
           }
         );
         // setEntities(response);
@@ -87,7 +88,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         setError(error);
-        console.error('Error in entity subscription:', error.message);
+        logger.error('Error in entity subscription:', error.message);
       }
     };
 
@@ -142,16 +143,16 @@ export async function subscribeToEvents<S extends SchemaType, T = any>(
   const transformEntity = transform || defaultTransform;
 
   if (logging) {
-    console.log('Subscribing to query:', query);
+    logger.debug('Subscribing to query:', query);
   }
 
   const [response, subscription] = await dojoSDK.subscribeEventQuery({
     query,
     callback: (response) => {
       if (response.error) {
-        console.error('Subscription error:', response.error.message);
+        logger.error('Subscription error:', response.error.message);
       } else if (response.data && response.data.length > 0) {
-        console.log('useSdkSubscribeEntities() response.data:', response.data);
+        logger.debug('useSdkSubscribeEntities() response.data:', response.data);
         response.data.forEach((entity) => {
           state.updateEntity(entity);
         });

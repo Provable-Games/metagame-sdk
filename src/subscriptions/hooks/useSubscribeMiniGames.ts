@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useMiniGamesStore } from '../stores/miniGamesStore';
 import { miniGamesQuery } from '../queries/sdk';
 import { type GameMetadata } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 
 export interface UseSubscribeMiniGamesParams {
   enabled?: boolean;
@@ -74,8 +75,8 @@ export function useSubscribeMiniGames(
     return miniGamesQuery({ namespace: client.getNamespace() });
   }, [client]);
 
-  console.log(query);
-  console.log('client', client);
+  logger.debug(query);
+  logger.debug('client', client);
 
   const {
     entities: events,
@@ -90,21 +91,21 @@ export function useSubscribeMiniGames(
       if (!client) return entity;
 
       const { entityId, models } = entity;
-      console.log(models);
+      logger.debug(models);
       const transformed = {
         entityId,
         ...models[client.getNamespace()],
       };
 
       // Call our store's updateEntity for real-time updates
-      console.log('transformed', transformed);
+      logger.debug('transformed', transformed);
       updateEntity(transformed);
 
       return transformed;
     },
   });
 
-  console.log(events, error, isSubscribed);
+  logger.debug(events, error, isSubscribed);
 
   const {
     initializeStore,
@@ -119,7 +120,7 @@ export function useSubscribeMiniGames(
   // Initialize store with all entities on first load
   useEffect(() => {
     if (events && events.length > 0) {
-      console.log('Initializing mini games store with', events.length, 'entities');
+      logger.debug('Initializing mini games store with', events.length, 'entities');
       initializeStore(events);
     }
   }, [events, initializeStore]);

@@ -1,4 +1,4 @@
-import { DojoProvider, DojoCall } from "@dojoengine/core";
+import { DojoProvider, DojoCall } from '@dojoengine/core';
 import {
   Account,
   AccountInterface,
@@ -6,16 +6,13 @@ import {
   CairoOption,
   ByteArray,
   CallData,
-} from "starknet";
+} from 'starknet';
 
 export function setupWorld(provider: DojoProvider) {
-  const build_denshokan_approve_calldata = (
-    to: string,
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_approve_calldata = (to: string, tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "approve",
+      contractName: 'denshokan',
+      entrypoint: 'approve',
       calldata: [to, tokenId],
     };
   };
@@ -29,7 +26,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_approve_calldata(to, tokenId),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -39,18 +36,15 @@ export function setupWorld(provider: DojoProvider) {
 
   const build_denshokan_balanceOf_calldata = (account: string): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "balanceOf",
+      contractName: 'denshokan',
+      entrypoint: 'balanceOf',
       calldata: [account],
     };
   };
 
   const denshokan_balanceOf = async (account: string) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_balanceOf_calldata(account)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_balanceOf_calldata(account));
     } catch (error) {
       console.error(error);
       throw error;
@@ -63,8 +57,8 @@ export function setupWorld(provider: DojoProvider) {
     data: ByteArray
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "create_objective",
+      contractName: 'denshokan',
+      entrypoint: 'create_objective',
       calldata: [gameId, objectiveId, data],
     };
   };
@@ -79,7 +73,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_createObjective_calldata(gameId, objectiveId, data),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -93,8 +87,8 @@ export function setupWorld(provider: DojoProvider) {
     data: ByteArray
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "create_settings",
+      contractName: 'denshokan',
+      entrypoint: 'create_settings',
       calldata: [gameId, settingsId, data],
     };
   };
@@ -109,7 +103,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_createSettings_calldata(gameId, settingsId, data),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -117,12 +111,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_endGame_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_endGame_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "end_game",
+      contractName: 'denshokan',
+      entrypoint: 'end_game',
       calldata: [tokenId],
     };
   };
@@ -135,7 +127,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_endGame_calldata(tokenId),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -143,34 +135,27 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_getApproved_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_getApproved_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "getApproved",
+      contractName: 'denshokan',
+      entrypoint: 'getApproved',
       calldata: [tokenId],
     };
   };
 
   const denshokan_getApproved = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_getApproved_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_getApproved_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_denshokan_getGameId_calldata = (
-    gameAddress: string
-  ): DojoCall => {
+  const build_denshokan_getGameId_calldata = (gameAddress: string): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "get_game_id",
+      contractName: 'denshokan',
+      entrypoint: 'get_game_id',
       calldata: [gameAddress],
     };
   };
@@ -178,7 +163,7 @@ export function setupWorld(provider: DojoProvider) {
   const denshokan_getGameId = async (gameAddress: string) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_denshokan_getGameId_calldata(gameAddress)
       );
     } catch (error) {
@@ -187,24 +172,18 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_isApprovedForAll_calldata = (
-    owner: string,
-    operator: string
-  ): DojoCall => {
+  const build_denshokan_isApprovedForAll_calldata = (owner: string, operator: string): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "isApprovedForAll",
+      contractName: 'denshokan',
+      entrypoint: 'isApprovedForAll',
       calldata: [owner, operator],
     };
   };
 
-  const denshokan_isApprovedForAll = async (
-    owner: string,
-    operator: string
-  ) => {
+  const denshokan_isApprovedForAll = async (owner: string, operator: string) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_denshokan_isApprovedForAll_calldata(owner, operator)
       );
     } catch (error) {
@@ -213,12 +192,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_isGamePlayable_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_isGamePlayable_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "is_game_playable",
+      contractName: 'denshokan',
+      entrypoint: 'is_game_playable',
       calldata: [tokenId],
     };
   };
@@ -226,7 +203,7 @@ export function setupWorld(provider: DojoProvider) {
   const denshokan_isGamePlayable = async (tokenId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_denshokan_isGamePlayable_calldata(tokenId)
       );
     } catch (error) {
@@ -249,8 +226,8 @@ export function setupWorld(provider: DojoProvider) {
     soulbound: boolean
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "mint",
+      contractName: 'denshokan',
+      entrypoint: 'mint',
       calldata: [
         gameId,
         playerName,
@@ -297,7 +274,7 @@ export function setupWorld(provider: DojoProvider) {
           to,
           soulbound
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -307,62 +284,49 @@ export function setupWorld(provider: DojoProvider) {
 
   const build_denshokan_name_calldata = (): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "name",
+      contractName: 'denshokan',
+      entrypoint: 'name',
       calldata: [],
     };
   };
 
   const denshokan_name = async () => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_name_calldata()
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_name_calldata());
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_denshokan_objectiveIds_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_objectiveIds_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "objective_ids",
+      contractName: 'denshokan',
+      entrypoint: 'objective_ids',
       calldata: [tokenId],
     };
   };
 
   const denshokan_objectiveIds = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_objectiveIds_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_objectiveIds_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_denshokan_ownerOf_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_ownerOf_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "ownerOf",
+      contractName: 'denshokan',
+      entrypoint: 'ownerOf',
       calldata: [tokenId],
     };
   };
 
   const denshokan_ownerOf = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_ownerOf_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_ownerOf_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
@@ -380,18 +344,9 @@ export function setupWorld(provider: DojoProvider) {
     color: CairoOption<ByteArray>
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "register_game",
-      calldata: [
-        creatorAddress,
-        name,
-        description,
-        developer,
-        publisher,
-        genre,
-        image,
-        color,
-      ],
+      contractName: 'denshokan',
+      entrypoint: 'register_game',
+      calldata: [creatorAddress, name, description, developer, publisher, genre, image, color],
     };
   };
 
@@ -419,7 +374,7 @@ export function setupWorld(provider: DojoProvider) {
           image,
           color
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -434,8 +389,8 @@ export function setupWorld(provider: DojoProvider) {
     data: Array<BigNumberish>
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "safeTransferFrom",
+      contractName: 'denshokan',
+      entrypoint: 'safeTransferFrom',
       calldata: [from, to, tokenId, data],
     };
   };
@@ -451,7 +406,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_safeTransferFrom_calldata(from, to, tokenId, data),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -464,8 +419,8 @@ export function setupWorld(provider: DojoProvider) {
     approved: boolean
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "setApprovalForAll",
+      contractName: 'denshokan',
+      entrypoint: 'setApprovalForAll',
       calldata: [operator, approved],
     };
   };
@@ -479,7 +434,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_setApprovalForAll_calldata(operator, approved),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -498,18 +453,9 @@ export function setupWorld(provider: DojoProvider) {
     context: CairoOption<ByteArray>
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "set_token_metadata",
-      calldata: [
-        tokenId,
-        gameId,
-        playerName,
-        settingsId,
-        start,
-        end,
-        objectiveIds,
-        context,
-      ],
+      contractName: 'denshokan',
+      entrypoint: 'set_token_metadata',
+      calldata: [tokenId, gameId, playerName, settingsId, start, end, objectiveIds, context],
     };
   };
 
@@ -524,18 +470,6 @@ export function setupWorld(provider: DojoProvider) {
     objectiveIds: CairoOption<BigNumberish[]>,
     context: CairoOption<ByteArray>
   ) => {
-    console.log(
-      CallData.compile([
-        tokenId,
-        gameId,
-        playerName,
-        settingsId,
-        start,
-        end,
-        objectiveIds,
-        context,
-      ])
-    );
     try {
       return await provider.execute(
         snAccount,
@@ -549,7 +483,7 @@ export function setupWorld(provider: DojoProvider) {
           objectiveIds,
           context
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -557,34 +491,27 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_settingsId_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_settingsId_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "settings_id",
+      contractName: 'denshokan',
+      entrypoint: 'settings_id',
       calldata: [tokenId],
     };
   };
 
   const denshokan_settingsId = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_settingsId_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_settingsId_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_denshokan_supportsInterface_calldata = (
-    interfaceId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_supportsInterface_calldata = (interfaceId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "supports_interface",
+      contractName: 'denshokan',
+      entrypoint: 'supports_interface',
       calldata: [interfaceId],
     };
   };
@@ -592,7 +519,7 @@ export function setupWorld(provider: DojoProvider) {
   const denshokan_supportsInterface = async (interfaceId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_denshokan_supportsInterface_calldata(interfaceId)
       );
     } catch (error) {
@@ -603,40 +530,32 @@ export function setupWorld(provider: DojoProvider) {
 
   const build_denshokan_symbol_calldata = (): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "symbol",
+      contractName: 'denshokan',
+      entrypoint: 'symbol',
       calldata: [],
     };
   };
 
   const denshokan_symbol = async () => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_symbol_calldata()
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_symbol_calldata());
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_denshokan_tokenUri_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_tokenUri_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "token_uri",
+      contractName: 'denshokan',
+      entrypoint: 'token_uri',
       calldata: [tokenId],
     };
   };
 
   const denshokan_tokenUri = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_denshokan_tokenUri_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_denshokan_tokenUri_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
@@ -649,8 +568,8 @@ export function setupWorld(provider: DojoProvider) {
     tokenId: BigNumberish
   ): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "transferFrom",
+      contractName: 'denshokan',
+      entrypoint: 'transferFrom',
       calldata: [from, to, tokenId],
     };
   };
@@ -665,7 +584,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_transferFrom_calldata(from, to, tokenId),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -673,12 +592,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_denshokan_updateGame_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_denshokan_updateGame_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "denshokan",
-      entrypoint: "update_game",
+      contractName: 'denshokan',
+      entrypoint: 'update_game',
       calldata: [tokenId],
     };
   };
@@ -691,7 +608,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_denshokan_updateGame_calldata(tokenId),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -699,34 +616,27 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_metagame_mock_context_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_metagame_mock_context_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "context",
+      contractName: 'metagame_mock',
+      entrypoint: 'context',
       calldata: [tokenId],
     };
   };
 
   const metagame_mock_context = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_metagame_mock_context_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_metagame_mock_context_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_metagame_mock_contextUri_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_metagame_mock_contextUri_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "context_uri",
+      contractName: 'metagame_mock',
+      entrypoint: 'context_uri',
       calldata: [tokenId],
     };
   };
@@ -734,7 +644,7 @@ export function setupWorld(provider: DojoProvider) {
   const metagame_mock_contextUri = async (tokenId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_metagame_mock_contextUri_calldata(tokenId)
       );
     } catch (error) {
@@ -743,12 +653,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_metagame_mock_hasContext_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_metagame_mock_hasContext_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "has_context",
+      contractName: 'metagame_mock',
+      entrypoint: 'has_context',
       calldata: [tokenId],
     };
   };
@@ -756,7 +664,7 @@ export function setupWorld(provider: DojoProvider) {
   const metagame_mock_hasContext = async (tokenId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_metagame_mock_hasContext_calldata(tokenId)
       );
     } catch (error) {
@@ -770,8 +678,8 @@ export function setupWorld(provider: DojoProvider) {
     denshokanAddress: string
   ): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "initializer",
+      contractName: 'metagame_mock',
+      entrypoint: 'initializer',
       calldata: [namespace, denshokanAddress],
     };
   };
@@ -785,7 +693,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_metagame_mock_initializer_calldata(namespace, denshokanAddress),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -806,8 +714,8 @@ export function setupWorld(provider: DojoProvider) {
     soulbound: boolean
   ): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "mint_game",
+      contractName: 'metagame_mock',
+      entrypoint: 'mint_game',
       calldata: [
         gameId,
         playerName,
@@ -851,7 +759,7 @@ export function setupWorld(provider: DojoProvider) {
           to,
           soulbound
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -859,12 +767,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_metagame_mock_supportsInterface_calldata = (
-    interfaceId: BigNumberish
-  ): DojoCall => {
+  const build_metagame_mock_supportsInterface_calldata = (interfaceId: BigNumberish): DojoCall => {
     return {
-      contractName: "metagame_mock",
-      entrypoint: "supports_interface",
+      contractName: 'metagame_mock',
+      entrypoint: 'supports_interface',
       calldata: [interfaceId],
     };
   };
@@ -872,7 +778,7 @@ export function setupWorld(provider: DojoProvider) {
   const metagame_mock_supportsInterface = async (interfaceId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_metagame_mock_supportsInterface_calldata(interfaceId)
       );
     } catch (error) {
@@ -886,8 +792,8 @@ export function setupWorld(provider: DojoProvider) {
     objectiveId: BigNumberish
   ): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "completed_objective",
+      contractName: 'minigame_mock',
+      entrypoint: 'completed_objective',
       calldata: [tokenId, objectiveId],
     };
   };
@@ -898,7 +804,7 @@ export function setupWorld(provider: DojoProvider) {
   ) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_completedObjective_calldata(tokenId, objectiveId)
       );
     } catch (error) {
@@ -907,12 +813,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_createObjectiveScore_calldata = (
-    score: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_createObjectiveScore_calldata = (score: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "create_objective_score",
+      contractName: 'minigame_mock',
+      entrypoint: 'create_objective_score',
       calldata: [score],
     };
   };
@@ -925,7 +829,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_minigame_mock_createObjectiveScore_calldata(score),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -939,8 +843,8 @@ export function setupWorld(provider: DojoProvider) {
     difficulty: BigNumberish
   ): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "create_settings_difficulty",
+      contractName: 'minigame_mock',
+      entrypoint: 'create_settings_difficulty',
       calldata: [name, description, difficulty],
     };
   };
@@ -954,12 +858,8 @@ export function setupWorld(provider: DojoProvider) {
     try {
       return await provider.execute(
         snAccount,
-        build_minigame_mock_createSettingsDifficulty_calldata(
-          name,
-          description,
-          difficulty
-        ),
-        "denshokan_0_0_1"
+        build_minigame_mock_createSettingsDifficulty_calldata(name, description, difficulty),
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -972,8 +872,8 @@ export function setupWorld(provider: DojoProvider) {
     score: BigNumberish
   ): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "end_game",
+      contractName: 'minigame_mock',
+      entrypoint: 'end_game',
       calldata: [tokenId, score],
     };
   };
@@ -987,7 +887,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_minigame_mock_endGame_calldata(tokenId, score),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -1008,8 +908,8 @@ export function setupWorld(provider: DojoProvider) {
     denshokanAddress: string
   ): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "initializer",
+      contractName: 'minigame_mock',
+      entrypoint: 'initializer',
       calldata: [
         gameCreator,
         gameName,
@@ -1053,7 +953,7 @@ export function setupWorld(provider: DojoProvider) {
           gameNamespace,
           denshokanAddress
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -1073,8 +973,8 @@ export function setupWorld(provider: DojoProvider) {
     soulbound: boolean
   ): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "mint",
+      contractName: 'minigame_mock',
+      entrypoint: 'mint',
       calldata: [
         playerName,
         settingsId,
@@ -1115,7 +1015,7 @@ export function setupWorld(provider: DojoProvider) {
           to,
           soulbound
         ),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -1123,12 +1023,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_objectiveExists_calldata = (
-    objectiveId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_objectiveExists_calldata = (objectiveId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "objective_exists",
+      contractName: 'minigame_mock',
+      entrypoint: 'objective_exists',
       calldata: [objectiveId],
     };
   };
@@ -1136,7 +1034,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_objectiveExists = async (objectiveId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_objectiveExists_calldata(objectiveId)
       );
     } catch (error) {
@@ -1145,12 +1043,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_objectives_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_objectives_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "objectives",
+      contractName: 'minigame_mock',
+      entrypoint: 'objectives',
       calldata: [tokenId],
     };
   };
@@ -1158,7 +1054,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_objectives = async (tokenId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_objectives_calldata(tokenId)
       );
     } catch (error) {
@@ -1167,12 +1063,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_objectivesUri_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_objectivesUri_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "objectives_uri",
+      contractName: 'minigame_mock',
+      entrypoint: 'objectives_uri',
       calldata: [tokenId],
     };
   };
@@ -1180,7 +1074,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_objectivesUri = async (tokenId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_objectivesUri_calldata(tokenId)
       );
     } catch (error) {
@@ -1189,34 +1083,27 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_score_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_score_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "score",
+      contractName: 'minigame_mock',
+      entrypoint: 'score',
       calldata: [tokenId],
     };
   };
 
   const minigame_mock_score = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_minigame_mock_score_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_minigame_mock_score_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
     }
   };
 
-  const build_minigame_mock_settingExists_calldata = (
-    settingsId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_settingExists_calldata = (settingsId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "setting_exists",
+      contractName: 'minigame_mock',
+      entrypoint: 'setting_exists',
       calldata: [settingsId],
     };
   };
@@ -1224,7 +1111,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_settingExists = async (settingsId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_settingExists_calldata(settingsId)
       );
     } catch (error) {
@@ -1233,12 +1120,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_settings_calldata = (
-    settingsId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_settings_calldata = (settingsId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "settings",
+      contractName: 'minigame_mock',
+      entrypoint: 'settings',
       calldata: [settingsId],
     };
   };
@@ -1246,7 +1131,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_settings = async (settingsId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_settings_calldata(settingsId)
       );
     } catch (error) {
@@ -1255,12 +1140,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_settingsUri_calldata = (
-    settingsId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_settingsUri_calldata = (settingsId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "settings_uri",
+      contractName: 'minigame_mock',
+      entrypoint: 'settings_uri',
       calldata: [settingsId],
     };
   };
@@ -1268,7 +1151,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_settingsUri = async (settingsId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_settingsUri_calldata(settingsId)
       );
     } catch (error) {
@@ -1277,12 +1160,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_startGame_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_startGame_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "start_game",
+      contractName: 'minigame_mock',
+      entrypoint: 'start_game',
       calldata: [tokenId],
     };
   };
@@ -1295,7 +1176,7 @@ export function setupWorld(provider: DojoProvider) {
       return await provider.execute(
         snAccount,
         build_minigame_mock_startGame_calldata(tokenId),
-        "denshokan_0_0_1"
+        'denshokan_0_0_1'
       );
     } catch (error) {
       console.error(error);
@@ -1303,12 +1184,10 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_supportsInterface_calldata = (
-    interfaceId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_supportsInterface_calldata = (interfaceId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "supports_interface",
+      contractName: 'minigame_mock',
+      entrypoint: 'supports_interface',
       calldata: [interfaceId],
     };
   };
@@ -1316,7 +1195,7 @@ export function setupWorld(provider: DojoProvider) {
   const minigame_mock_supportsInterface = async (interfaceId: BigNumberish) => {
     try {
       return await provider.call(
-        "denshokan_0_0_1",
+        'denshokan_0_0_1',
         build_minigame_mock_supportsInterface_calldata(interfaceId)
       );
     } catch (error) {
@@ -1325,22 +1204,17 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
-  const build_minigame_mock_tokenUri_calldata = (
-    tokenId: BigNumberish
-  ): DojoCall => {
+  const build_minigame_mock_tokenUri_calldata = (tokenId: BigNumberish): DojoCall => {
     return {
-      contractName: "minigame_mock",
-      entrypoint: "token_uri",
+      contractName: 'minigame_mock',
+      entrypoint: 'token_uri',
       calldata: [tokenId],
     };
   };
 
   const minigame_mock_tokenUri = async (tokenId: BigNumberish) => {
     try {
-      return await provider.call(
-        "denshokan_0_0_1",
-        build_minigame_mock_tokenUri_calldata(tokenId)
-      );
+      return await provider.call('denshokan_0_0_1', build_minigame_mock_tokenUri_calldata(tokenId));
     } catch (error) {
       console.error(error);
       throw error;
@@ -1380,15 +1254,13 @@ export function setupWorld(provider: DojoProvider) {
       safeTransferFrom: denshokan_safeTransferFrom,
       buildSafeTransferFromCalldata: build_denshokan_safeTransferFrom_calldata,
       setApprovalForAll: denshokan_setApprovalForAll,
-      buildSetApprovalForAllCalldata:
-        build_denshokan_setApprovalForAll_calldata,
+      buildSetApprovalForAllCalldata: build_denshokan_setApprovalForAll_calldata,
       setTokenMetadata: denshokan_setTokenMetadata,
       buildSetTokenMetadataCalldata: build_denshokan_setTokenMetadata_calldata,
       settingsId: denshokan_settingsId,
       buildSettingsIdCalldata: build_denshokan_settingsId_calldata,
       supportsInterface: denshokan_supportsInterface,
-      buildSupportsInterfaceCalldata:
-        build_denshokan_supportsInterface_calldata,
+      buildSupportsInterfaceCalldata: build_denshokan_supportsInterface_calldata,
       symbol: denshokan_symbol,
       buildSymbolCalldata: build_denshokan_symbol_calldata,
       tokenUri: denshokan_tokenUri,
@@ -1410,19 +1282,15 @@ export function setupWorld(provider: DojoProvider) {
       mintGame: metagame_mock_mintGame,
       buildMintGameCalldata: build_metagame_mock_mintGame_calldata,
       supportsInterface: metagame_mock_supportsInterface,
-      buildSupportsInterfaceCalldata:
-        build_metagame_mock_supportsInterface_calldata,
+      buildSupportsInterfaceCalldata: build_metagame_mock_supportsInterface_calldata,
     },
     minigame_mock: {
       completedObjective: minigame_mock_completedObjective,
-      buildCompletedObjectiveCalldata:
-        build_minigame_mock_completedObjective_calldata,
+      buildCompletedObjectiveCalldata: build_minigame_mock_completedObjective_calldata,
       createObjectiveScore: minigame_mock_createObjectiveScore,
-      buildCreateObjectiveScoreCalldata:
-        build_minigame_mock_createObjectiveScore_calldata,
+      buildCreateObjectiveScoreCalldata: build_minigame_mock_createObjectiveScore_calldata,
       createSettingsDifficulty: minigame_mock_createSettingsDifficulty,
-      buildCreateSettingsDifficultyCalldata:
-        build_minigame_mock_createSettingsDifficulty_calldata,
+      buildCreateSettingsDifficultyCalldata: build_minigame_mock_createSettingsDifficulty_calldata,
       endGame: minigame_mock_endGame,
       buildEndGameCalldata: build_minigame_mock_endGame_calldata,
       initializer: minigame_mock_initializer,
@@ -1430,8 +1298,7 @@ export function setupWorld(provider: DojoProvider) {
       mint: minigame_mock_mint,
       buildMintCalldata: build_minigame_mock_mint_calldata,
       objectiveExists: minigame_mock_objectiveExists,
-      buildObjectiveExistsCalldata:
-        build_minigame_mock_objectiveExists_calldata,
+      buildObjectiveExistsCalldata: build_minigame_mock_objectiveExists_calldata,
       objectives: minigame_mock_objectives,
       buildObjectivesCalldata: build_minigame_mock_objectives_calldata,
       objectivesUri: minigame_mock_objectivesUri,
@@ -1447,8 +1314,7 @@ export function setupWorld(provider: DojoProvider) {
       startGame: minigame_mock_startGame,
       buildStartGameCalldata: build_minigame_mock_startGame_calldata,
       supportsInterface: minigame_mock_supportsInterface,
-      buildSupportsInterfaceCalldata:
-        build_minigame_mock_supportsInterface_calldata,
+      buildSupportsInterfaceCalldata: build_minigame_mock_supportsInterface_calldata,
       tokenUri: minigame_mock_tokenUri,
       buildTokenUriCalldata: build_minigame_mock_tokenUri_calldata,
     },

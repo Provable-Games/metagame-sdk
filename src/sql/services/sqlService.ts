@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { logger } from '../../shared/utils/logger';
 
 interface ErrorResponse {
   error?: string;
@@ -41,7 +42,7 @@ export function useSqlQuery<T>(
 
     try {
       if (logging) {
-        console.log('[useSqlQuery] Executing query with toriiUrl:', toriiUrl);
+        logger.debug('[useSqlQuery] Executing query with toriiUrl:', toriiUrl);
       }
       const result = await executeSqlQuery<T>(toriiUrl, query, logging);
       setData(result.data);
@@ -50,7 +51,7 @@ export function useSqlQuery<T>(
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(errorMessage);
       if (logging) {
-        console.error('SQL query error:', errorMessage);
+        logger.error('SQL query error:', errorMessage);
       }
     } finally {
       setLoading(false);
@@ -98,20 +99,20 @@ export async function executeSqlQuery<T>(
       const errorData = responseData as ErrorResponse;
       const errorMessage = errorData.error || errorData.message || 'Failed to execute query';
       if (logging) {
-        console.error('SQL query error:', errorMessage);
+        logger.error('SQL query error:', errorMessage);
       }
       return { data: [], error: errorMessage };
     }
 
     const result = responseData as T[];
     if (logging) {
-      console.log('SQL query result:', result);
+      logger.debug('SQL query result:', result);
     }
     return { data: result, error: null };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
     if (logging) {
-      console.error('SQL query error:', errorMessage);
+      logger.error('SQL query error:', errorMessage);
     }
     return { data: [], error: errorMessage };
   }

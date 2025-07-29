@@ -5,6 +5,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { settingsQuery } from '../queries/sdk';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
 import { type GameMetadata } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 
 export interface UseSubscribeSettingsParams {
   enabled?: boolean;
@@ -106,7 +107,7 @@ export function useSubscribeSettings(
     },
   });
 
-  console.log('settings entities', entities);
+  logger.debug('settings entities', entities);
 
   const {
     initializeStore,
@@ -120,7 +121,7 @@ export function useSubscribeSettings(
   // Initialize store with all entities on first load
   useEffect(() => {
     if (entities && entities.length > 0) {
-      console.log('Initializing settings store with', entities.length, 'entities');
+      logger.debug('Initializing settings store with', entities.length, 'entities');
       initializeStore(entities);
     }
   }, [entities, initializeStore]);

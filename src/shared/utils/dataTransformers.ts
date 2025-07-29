@@ -1,4 +1,5 @@
 import { feltToString } from '../lib';
+import { logger } from './logger';
 import type { GameTokenData, GameMetadata, GameSettings, GameObjective } from '../types';
 import type { EntityData } from '../types/entities';
 
@@ -133,7 +134,7 @@ export const parseContextData = (
 
     return { name, description, contexts };
   } catch (error) {
-    console.warn('Failed to parse context data:', error);
+    logger.warn('Failed to parse context data:', error);
     return { name: '', description: '', contexts: {} };
   }
 };
@@ -168,7 +169,7 @@ export const parseSettingsData = (
     // Fallback
     return { name: '', description: '', data: rawSettings };
   } catch (error) {
-    console.warn('Failed to parse settings data:', error);
+    logger.warn('Failed to parse settings data:', error);
     return { name: '', description: '', data: {} };
   }
 };
@@ -225,7 +226,7 @@ export const transformEntityToGameToken = (
       const lifecycleStart = entity.TokenMetadataUpdate.lifecycle_start || entity.TokenMetadataUpdate['lifecycle.start'];
       const lifecycleEnd = entity.TokenMetadataUpdate.lifecycle_end || entity.TokenMetadataUpdate['lifecycle.end'];
       
-      console.log(`dataTransformers: Processing lifecycle for token ${tokenId}:`, {
+      logger.debug(`dataTransformers: Processing lifecycle for token ${tokenId}:`, {
         lifecycle_start: entity.TokenMetadataUpdate.lifecycle_start,
         lifecycle_end: entity.TokenMetadataUpdate.lifecycle_end,
         'lifecycle.start': entity.TokenMetadataUpdate['lifecycle.start'],
@@ -388,7 +389,7 @@ export function buildObjectivesLookup(
     }
   });
 
-  console.log('Built objectives lookup:', lookup);
+  logger.debug('Built objectives lookup:', lookup);
   return lookup;
 }
 
@@ -417,7 +418,7 @@ export function buildMiniGamesLookup(
     }
   });
 
-  console.log('Built mini games lookup:', lookup);
+  logger.debug('Built mini games lookup:', lookup);
   return lookup;
 }
 
@@ -462,7 +463,7 @@ export function mergeGameEntities(
   const settingsToTokens = new Map<string, string>();
   const gameToTokens = new Map<string, string[]>();
 
-  console.log('Building relationship mappings...');
+  logger.debug('Building relationship mappings...');
 
   // Build relationship mappings
   entities.forEach((entity) => {
@@ -495,9 +496,9 @@ export function mergeGameEntities(
     }
   });
 
-  console.log('Objective to Token mappings:', Object.fromEntries(objectiveToTokens));
-  console.log('Settings to Token mappings:', Object.fromEntries(settingsToTokens));
-  console.log('Game to Tokens mappings:', Object.fromEntries(gameToTokens));
+  logger.debug('Objective to Token mappings:', Object.fromEntries(objectiveToTokens));
+  logger.debug('Settings to Token mappings:', Object.fromEntries(settingsToTokens));
+  logger.debug('Game to Tokens mappings:', Object.fromEntries(gameToTokens));
 
   // Group entities by their related token_ids
   entities.forEach((entity) => {
@@ -552,8 +553,8 @@ export function mergeGameEntities(
     });
   });
 
-  console.log('Token groups created:', groupedByToken.size);
-  console.log('Token group keys:', Array.from(groupedByToken.keys()));
+  logger.debug('Token groups created:', groupedByToken.size);
+  logger.debug('Token group keys:', Array.from(groupedByToken.keys()));
 
   // Merge entities for each token (similar to SQL aggregation)
   const gameTokens = Array.from(groupedByToken.entries()).map(([tokenId, tokenEntities]) => {

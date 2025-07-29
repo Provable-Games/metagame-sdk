@@ -5,6 +5,7 @@ import { useObjectivesStore } from '../stores/objectivesStore';
 import { objectivesQuery } from '../queries/sdk';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
 import { type GameMetadata } from '../../shared/types';
+import { logger } from '../../shared/utils/logger';
 
 export interface UseSubscribeObjectivesParams {
   enabled?: boolean;
@@ -84,7 +85,7 @@ export function useSubscribeObjectives(
     return objectivesQuery({ namespace: client.getNamespace() });
   }, [client]);
 
-  console.log('objectives query', query);
+  logger.debug('objectives query', query);
 
   const { entities, isSubscribed, error } = useEventSubscription(client, {
     query: query || { keys: [], entityModels: [], eventModels: [] },
@@ -100,7 +101,7 @@ export function useSubscribeObjectives(
         ...models[client.getNamespace()],
       };
 
-      console.log('objectives entity', transformed);
+      logger.debug('objectives entity', transformed);
 
       // Call our store's updateEntity for real-time updates
       updateEntity(transformed);
@@ -109,7 +110,7 @@ export function useSubscribeObjectives(
     },
   });
 
-  console.log('objectives entities', entities);
+  logger.debug('objectives entities', entities);
 
   const {
     initializeStore,
@@ -123,7 +124,7 @@ export function useSubscribeObjectives(
   // Initialize store with all entities on first load
   useEffect(() => {
     if (entities && entities.length > 0) {
-      console.log('Initializing objectives store with', entities.length, 'entities');
+      logger.debug('Initializing objectives store with', entities.length, 'entities');
       initializeStore(entities);
     }
   }, [entities, initializeStore]);

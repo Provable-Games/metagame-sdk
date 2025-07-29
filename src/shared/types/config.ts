@@ -1,5 +1,6 @@
 import { SDK, SchemaType } from '@dojoengine/sdk';
 import { ToriiClient } from '@dojoengine/torii-client';
+import { LoggerConfig } from '../utils/logger';
 
 /**
  * Configuration interface for the SDK.
@@ -19,4 +20,7 @@ export interface MetagameConfig<T extends SchemaType> {
     chainId: string;
     revision: string;
   };
+
+  // Optional logging configuration
+  logging?: Partial<LoggerConfig>;
 }

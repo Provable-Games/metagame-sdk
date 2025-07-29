@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { feltToString } from '../../shared/lib';
+import { logger } from '../../shared/utils/logger';
 
 export interface MiniGameEntity {
   entityId: string;
@@ -67,7 +68,7 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
 
   // Actions
   initializeStore: (entities: MiniGameEntity[]) => {
-    console.log('miniGamesStore: initializeStore called with', entities.length, 'entities');
+    logger.debug('miniGamesStore: initializeStore called with', entities.length, 'entities');
     const miniGames: MiniGamesLookup = {};
 
     entities.forEach((entity) => {
@@ -91,8 +92,8 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
       }
     });
 
-    console.log('miniGamesStore: built', Object.keys(miniGames).length, 'mini games');
-    console.log('miniGamesStore: sample mini games:', Object.values(miniGames).slice(0, 2));
+    logger.debug('miniGamesStore: built', Object.keys(miniGames).length, 'mini games');
+    logger.debug('miniGamesStore: sample mini games:', Object.values(miniGames).slice(0, 2));
 
     set({
       miniGames,
@@ -106,10 +107,10 @@ export const useMiniGamesStore = create<MiniGamesState>((set, get) => ({
     if (!entity.GameMetadataUpdate) return;
 
     const state = get();
-    console.log(entity);
+    logger.debug(entity);
     const gameId = entity.GameMetadataUpdate.id.toString();
 
-    console.log(entity);
+    logger.debug(entity);
 
     const updatedMiniGames = {
       ...state.miniGames,

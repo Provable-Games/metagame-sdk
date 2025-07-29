@@ -5,6 +5,7 @@ import type { GameTokenData, EntityData } from '../../shared/utils/dataTransform
 import { parseContextData, parseSettingsData } from '../../shared/utils/dataTransformers';
 import { useMiniGamesStore } from './miniGamesStore';
 import { isDevelopment } from '../../shared/utils/env';
+import { logger } from '../../shared/utils/logger';
 
 interface RelationshipMaps {
   objectiveToTokens: Map<string, string[]>; // objective_id -> array of token_ids
@@ -72,7 +73,7 @@ export const useGameTokensStore = create<GameTokensState>()(
 
     // Initialize store with bulk data (like from initial query)
     initializeStore: (entities: EntityData[]) => {
-      console.log('gameTokensStore: initializeStore called with', entities.length, 'entities');
+      logger.debug('gameTokensStore: initializeStore called with', entities.length, 'entities');
 
       // Debug: Log entity types distribution
       if (isDevelopment()) {
@@ -84,17 +85,17 @@ export const useGameTokensStore = create<GameTokensState>()(
             }
           });
         });
-        console.log('gameTokensStore: Entity types distribution:', entityTypes);
+        logger.debug('gameTokensStore: Entity types distribution:', entityTypes);
       }
 
       const { gameTokens, relationshipMaps } = buildMergedGamesFromEntities(entities);
-      console.log('gameTokensStore: built', Object.keys(gameTokens).length, 'game tokens');
+      logger.debug('gameTokensStore: built', Object.keys(gameTokens).length, 'game tokens');
 
       // Debug: Log token ID mappings
       if (isDevelopment() && Object.keys(gameTokens).length < 20) {
-        console.log('gameTokensStore: Token ID -> token_id mappings:');
+        logger.debug('gameTokensStore: Token ID -> token_id mappings:');
         Object.entries(gameTokens).forEach(([key, token]) => {
-          console.log(`  Key: ${key} -> token_id: ${token.token_id}`);
+          logger.debug(`  Key: ${key} -> token_id: ${token.token_id}`);
         });
       }
 
@@ -148,7 +149,7 @@ export const useGameTokensStore = create<GameTokensState>()(
       const affectedTokenIds = findAffectedTokenIds(entity, relationshipMaps);
 
       if (affectedTokenIds.length === 0) {
-        console.warn('No affected tokens found for entity:', entity.entityId);
+        logger.warn('No affected tokens found for entity:', entity.entityId);
         return;
       }
 
@@ -211,7 +212,7 @@ export const useGameTokensStore = create<GameTokensState>()(
       });
 
       if (hasUpdates) {
-        console.log('gameTokensStore: Refreshed gameMetadata for all tokens');
+        logger.debug('gameTokensStore: Refreshed gameMetadata for all tokens');
         set({
           gameTokens: updatedGames,
           lastUpdated: Date.now(),
@@ -222,12 +223,12 @@ export const useGameTokensStore = create<GameTokensState>()(
     // Remove entity
     removeEntity: (entityId: string) => {
       // Implementation for entity removal if needed
-      console.log('Entity removal not yet implemented:', entityId);
+      logger.debug('Entity removal not yet implemented:', entityId);
     },
 
     // Clear all data
     clearStore: () => {
-      console.log('[gameTokensStore] Clearing store data');
+      logger.info('[gameTokensStore] Clearing store data');
       set({
         gameTokens: {},
         relationshipMaps: {
@@ -332,7 +333,7 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
   });
 
   // ObjectiveData mapping still maintained for potential future use
-  // console.log('Store: ObjectiveData entities stored:', relationshipMaps.objectiveDataById.size);
+  // logger.debug('Store: ObjectiveData entities stored:', relationshipMaps.objectiveDataById.size);
 
   // Group by token ID using the same logic as dataTransformers
   const groupedByToken = new Map<string, EntityData[]>();
@@ -344,7 +345,7 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
       // Log entity grouping for debugging
       const entityType = Object.keys(entity).find((key) => key !== 'entityId' && entity[key]);
       if (entityType === 'TokenMetadataUpdate' || entityType === 'OwnersUpdate') {
-        console.log(`Entity ${entityType} affects tokens:`, tokenIds);
+        logger.debug(`Entity ${entityType} affects tokens:`, tokenIds);
       }
     }
 
@@ -361,12 +362,12 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 
   groupedByToken.forEach((tokenEntities, tokenId) => {
     if (isDevelopment()) {
-      console.log(`\n=== Creating merged game for token ${tokenId} ===`);
-      console.log(`Total entities for this token: ${tokenEntities.length}`);
+      logger.debug(`\n=== Creating merged game for token ${tokenId} ===`);
+      logger.debug(`Total entities for this token: ${tokenEntities.length}`);
       tokenEntities.forEach((entity) => {
         const entityType = Object.keys(entity).find((key) => key !== 'entityId' && entity[key]);
         if (entityType) {
-          console.log(`- ${entityType}:`, entity[entityType]);
+          logger.debug(`- ${entityType}:`, entity[entityType]);
         }
       });
     }
@@ -375,14 +376,14 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 
     // Validate that the token_id matches the key
     if (String(mergedGame.token_id) !== tokenId) {
-      console.warn(
+      logger.warn(
         `Token ID mismatch: key=${tokenId}, token_id=${mergedGame.token_id}. Using key as token_id.`
       );
       mergedGame.token_id = Number(tokenId) || 0;
     }
 
     if (isDevelopment()) {
-      console.log(`Final merged game for token ${tokenId}:`, {
+      logger.debug(`Final merged game for token ${tokenId}:`, {
         token_id: mergedGame.token_id,
         game_id: mergedGame.game_id,
         lifecycle: mergedGame.lifecycle,
@@ -573,7 +574,7 @@ function createMergedGameFromEntities(
     // Log each entity being processed for this token
     if (isDevelopment()) {
       const entityType = Object.keys(entity).find((key) => key !== 'entityId' && entity[key]);
-      console.log(`Processing ${entityType} for token ${tokenId}:`, entity);
+      logger.debug(`Processing ${entityType} for token ${tokenId}:`, entity);
     }
     updateMergedGameData(merged, entity, relationshipMaps);
   });
@@ -593,7 +594,7 @@ function updateMergedGameData(
   if (entity.TokenMetadataUpdate) {
     // Log if we're processing a TokenMetadataUpdate
     if (isDevelopment()) {
-      console.log(`Processing TokenMetadataUpdate for token ${entity.TokenMetadataUpdate.id}:`, {
+      logger.debug(`Processing TokenMetadataUpdate for token ${entity.TokenMetadataUpdate.id}:`, {
         game_id: entity.TokenMetadataUpdate.game_id,
         minted_at: entity.TokenMetadataUpdate.minted_at,
         lifecycle_start: entity.TokenMetadataUpdate.lifecycle_start,
@@ -610,7 +611,7 @@ function updateMergedGameData(
       entity.TokenMetadataUpdate.lifecycle_end || entity.TokenMetadataUpdate['lifecycle.end'];
 
     if (isDevelopment()) {
-      console.log(`TokenMetadataUpdate lifecycle parsing for token ${merged.token_id}:`, {
+      logger.debug(`TokenMetadataUpdate lifecycle parsing for token ${merged.token_id}:`, {
         raw_entity: entity.TokenMetadataUpdate,
         lifecycle_start: entity.TokenMetadataUpdate.lifecycle_start,
         lifecycle_end: entity.TokenMetadataUpdate.lifecycle_end,
@@ -633,7 +634,7 @@ function updateMergedGameData(
     };
 
     if (isDevelopment()) {
-      console.log(`Set lifecycle for token ${merged.token_id}:`, merged.lifecycle);
+      logger.debug(`Set lifecycle for token ${merged.token_id}:`, merged.lifecycle);
     }
     merged.minted_at = Number(entity.TokenMetadataUpdate.minted_at) || undefined;
     merged.minted_by = Number(entity.TokenMetadataUpdate.minted_by) || undefined;

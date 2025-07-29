@@ -53,12 +53,12 @@ export const gamesQuery = ({
   const conditions = [];
 
   if (owner) {
-    conditions.push(`o.owner_address = "${owner}"`);
+    conditions.push(`o.owner = "${padAddress(owner)}"`);
   }
 
   if (gameAddresses && gameAddresses.length > 0) {
     conditions.push(
-      `gr.contract_address IN (${gameAddresses.map((address) => `'${address}'`).join(',')})`
+      `gr.contract_address IN (${gameAddresses.map((address) => `'${padAddress(address)}'`).join(',')})`
     );
   }
 

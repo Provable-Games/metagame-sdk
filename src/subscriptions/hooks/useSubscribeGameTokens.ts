@@ -6,6 +6,7 @@ import { gamesQuery } from '../queries/sdk';
 import { type GameTokenData } from '../../shared/utils/dataTransformers';
 import { getMetagameClientSafe } from '../../shared/singleton';
 import { useEnsureMiniGamesStore } from '../utils/ensureMiniGamesStore';
+import { logger } from '../../shared/utils/logger';
 
 export interface UseSubscribeGameTokensParams {
   owner?: string;
@@ -131,7 +132,7 @@ export function useSubscribeGameTokens(
       if (!client) return entity;
 
       const { entityId, models } = entity;
-      console.log('Raw models from subscription:', models);
+      logger.debug('Raw models from subscription:', models);
       const transformed = {
         entityId,
         ...models[client.getNamespace()],
@@ -139,7 +140,7 @@ export function useSubscribeGameTokens(
 
       // Log specific TokenMetadataUpdate events
       if (transformed.TokenMetadataUpdate) {
-        console.log('TokenMetadataUpdate event received:', {
+        logger.debug('TokenMetadataUpdate event received:', {
           id: transformed.TokenMetadataUpdate.id,
           game_id: transformed.TokenMetadataUpdate.game_id,
           lifecycle_start: transformed.TokenMetadataUpdate.lifecycle_start,
@@ -155,15 +156,15 @@ export function useSubscribeGameTokens(
     },
   });
 
-  console.log(query);
-  console.log(events);
+  logger.debug(query);
+  logger.debug(events);
 
   // Handle initial load only
   useEffect(() => {
     if (!enabled) return;
 
     if (events && events.length > 0) {
-      console.log('useSubscribeGameTokens: Initial load with', events.length, 'entities');
+      logger.debug('useSubscribeGameTokens: Initial load with', events.length, 'entities');
       initializeStore(events);
     }
   }, [events, initializeStore, enabled]);
@@ -251,7 +252,7 @@ export function useSubscribeGameTokens(
       return 0;
     });
 
-    console.log(
+    logger.debug(
       'useSubscribeGameTokens: filtered and sorted games:',
       sortedGames.length,
       `sorted by ${sortBy} ${sortOrder}`,
@@ -263,7 +264,7 @@ export function useSubscribeGameTokens(
         minted_at: game.minted_at,
       })) // Log key fields for first 3 games
     );
-    console.log('useSubscribeGameTokens: store state:', {
+    logger.debug('useSubscribeGameTokens: store state:', {
       gameTokens: Object.keys(gameTokens).length,
       isInitialized,
       lastUpdated,
