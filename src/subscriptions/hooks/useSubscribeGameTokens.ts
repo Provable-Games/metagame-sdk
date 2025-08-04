@@ -109,7 +109,6 @@ export function useSubscribeGameTokens(
     clearStore,
     getGameTokensByFilter,
     getGameTokenByTokenId,
-    updateTokenMetadata,
   } = useGameTokensStore();
 
   // Get mini games store for metadata lookup
@@ -120,6 +119,42 @@ export function useSubscribeGameTokens(
     if (!client) return null;
     return gamesQuery({ namespace: client.getNamespace() });
   }, [client]);
+
+  const tokenAddress = client?.getTokenAddress() ?? '0x0';
+
+  const {
+    entities: tokenEntities,
+    isSubscribed: isSubscribedTokens,
+    error: errorTokens,
+  } = useTokenSubscription(client, {
+    contractAddress: tokenAddress,
+    enabled: enabled && !!client,
+    onUpdate: (entity: any) => {
+      // Handle token metadata updates from the subscription
+
+      // Extract token ID and create/update the full token entry
+      const tokenId = entity.token_id
+        ? Number(entity.token_id)
+        : entity.id
+          ? Number(entity.id)
+          : null;
+
+      if (tokenId) {
+        // Create a token entity with metadata from the token subscription
+        const tokenEntity = {
+          entityId: `token-${tokenId}`,
+          TokenMetadata: {
+            id: tokenId,
+            metadata: entity.metadata,
+            // Include all fields from the token subscription
+            ...entity,
+          },
+        };
+
+        updateEntity(tokenEntity);
+      }
+    },
+  });
 
   // Subscribe to events for real-time updates with custom callback
   const {
@@ -158,30 +193,10 @@ export function useSubscribeGameTokens(
     },
   });
 
-  const tokenAddress = client?.getTokenAddress() ?? '0x0';
-  
-  const { isSubscribed: isSubscribedTokens, error: errorTokens } = useTokenSubscription(client, {
-    contractAddress: tokenAddress,
-    enabled: enabled && !!client,
-    onUpdate: (entity: any) => {
-      // Handle token metadata updates from the subscription
-      logger.debug('Token subscription update received:', entity);
-
-      // Extract token ID and metadata from the subscription response
-      const tokenId = entity.token_id ? Number(entity.token_id) : (entity.id ? Number(entity.id) : null);
-
-      if (tokenId && entity.metadata !== undefined) {
-        // Update only the metadata field for this token
-        logger.debug(`Updating metadata for token ${tokenId}:`, entity.metadata);
-        updateTokenMetadata(tokenId, entity.metadata);
-      }
-    },
-  });
-
   logger.debug(query);
   logger.debug(events);
 
-  // Handle initial load only
+  // Handle initial load of events
   useEffect(() => {
     if (!enabled) return;
 
@@ -190,6 +205,35 @@ export function useSubscribeGameTokens(
       initializeStore(events);
     }
   }, [events, initializeStore, enabled]);
+
+  // Handle initial load of token entities with metadata
+  useEffect(() => {
+    if (!enabled || !tokenEntities) return;
+
+
+    // Process each token entity to add/update metadata
+    tokenEntities.forEach((entity: any) => {
+      const tokenId = entity.token_id
+        ? Number(entity.token_id)
+        : entity.id
+          ? Number(entity.id)
+          : null;
+
+      if (tokenId) {
+        const tokenEntity = {
+          entityId: `token-${tokenId}`,
+          TokenMetadata: {
+            id: tokenId,
+            metadata: entity.metadata,
+            ...entity,
+          },
+        };
+
+        updateEntity(tokenEntity);
+      }
+    });
+  }, [tokenEntities, updateEntity, enabled]);
+
 
   // Clear store when disabled
   useEffect(() => {

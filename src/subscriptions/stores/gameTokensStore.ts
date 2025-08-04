@@ -33,7 +33,6 @@ interface GameTokensState {
   removeEntity: (entityId: string) => void;
   clearStore: () => void;
   refreshGameMetadata: () => void;
-  updateTokenMetadata: (tokenId: number, metadata: any) => void;
 
   // Getters
   getGameTokensByFilter: (filter: {
@@ -97,6 +96,7 @@ export const useGameTokensStore = create<GameTokensState>()(
 
       // Preserve existing metadata from tokens
       const mergedTokens = { ...gameTokens };
+      
       Object.keys(mergedTokens).forEach((tokenId) => {
         const existingToken = existingTokens[tokenId];
         if (existingToken && existingToken.metadata !== undefined) {
@@ -130,6 +130,16 @@ export const useGameTokensStore = create<GameTokensState>()(
     updateEntity: (entity: EntityData) => {
       const state = get();
       const { gameTokens, relationshipMaps } = state;
+
+      // Check if this is a new token being added
+      if (entity.TokenMetadataUpdate?.id) {
+        const tokenId = entity.TokenMetadataUpdate.id.toString();
+        const isNewToken = !gameTokens[tokenId];
+        
+        if (isNewToken) {
+          logger.info(`New token detected: ${tokenId} - metadata will be fetched from token subscription`);
+        }
+      }
 
       // Special handling for MinterRegistryUpdate - need to update all tokens minted by this minter
       if (entity.MinterRegistryUpdate?.id) {
@@ -201,40 +211,6 @@ export const useGameTokensStore = create<GameTokensState>()(
       });
     },
 
-    // Update only the metadata field for a specific token
-    updateTokenMetadata: (tokenId: number, metadata: any) => {
-      const state = get();
-      const { gameTokens, relationshipMaps } = state;
-
-      // Check if the token exists
-      let existingToken = gameTokens[tokenId];
-      
-      // If token doesn't exist yet, create a minimal entry with just metadata
-      // This handles the race condition where metadata arrives before the full token data
-      if (!existingToken) {
-        logger.info(`Token ${tokenId} not found in store, creating minimal entry with metadata`);
-        existingToken = createEmptyMergedGame(tokenId.toString());
-      }
-
-      // Update only the metadata field
-      const updatedGames = {
-        ...gameTokens,
-        [tokenId]: {
-          ...existingToken,
-          metadata: metadata,
-          // Ensure token_id is set correctly
-          token_id: tokenId,
-        },
-      };
-
-      logger.debug(`Updated metadata for token ${tokenId}`, metadata);
-
-      set({
-        gameTokens: updatedGames,
-        relationshipMaps,
-        lastUpdated: Date.now(),
-      });
-    },
 
     // Refresh gameMetadata for all tokens (called when mini games store updates)
     refreshGameMetadata: () => {
@@ -462,6 +438,11 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 function findAffectedTokenIds(entity: EntityData, maps: RelationshipMaps): string[] {
   const tokenIds: string[] = [];
 
+  // Handle TokenMetadata from token subscription
+  if (entity.TokenMetadata?.id) {
+    tokenIds.push(String(entity.TokenMetadata.id));
+  }
+  
   // Direct token ID references - use consistent String() conversion
   if (entity.TokenMetadataUpdate?.id) {
     tokenIds.push(String(entity.TokenMetadataUpdate.id));
@@ -651,6 +632,16 @@ function updateMergedGameData(
   entity: EntityData,
   relationshipMaps?: RelationshipMaps
 ): void {
+  // Handle token metadata from token subscription
+  if (entity.TokenMetadata) {
+    merged.metadata = entity.TokenMetadata.metadata;
+    // Also update token_id if needed
+    if (entity.TokenMetadata.id) {
+      merged.token_id = Number(entity.TokenMetadata.id);
+    }
+    logger.debug(`Applied TokenMetadata for token ${merged.token_id}`);
+  }
+
   // Same logic as in dataTransformers merging
   if (entity.TokenMetadataUpdate) {
     // Log if we're processing a TokenMetadataUpdate

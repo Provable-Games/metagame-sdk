@@ -75,24 +75,16 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
 
         const [_response, subscription] = await dojoSDK.subscribeToken({
           contractAddresses: [contractAddress],
-          callback: (response: any) => {
-            logger.debug('Token subscription callback response:', response);
-
-            // Update entities state with new items from callback
-            if (response.items) {
-              setEntities(response.items);
-              state.setEntities(response.items.map(transformEntity));
-
-              // Also trigger onUpdate callback if provided
-              if (onUpdate) {
-                response.items.forEach((item: any) => {
-                  onUpdate(transformEntity(item));
-                });
-              }
+          callback: (response) => {
+            if (response.error) {
+              logger.error('Subscription error:', response.error.message);
+            } else if (onUpdate && response.data) {
+              logger.debug('useSdkSubscribeEntities() response.data:', response.data);
+              onUpdate(transformEntity(response.data));
             }
           },
         });
-        
+
         setEntities(_response.items);
         state.setEntities(_response.items.map(transformEntity));
 
