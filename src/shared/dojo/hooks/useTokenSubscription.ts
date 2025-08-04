@@ -3,25 +3,20 @@ import { SchemaType } from '@dojoengine/sdk';
 import { MetagameClient } from '../../client';
 import { getMetagameClient } from '../../singleton';
 import { logger } from '../../utils/logger';
+import { addAddressPadding } from 'starknet';
 
 export interface UseTokenSubscriptionOptions {
   contractAddress: string;
   enabled?: boolean;
   logging?: boolean;
   transform?: (entity: any) => any; // Custom transform function
+  onUpdate?: (entity: any) => void; // Callback for entity updates
 }
 
 export interface UseTokenSubscriptionResult<T> {
   entities: T[] | null;
   isSubscribed: boolean;
   error?: Error;
-}
-
-export interface SubscriptionOptions {
-  query: any;
-  namespace: string;
-  logging?: boolean;
-  transform?: (entity: any) => any;
 }
 
 export interface SubscriptionResult<T> {
@@ -33,10 +28,10 @@ export interface SubscriptionResult<T> {
  * Base hook for subscribing to entity queries
  */
 export function useTokenSubscription<S extends SchemaType, T = any>(
-  client: MetagameClient<S>,
+  client: MetagameClient<S> | null,
   options: UseTokenSubscriptionOptions
 ): UseTokenSubscriptionResult<T> {
-  const { contractAddress, enabled = true, logging = false, transform } = options;
+  const { contractAddress, enabled = true, logging = false, transform, onUpdate } = options;
 
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [entities, setEntities] = useState<any[] | null>(null);
@@ -44,11 +39,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
 
   // Default transform function if none provided
   const defaultTransform = (entity: any) => {
-    const { entityId, models } = entity;
-    return {
-      entityId,
-      ...models[contractAddress],
-    } as T;
+    return entity;
   };
 
   // Use custom transform or default
@@ -58,6 +49,12 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
     let _unsubscribe: (() => void) | undefined;
     const _subscribe = async () => {
       try {
+        if (!client) {
+          setEntities(null);
+          setIsSubscribed(false);
+          return;
+        }
+
         if (logging) {
           logger.debug('Subscribing to contract:', contractAddress);
         }
@@ -67,22 +64,45 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
         // Check if dojoSDK exists
         if (!dojoSDK) {
           const error = new Error(
-            'dojoSDK is required for entity subscriptions. Please provide dojoSDK when initializing the MetagameClient.'
+            'dojoSDK is required for token subscriptions. Please provide dojoSDK when initializing the MetagameClient.'
           );
           setError(error);
           logger.error(error.message);
           return;
         }
 
-        const subscription = await dojoSDK.client.onTokenUpdated(
-          [contractAddress],
-          [],
-          (response: any) => {
-            logger.debug('response:', response);
-          }
-        );
-        // setEntities(response);
-        // state.setEntities(response.items.map(transformEntity));
+        const state = client.getStore().getState();
+
+        const [_response, subscription] = await dojoSDK.subscribeToken({
+          contractAddresses: [contractAddress],
+          callback: (response: any) => {
+            logger.debug('Token subscription callback response:', response);
+
+            // Update entities state with new items from callback
+            if (response.items) {
+              setEntities(response.items);
+              state.setEntities(response.items.map(transformEntity));
+
+              // Also trigger onUpdate callback if provided
+              if (onUpdate) {
+                response.items.forEach((item: any) => {
+                  onUpdate(transformEntity(item));
+                });
+              }
+            }
+          },
+        });
+        
+        setEntities(_response.items);
+        state.setEntities(_response.items.map(transformEntity));
+
+        // Trigger onUpdate for initial items if provided
+        if (onUpdate && _response.items) {
+          _response.items.forEach((item: any) => {
+            onUpdate(transformEntity(item));
+          });
+        }
+
         setIsSubscribed(true);
         _unsubscribe = () => subscription.cancel();
       } catch (err) {
@@ -95,7 +115,7 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
     setIsSubscribed(false);
     setError(undefined);
 
-    if (enabled) {
+    if (enabled && client) {
       _subscribe();
     } else {
       setEntities(null);
@@ -112,61 +132,5 @@ export function useTokenSubscription<S extends SchemaType, T = any>(
     entities,
     isSubscribed,
     error,
-  };
-}
-
-export async function subscribeToEvents<S extends SchemaType, T = any>(
-  client: MetagameClient<S>,
-  options: SubscriptionOptions
-): Promise<SubscriptionResult<T>> {
-  const { query, namespace, logging = false, transform } = options;
-  const entityNamespace = namespace;
-
-  // Check if dojoSDK exists
-  const { dojoSDK } = client.getConfig();
-  if (!dojoSDK) {
-    throw new Error(
-      'dojoSDK is required for entity subscriptions. Please provide dojoSDK when initializing the MetagameClient.'
-    );
-  }
-
-  const state = client.getStore().getState();
-
-  const defaultTransform = (entity: any) => {
-    const { entityId, models } = entity;
-    return {
-      entityId,
-      ...models[entityNamespace],
-    } as T;
-  };
-
-  const transformEntity = transform || defaultTransform;
-
-  if (logging) {
-    logger.debug('Subscribing to query:', query);
-  }
-
-  const [response, subscription] = await dojoSDK.subscribeEventQuery({
-    query,
-    callback: (response) => {
-      if (response.error) {
-        logger.error('Subscription error:', response.error.message);
-      } else if (response.data && response.data.length > 0) {
-        logger.debug('useSdkSubscribeEntities() response.data:', response.data);
-        response.data.forEach((entity) => {
-          state.updateEntity(entity);
-        });
-      }
-    },
-  });
-
-  // const entities = _initialEntities.map(transformEntity);
-  const initialEntities = response.getItems();
-  const entities = initialEntities.map(transformEntity);
-  state.setEntities(entities);
-
-  return {
-    entities,
-    unsubscribe: () => subscription.cancel(),
   };
 }

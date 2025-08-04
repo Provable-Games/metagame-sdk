@@ -33,6 +33,7 @@ interface GameTokensState {
   removeEntity: (entityId: string) => void;
   clearStore: () => void;
   refreshGameMetadata: () => void;
+  updateTokenMetadata: (tokenId: number, metadata: any) => void;
 
   // Getters
   getGameTokensByFilter: (filter: {
@@ -88,19 +89,36 @@ export const useGameTokensStore = create<GameTokensState>()(
         logger.debug('gameTokensStore: Entity types distribution:', entityTypes);
       }
 
+      const state = get();
+      const existingTokens = state.gameTokens;
+      
       const { gameTokens, relationshipMaps } = buildMergedGamesFromEntities(entities);
       logger.debug('gameTokensStore: built', Object.keys(gameTokens).length, 'game tokens');
 
+      // Preserve existing metadata from tokens
+      const mergedTokens = { ...gameTokens };
+      Object.keys(mergedTokens).forEach((tokenId) => {
+        const existingToken = existingTokens[tokenId];
+        if (existingToken && existingToken.metadata !== undefined) {
+          // Preserve the metadata from the existing token
+          mergedTokens[tokenId] = {
+            ...mergedTokens[tokenId],
+            metadata: existingToken.metadata
+          };
+          logger.debug(`gameTokensStore: Preserved metadata for token ${tokenId}`);
+        }
+      });
+
       // Debug: Log token ID mappings
-      if (isDevelopment() && Object.keys(gameTokens).length < 20) {
+      if (isDevelopment() && Object.keys(mergedTokens).length < 20) {
         logger.debug('gameTokensStore: Token ID -> token_id mappings:');
-        Object.entries(gameTokens).forEach(([key, token]) => {
-          logger.debug(`  Key: ${key} -> token_id: ${token.token_id}`);
+        Object.entries(mergedTokens).forEach(([key, token]) => {
+          logger.debug(`  Key: ${key} -> token_id: ${token.token_id}, has metadata: ${token.metadata !== undefined}`);
         });
       }
 
       set({
-        gameTokens,
+        gameTokens: mergedTokens,
         relationshipMaps,
         isInitialized: true,
         lastUpdated: Date.now(),
@@ -165,12 +183,55 @@ export const useGameTokensStore = create<GameTokensState>()(
           updatedGames[tokenId] = createEmptyMergedGame(tokenId);
         }
 
+        // Preserve existing metadata before updating
+        const existingMetadata = updatedGames[tokenId].metadata;
+        
         updateMergedGameData(updatedGames[tokenId], entity, updatedMaps);
+        
+        // Restore metadata if it was overwritten (metadata comes from token subscription)
+        if (existingMetadata !== undefined && updatedGames[tokenId].metadata === undefined) {
+          updatedGames[tokenId].metadata = existingMetadata;
+        }
       });
 
       set({
         gameTokens: updatedGames,
         relationshipMaps: updatedMaps,
+        lastUpdated: Date.now(),
+      });
+    },
+
+    // Update only the metadata field for a specific token
+    updateTokenMetadata: (tokenId: number, metadata: any) => {
+      const state = get();
+      const { gameTokens, relationshipMaps } = state;
+
+      // Check if the token exists
+      let existingToken = gameTokens[tokenId];
+      
+      // If token doesn't exist yet, create a minimal entry with just metadata
+      // This handles the race condition where metadata arrives before the full token data
+      if (!existingToken) {
+        logger.info(`Token ${tokenId} not found in store, creating minimal entry with metadata`);
+        existingToken = createEmptyMergedGame(tokenId.toString());
+      }
+
+      // Update only the metadata field
+      const updatedGames = {
+        ...gameTokens,
+        [tokenId]: {
+          ...existingToken,
+          metadata: metadata,
+          // Ensure token_id is set correctly
+          token_id: tokenId,
+        },
+      };
+
+      logger.debug(`Updated metadata for token ${tokenId}`, metadata);
+
+      set({
+        gameTokens: updatedGames,
+        relationshipMaps,
         lastUpdated: Date.now(),
       });
     },
@@ -645,6 +706,7 @@ function updateMergedGameData(
     merged.soulbound = entity.TokenMetadataUpdate.soulbound;
     merged.completed_all_objectives = entity.TokenMetadataUpdate.completed_all_objectives;
     // TokenMetadataUpdate doesn't have a metadata field in Cairo events
+    // Don't overwrite metadata - it comes from token subscription
 
     // Look up and include SettingsData if we have a settings_id
     if (entity.TokenMetadataUpdate.settings_id && relationshipMaps) {

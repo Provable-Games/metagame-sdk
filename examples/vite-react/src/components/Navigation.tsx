@@ -25,6 +25,8 @@ const Navigation: React.FC = () => {
   const [isNetworkDropdownOpen, setIsNetworkDropdownOpen] = useState(false);
   const { chain } = useNetwork();
 
+  console.log('Current chain:', chain);
+
   // Network configurations
   const networks = [
     {

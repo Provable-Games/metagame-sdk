@@ -10,6 +10,7 @@ import {
 } from '@dojoengine/predeployed-connector';
 import { initializeController } from '../dojo/setup/controller';
 import { manifests } from '../dojo/setup/config';
+import { get } from 'http';
 
 // Initialize controller outside component
 const initController = () => {
@@ -111,6 +112,8 @@ export function StarknetProvider({ children }: { children: React.ReactNode }) {
     console.error(`No chain configuration found for ${defaultChainId}`);
     return null;
   }
+
+  console.log(connectors, controller, getDefaultChainId());
 
   return (
     <StarknetConfig autoConnect chains={chains} connectors={connectors} provider={provider}>

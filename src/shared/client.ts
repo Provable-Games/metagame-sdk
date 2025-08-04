@@ -43,7 +43,7 @@ export class MetagameClient<T extends SchemaType> {
   private config: MetagameConfig<T>;
   private store: any;
   private namespace: string;
-  private contractAddress: string;
+  private tokenAddress: string;
 
   constructor(config: MetagameConfig<T>) {
     this.config = {
@@ -53,7 +53,7 @@ export class MetagameClient<T extends SchemaType> {
     this.store = createDojoStore<T>();
 
     this.namespace = 'relayer_0_0_1';
-    this.contractAddress = '0x50d5db3a00209bbcd8b7f5fbec727d36515485fb2859c257616d019a166f99';
+    this.tokenAddress = '0x1fd7f186c0bb99f8d128f1eb40dbe3c7657df381957417f8c9a40804c005545';
   }
 
   /**
@@ -100,10 +100,10 @@ export class MetagameClient<T extends SchemaType> {
   }
 
   /**
-   * Get the contract address
+   * Get the token address
    */
-  getContractAddress(): string {
-    return this.contractAddress;
+  getTokenAddress(): string {
+    return this.tokenAddress;
   }
 
   /**

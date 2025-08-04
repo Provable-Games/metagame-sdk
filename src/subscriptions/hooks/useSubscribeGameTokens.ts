@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useEventSubscription } from '../../shared/dojo/hooks/useEventSubscription';
+import { useTokenSubscription } from '../../shared/dojo/hooks/useTokenSubscription';
 import { useGameTokensStore } from '../stores/gameTokensStore';
 import { useMiniGamesStore } from '../stores/miniGamesStore';
 import { gamesQuery } from '../queries/sdk';
@@ -108,6 +109,7 @@ export function useSubscribeGameTokens(
     clearStore,
     getGameTokensByFilter,
     getGameTokenByTokenId,
+    updateTokenMetadata,
   } = useGameTokensStore();
 
   // Get mini games store for metadata lookup
@@ -153,6 +155,26 @@ export function useSubscribeGameTokens(
       updateEntity(transformed);
 
       return transformed;
+    },
+  });
+
+  const tokenAddress = client?.getTokenAddress() ?? '0x0';
+  
+  const { isSubscribed: isSubscribedTokens, error: errorTokens } = useTokenSubscription(client, {
+    contractAddress: tokenAddress,
+    enabled: enabled && !!client,
+    onUpdate: (entity: any) => {
+      // Handle token metadata updates from the subscription
+      logger.debug('Token subscription update received:', entity);
+
+      // Extract token ID and metadata from the subscription response
+      const tokenId = entity.token_id ? Number(entity.token_id) : (entity.id ? Number(entity.id) : null);
+
+      if (tokenId && entity.metadata !== undefined) {
+        // Update only the metadata field for this token
+        logger.debug(`Updating metadata for token ${tokenId}:`, entity.metadata);
+        updateTokenMetadata(tokenId, entity.metadata);
+      }
     },
   });
 
@@ -401,8 +423,8 @@ export function useSubscribeGameTokens(
 
   return {
     // Subscription status
-    isSubscribing: isSubscribedEvents,
-    error: errorEvents || null,
+    isSubscribing: isSubscribedEvents || isSubscribedTokens,
+    error: errorEvents || errorTokens || null,
     isInitialized,
     lastUpdated,
 
