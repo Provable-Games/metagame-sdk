@@ -120,7 +120,6 @@ export function useEventSubscription<S extends SchemaType, T = any>(
 
     if (enabled && client) {
       _subscribe();
-      console.log('EVENT SUBSCRIPTION ACTIVE');
     } else {
       setEntities(null);
     }

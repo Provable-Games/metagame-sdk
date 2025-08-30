@@ -9,7 +9,7 @@ import type { GameTokenData } from '../../shared/types';
 interface GameTokensQueryParams {
   owner?: string;
   gameAddresses?: string[];
-  tokenIds?: string[];
+  tokenIds?: number[];
   hasContext?: boolean;
   mintedByAddress?: string;
   limit?: number;

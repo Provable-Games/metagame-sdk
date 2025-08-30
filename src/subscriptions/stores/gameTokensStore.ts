@@ -38,7 +38,7 @@ interface GameTokensState {
   getGameTokensByFilter: (filter: {
     owner?: string;
     gameAddresses?: string[];
-    tokenIds?: string[];
+    tokenIds?: number[];
     hasContext?: boolean;
     context?: {
       name?: string;
@@ -90,20 +90,20 @@ export const useGameTokensStore = create<GameTokensState>()(
 
       const state = get();
       const existingTokens = state.gameTokens;
-      
+
       const { gameTokens, relationshipMaps } = buildMergedGamesFromEntities(entities);
       logger.debug('gameTokensStore: built', Object.keys(gameTokens).length, 'game tokens');
 
       // Preserve existing metadata from tokens
       const mergedTokens = { ...gameTokens };
-      
+
       Object.keys(mergedTokens).forEach((tokenId) => {
         const existingToken = existingTokens[tokenId];
         if (existingToken && existingToken.metadata !== undefined) {
           // Preserve the metadata from the existing token
           mergedTokens[tokenId] = {
             ...mergedTokens[tokenId],
-            metadata: existingToken.metadata
+            metadata: existingToken.metadata,
           };
           logger.debug(`gameTokensStore: Preserved metadata for token ${tokenId}`);
         }
@@ -113,7 +113,9 @@ export const useGameTokensStore = create<GameTokensState>()(
       if (isDevelopment() && Object.keys(mergedTokens).length < 20) {
         logger.debug('gameTokensStore: Token ID -> token_id mappings:');
         Object.entries(mergedTokens).forEach(([key, token]) => {
-          logger.debug(`  Key: ${key} -> token_id: ${token.token_id}, has metadata: ${token.metadata !== undefined}`);
+          logger.debug(
+            `  Key: ${key} -> token_id: ${token.token_id}, has metadata: ${token.metadata !== undefined}`
+          );
         });
       }
 
@@ -135,9 +137,11 @@ export const useGameTokensStore = create<GameTokensState>()(
       if (entity.TokenMetadataUpdate?.id) {
         const tokenId = entity.TokenMetadataUpdate.id.toString();
         const isNewToken = !gameTokens[tokenId];
-        
+
         if (isNewToken) {
-          logger.info(`New token detected: ${tokenId} - metadata will be fetched from token subscription`);
+          logger.info(
+            `New token detected: ${tokenId} - metadata will be fetched from token subscription`
+          );
         }
       }
 
@@ -195,9 +199,9 @@ export const useGameTokensStore = create<GameTokensState>()(
 
         // Preserve existing metadata before updating
         const existingMetadata = updatedGames[tokenId].metadata;
-        
+
         updateMergedGameData(updatedGames[tokenId], entity, updatedMaps);
-        
+
         // Restore metadata if it was overwritten (metadata comes from token subscription)
         if (existingMetadata !== undefined && updatedGames[tokenId].metadata === undefined) {
           updatedGames[tokenId].metadata = existingMetadata;
@@ -210,7 +214,6 @@ export const useGameTokensStore = create<GameTokensState>()(
         lastUpdated: Date.now(),
       });
     },
-
 
     // Refresh gameMetadata for all tokens (called when mini games store updates)
     refreshGameMetadata: () => {
@@ -295,8 +298,7 @@ export const useGameTokensStore = create<GameTokensState>()(
           !filter.gameAddresses.includes(game.gameMetadata?.contract_address || '')
         )
           return false;
-        if (filter.tokenIds?.length && !filter.tokenIds.includes(game.token_id.toString()))
-          return false;
+        if (filter.tokenIds?.length && !filter.tokenIds.includes(game.token_id)) return false;
         if (filter.hasContext !== undefined && !!game.context !== filter.hasContext) return false;
 
         // New context-based filtering
@@ -442,7 +444,7 @@ function findAffectedTokenIds(entity: EntityData, maps: RelationshipMaps): strin
   if (entity.TokenMetadata?.id) {
     tokenIds.push(String(entity.TokenMetadata.id));
   }
-  
+
   // Direct token ID references - use consistent String() conversion
   if (entity.TokenMetadataUpdate?.id) {
     tokenIds.push(String(entity.TokenMetadataUpdate.id));

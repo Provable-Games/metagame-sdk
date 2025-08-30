@@ -52,8 +52,9 @@ export class MetagameClient<T extends SchemaType> {
 
     this.store = createDojoStore<T>();
 
-    this.namespace = 'relayer_0_0_1';
-    this.tokenAddress = '0x1fd7f186c0bb99f8d128f1eb40dbe3c7657df381957417f8c9a40804c005545';
+    this.namespace = config.namespace || 'relayer_0_0_1';
+    this.tokenAddress =
+      config.tokenAddress || '0x0610aba32da98547f9f65fe0195cc60c08f1ef6fa2f2a0fc03e35f1c29319fd3';
   }
 
   /**

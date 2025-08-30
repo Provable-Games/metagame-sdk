@@ -51,3 +51,11 @@ export function padAddress(address: string) {
     return '';
   }
 }
+
+export function padU64(num: bigint): string {
+  if (num < 0n || num > 0xffffffffffffffffn) {
+    throw new Error('Value out of range for u64');
+  }
+  const hex = num.toString(16);
+  return '0x' + hex.padStart(16, '0');
+}

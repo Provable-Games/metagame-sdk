@@ -1,14 +1,18 @@
 import React from 'react';
 import { useSubscribeGameTokens } from 'metagame-sdk/subscriptions';
 import { useGameTokens } from 'metagame-sdk/sql';
+import { useAccount } from '@starknet-react/core';
 
 const GameCards: React.FC = () => {
+  const { address } = useAccount();
   const { games } = useSubscribeGameTokens({
     // minted_by_address: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
+    // owner: address,
+    tokenIds: [2],
   });
   const { data: gamesFromSQL } = useGameTokens({
     // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-    // tokenIds: ['0x000000000000000000000000000000000000000000000000000000000000000a'],
+    tokenIds: [2],
     owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
   });
 

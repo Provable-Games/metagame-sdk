@@ -12,7 +12,7 @@ import { logger } from '../../shared/utils/logger';
 export interface UseSubscribeGameTokensParams {
   owner?: string;
   gameAddresses?: string[];
-  tokenIds?: string[];
+  tokenIds?: number[];
   hasContext?: boolean;
   context?: {
     name?: string;
@@ -114,11 +114,31 @@ export function useSubscribeGameTokens(
   // Get mini games store for metadata lookup
   const { getMiniGameData } = useMiniGamesStore();
 
-  // Create query only if client is available
+  // Create query with filters
   const query = useMemo(() => {
     if (!client) return null;
-    return gamesQuery({ namespace: client.getNamespace() });
-  }, [client]);
+    return gamesQuery({
+      namespace: client.getNamespace(),
+      owner,
+      gameAddresses,
+      tokenIds,
+      settings_id,
+      completed_all_objectives,
+      soulbound,
+      minted_by: minted_by_address,
+      limit: pagination?.pageSize ? pagination.pageSize * 10 : 10000,
+    });
+  }, [
+    client,
+    owner,
+    gameAddresses,
+    tokenIds,
+    settings_id,
+    completed_all_objectives,
+    soulbound,
+    minted_by_address,
+    pagination?.pageSize,
+  ]);
 
   const tokenAddress = client?.getTokenAddress() ?? '0x0';
 
@@ -210,7 +230,6 @@ export function useSubscribeGameTokens(
   useEffect(() => {
     if (!enabled || !tokenEntities) return;
 
-
     // Process each token entity to add/update metadata
     tokenEntities.forEach((entity: any) => {
       const tokenId = entity.token_id
@@ -233,7 +252,6 @@ export function useSubscribeGameTokens(
       }
     });
   }, [tokenEntities, updateEntity, enabled]);
-
 
   // Clear store when disabled
   useEffect(() => {

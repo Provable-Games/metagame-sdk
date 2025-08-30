@@ -1,4 +1,5 @@
 import { padAddress } from '../../shared/lib';
+import { padU64 } from '../../shared/lib';
 
 export const miniGamesQuery = ({
   namespace,
@@ -32,7 +33,7 @@ interface GamesQueryParams {
   namespace: string;
   owner?: string;
   gameAddresses?: string[];
-  tokenIds?: string[];
+  tokenIds?: number[];
   hasContext?: boolean;
   mintedByAddress?: string;
   limit?: number;
@@ -63,7 +64,7 @@ export const gamesQuery = ({
   }
 
   if (tokenIds && tokenIds.length > 0) {
-    conditions.push(`tm.id IN (${tokenIds.map((id) => `'${id}'`).join(',')})`);
+    conditions.push(`tm.id IN (${tokenIds.map((id) => `'${padU64(BigInt(id))}'`).join(',')})`);
   }
 
   if (hasContext) {
