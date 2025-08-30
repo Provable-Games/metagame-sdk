@@ -7,7 +7,7 @@
         "@cartridge/connector": "^0.9.1",
         "@cartridge/controller": "^0.9.1",
         "@cartridge/presets": "^0.5.2",
-        "@dojoengine/core": "1.6.0",
+        "@dojoengine/core": "1.7.0-preview.1",
         "@dojoengine/predeployed-connector": "1.6.0",
         "@starknet-react/core": "4.0.2",
         "react": "^19.0.0",
@@ -155,7 +155,7 @@
 
     "@chakra-ui/utils": ["@chakra-ui/utils@2.2.5", "", { "dependencies": { "@types/lodash.mergewith": "4.6.9", "lodash.mergewith": "4.6.2" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-KTBCK+M5KtXH6p54XS39ImQUMVtAx65BoZDoEms3LuObyTo1+civ1sMm4h3nRT320U6H5H7D35WnABVQjqU/4g=="],
 
-    "@dojoengine/core": ["@dojoengine/core@1.6.0", "", { "dependencies": { "@dojoengine/recs": "2.0.13", "starknet": "^7.6.2", "zod": "^3.23.8" } }, "sha512-r9pefQDCCb3D3fOOn14mXlaWXXRd65NLZsy+YXjOrOb9nUO5yK1V6+BUIFIi4oaBEUNLaO5Pk2WRsSoBPpyGCA=="],
+    "@dojoengine/core": ["@dojoengine/core@1.7.0-preview.1", "", { "dependencies": { "@dojoengine/recs": "2.0.13", "starknet": "^8.1.2", "zod": "^3.23.8" }, "bin": { "compile-abi": "dist/cli/compile-abi.js", "generate-abi-types": "dist/cli/generate-abi-types.js" } }, "sha512-dDlQ8zNEOfHNrv8g7GRRY3NvDGHoz6yNPzJHLulrJ1p4eNGk0pusIOMoTjiQETZT8MChGflg0/kgbKigIC4Lcw=="],
 
     "@dojoengine/predeployed-connector": ["@dojoengine/predeployed-connector@1.6.0", "", { "dependencies": { "@starknet-io/types-js": "^0.7.10", "@starknet-react/core": "^4.0.1-beta.4", "react": "^18.3.1", "react-dom": "^18.3.1", "starknet": "^7.6.2" } }, "sha512-+KxZpBwoFMm1wni4fPV62th+NPHaa72gzLy+zdLO+eJQAqjdsYVGXAfxmonqwp6G2nYxqpP69NSs7aHRYHpGoQ=="],
 
@@ -514,6 +514,8 @@
     "@starknet-io/starknet-types-07": ["@starknet-io/types-js@0.7.10", "", {}, "sha512-1VtCqX4AHWJlRRSYGSn+4X1mqolI1Tdq62IwzoU2vUuEE72S1OlEeGhpvd6XsdqXcfHmVzYfj8k1XtKBQqwo9w=="],
 
     "@starknet-io/starknet-types-08": ["@starknet-io/types-js@0.8.4", "", {}, "sha512-0RZ3TZHcLsUTQaq1JhDSCM8chnzO4/XNsSCozwDET64JK5bjFDIf2ZUkta+tl5Nlbf4usoU7uZiDI/Q57kt2SQ=="],
+
+    "@starknet-io/starknet-types-09": ["@starknet-io/types-js@0.9.1", "", {}, "sha512-ngLjOFuWOI4EFij8V+nl5tgHVACr6jqgLNUQbgD+AgnTcAN33SemBPXDIsovwK1Mz1U04Cz3qjDOnTq7067ZQw=="],
 
     "@starknet-io/types-js": ["@starknet-io/types-js@0.8.4", "", {}, "sha512-0RZ3TZHcLsUTQaq1JhDSCM8chnzO4/XNsSCozwDET64JK5bjFDIf2ZUkta+tl5Nlbf4usoU7uZiDI/Q57kt2SQ=="],
 
@@ -1974,6 +1976,8 @@
     "@babel/traverse--for-generate-function-map/globals": ["globals@11.12.0", "", {}, "sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA=="],
 
     "@cartridge/presets/@starknet-io/types-js": ["@starknet-io/types-js@0.7.7", "", {}, "sha512-WLrpK7LIaIb8Ymxu6KF/6JkGW1sso988DweWu7p5QY/3y7waBIiPvzh27D9bX5KIJNRDyOoOVoHVEKYUYWZ/RQ=="],
+
+    "@dojoengine/core/starknet": ["starknet@8.5.2", "", { "dependencies": { "@noble/curves": "1.7.0", "@noble/hashes": "1.6.0", "@scure/base": "1.2.1", "@scure/starknet": "1.1.0", "@starknet-io/starknet-types-08": "npm:@starknet-io/types-js@~0.8.4", "@starknet-io/starknet-types-09": "npm:@starknet-io/types-js@~0.9.1", "abi-wan-kanabi": "2.2.4", "lossless-json": "^4.0.1", "pako": "^2.0.4", "ts-mixer": "^6.0.3" } }, "sha512-d/GNASyo569y2kNZX+qS8faVxANyVANeEZWhwq0B7jVGcU6gE9W/aPThz3fMT3QN/srm+2XEiGTYbKuX+w5IKg=="],
 
     "@dojoengine/predeployed-connector/@starknet-io/types-js": ["@starknet-io/types-js@0.7.10", "", {}, "sha512-1VtCqX4AHWJlRRSYGSn+4X1mqolI1Tdq62IwzoU2vUuEE72S1OlEeGhpvd6XsdqXcfHmVzYfj8k1XtKBQqwo9w=="],
 

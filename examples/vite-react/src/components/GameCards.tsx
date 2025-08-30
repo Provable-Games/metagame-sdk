@@ -2,13 +2,30 @@ import React from 'react';
 import { useSubscribeGameTokens } from 'metagame-sdk/subscriptions';
 import { useGameTokens } from 'metagame-sdk/sql';
 import { useAccount } from '@starknet-react/core';
+import { addAddressPadding } from 'starknet';
 
 const GameCards: React.FC = () => {
   const { address } = useAccount();
   const { games } = useSubscribeGameTokens({
-    // minted_by_address: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-    // owner: address,
-    tokenIds: [2],
+    // context: {
+    //   name: 'Budokan',
+    //   attributes: {
+    //     'Tournament ID': (1)?.toString() ?? '0',
+    //   },
+    // },
+    // pagination: {
+    //   pageSize: 10,
+    //   sortBy: 'score',
+    //   sortOrder: 'desc',
+    // },
+    // owner: addAddressPadding(address ?? '0'),
+    gameAddresses: [
+      addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
+    ],
+    // soulbound: false,
+    // minted_by_address: addAddressPadding(
+    //   '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
+    // ),
   });
   const { data: gamesFromSQL } = useGameTokens({
     // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',

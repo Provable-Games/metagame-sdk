@@ -42,59 +42,62 @@ export const gamesQuery = ({
 
   let keysClause = KeysClause(models, []);
 
-  // Apply filters using where clauses
-  if (owner) {
-    keysClause = keysClause.where(`${namespace}-OwnersUpdate`, 'owner', 'Eq', padAddress(owner));
-  }
+  // // Apply filters using where clauses
+  // if (owner) {
+  //   keysClause = keysClause.where(`${namespace}-OwnersUpdate`, 'owner', 'Eq', padAddress(owner));
+  // }
 
-  if (tokenIds && tokenIds.length > 0) {
-    keysClause = keysClause.where(
-      `${namespace}-TokenMetadataUpdate`,
-      'id',
-      'In',
-      tokenIds.map((id) => padU64(BigInt(id)))
-    );
-  }
+  // if (tokenIds && tokenIds.length > 0) {
+  //   keysClause = keysClause.where(
+  //     `${namespace}-TokenMetadataUpdate`,
+  //     'id',
+  //     'In',
+  //     tokenIds.map((id) => padU64(BigInt(id)))
+  //   );
+  // }
 
-  if (gameAddresses && gameAddresses.length > 0) {
-    keysClause = keysClause.where(
-      `${namespace}-GameRegistryUpdate`,
-      'contract_address',
-      'In',
-      gameAddresses.map((addr) => padAddress(addr))
-    );
-  }
+  // if (gameAddresses && gameAddresses.length > 0) {
+  //   keysClause = keysClause.where(
+  //     `${namespace}-GameRegistryUpdate`,
+  //     'contract_address',
+  //     'In',
+  //     gameAddresses.map((addr) => padAddress(addr))
+  //   );
+  // }
 
-  if (settings_id !== undefined) {
-    keysClause = keysClause.where(
-      `${namespace}-TokenMetadataUpdate`,
-      'settings_id',
-      'Eq',
-      settings_id
-    );
-  }
+  // if (settings_id !== undefined) {
+  //   keysClause = keysClause.where(
+  //     `${namespace}-TokenMetadataUpdate`,
+  //     'settings_id',
+  //     'Eq',
+  //     settings_id
+  //   );
+  // }
 
-  if (completed_all_objectives !== undefined) {
-    keysClause = keysClause.where(
-      `${namespace}-TokenMetadataUpdate`,
-      'completed_all_objectives',
-      'Eq',
-      completed_all_objectives
-    );
-  }
+  // if (completed_all_objectives !== undefined) {
+  //   keysClause = keysClause.where(
+  //     `${namespace}-TokenMetadataUpdate`,
+  //     'completed_all_objectives',
+  //     'Eq',
+  //     completed_all_objectives
+  //   );
+  // }
 
-  if (soulbound !== undefined) {
-    keysClause = keysClause.where(`${namespace}-TokenMetadataUpdate`, 'soulbound', 'Eq', soulbound);
-  }
+  // if (soulbound !== undefined) {
+  //   keysClause = keysClause.where(`${namespace}-TokenMetadataUpdate`, 'soulbound', 'Eq', soulbound);
+  // }
 
-  if (minted_by !== undefined) {
-    keysClause = keysClause.where(
-      `${namespace}-TokenMetadataUpdate`,
-      'minted_by',
-      'Eq',
-      Number(minted_by)
-    );
-  }
+  // console.log('minted by address:', minted_by);
+  // console.log('minted by pad again:', padAddress(minted_by ?? '0x0'));
+
+  // if (minted_by !== undefined) {
+  //   keysClause = keysClause.where(
+  //     `${namespace}-MinterRegistryUpdate`,
+  //     'minter_address',
+  //     'Eq',
+  //     padAddress(minted_by)
+  //   );
+  // }
 
   return new ToriiQueryBuilder()
     .withClause(keysClause.build())
