@@ -28,7 +28,7 @@ export interface UseSubscribeGameTokensParams {
 
   // Pagination parameters
   pagination?: {
-    pageSize?: number; // Number of items per page (default: 20)
+    pageSize?: number; // Number of items per page (default: 100)
     initialPage?: number; // Starting page (0-indexed, default: 0)
 
     // Sorting parameters
@@ -89,7 +89,7 @@ export function useSubscribeGameTokens(
   useEnsureMiniGamesStore();
 
   // Pagination state
-  const pageSize = pagination?.pageSize ?? 20;
+  const pageSize = pagination?.pageSize ?? 100;
   const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
 
   // Sorting parameters

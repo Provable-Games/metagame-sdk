@@ -440,53 +440,50 @@ function buildMergedGamesFromEntities(entities: EntityData[]): {
 function findAffectedTokenIds(entity: EntityData, maps: RelationshipMaps): string[] {
   const tokenIds: string[] = [];
 
-  // Handle TokenMetadata from token subscription
-  if (entity.TokenMetadata?.id) {
-    tokenIds.push(String(entity.TokenMetadata.id));
-  }
+  // Direct token ID references
+  const directIds = [
+    entity.TokenMetadata?.id,
+    entity.TokenMetadataUpdate?.id,
+    entity.ObjectiveUpdate?.token_id,
+    entity.OwnersUpdate?.token_id,
+    entity.TokenPlayerNameUpdate?.id,
+    entity.TokenContextUpdate?.id,
+    entity.TokenScoreUpdate?.id,
+    entity.TokenRendererUpdate?.id,
+    entity.TokenClientUrlUpdate?.id,
+  ].filter((id) => id !== undefined && id !== null);
 
-  // Direct token ID references - use consistent String() conversion
-  if (entity.TokenMetadataUpdate?.id) {
-    tokenIds.push(String(entity.TokenMetadataUpdate.id));
-  }
-  if (entity.ObjectiveUpdate?.token_id) {
-    tokenIds.push(String(entity.ObjectiveUpdate.token_id));
-  }
-  if (entity.OwnersUpdate?.token_id) {
-    tokenIds.push(String(entity.OwnersUpdate.token_id));
-  }
-  if (entity.TokenPlayerNameUpdate?.id) {
-    tokenIds.push(String(entity.TokenPlayerNameUpdate.id));
-  }
-  if (entity.TokenContextUpdate?.id) {
-    tokenIds.push(String(entity.TokenContextUpdate.id));
-  }
-  if (entity.TokenScoreUpdate?.id) {
-    tokenIds.push(String(entity.TokenScoreUpdate.id));
-  }
-  if (entity.TokenRendererUpdate?.id) {
-    tokenIds.push(String(entity.TokenRendererUpdate.id));
-  }
-  if (entity.TokenClientUrlUpdate?.id) {
-    tokenIds.push(String(entity.TokenClientUrlUpdate.id));
-  }
+  tokenIds.push(...directIds.map(String));
 
-  // Relationship-based references
-  if (entity.ObjectiveCreated?.objective_id) {
-    const relatedTokenIds =
-      maps.objectiveToTokens.get(entity.ObjectiveCreated.objective_id.toString()) || [];
-    tokenIds.push(...relatedTokenIds);
-  }
+  // Relationship-based references (only for entities that don't have direct token references)
+  // Skip relationship lookups if entity already has direct token references to avoid cross-contamination
+  const hasDirectTokenReference =
+    entity.TokenMetadataUpdate?.id ||
+    entity.ObjectiveUpdate?.token_id ||
+    entity.OwnersUpdate?.token_id ||
+    entity.TokenPlayerNameUpdate?.id ||
+    entity.TokenContextUpdate?.id ||
+    entity.TokenScoreUpdate?.id ||
+    entity.TokenRendererUpdate?.id ||
+    entity.TokenClientUrlUpdate?.id;
 
-  if (entity.SettingsCreated?.settings_id) {
-    const relatedTokenIds =
-      maps.settingsToTokens.get(entity.SettingsCreated.settings_id.toString()) || [];
-    tokenIds.push(...relatedTokenIds);
-  }
+  if (!hasDirectTokenReference) {
+    if (entity.ObjectiveCreated?.objective_id) {
+      const relatedTokenIds =
+        maps.objectiveToTokens.get(entity.ObjectiveCreated.objective_id.toString()) || [];
+      tokenIds.push(...relatedTokenIds);
+    }
 
-  if (entity.GameRegistryUpdate?.id) {
-    const relatedTokenIds = maps.gameToTokens.get(entity.GameRegistryUpdate.id.toString()) || [];
-    tokenIds.push(...relatedTokenIds);
+    if (entity.SettingsCreated?.settings_id) {
+      const relatedTokenIds =
+        maps.settingsToTokens.get(entity.SettingsCreated.settings_id.toString()) || [];
+      tokenIds.push(...relatedTokenIds);
+    }
+
+    if (entity.GameRegistryUpdate?.id) {
+      const relatedTokenIds = maps.gameToTokens.get(entity.GameRegistryUpdate.id.toString()) || [];
+      tokenIds.push(...relatedTokenIds);
+    }
   }
 
   // For MinterRegistryUpdate, we need to find all tokens that were minted by this minter

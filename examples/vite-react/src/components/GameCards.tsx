@@ -19,9 +19,9 @@ const GameCards: React.FC = () => {
     //   sortOrder: 'desc',
     // },
     // owner: addAddressPadding(address ?? '0'),
-    gameAddresses: [
-      addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
-    ],
+    // gameAddresses: [
+    //   addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
+    // ],
     // soulbound: false,
     // minted_by_address: addAddressPadding(
     //   '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
