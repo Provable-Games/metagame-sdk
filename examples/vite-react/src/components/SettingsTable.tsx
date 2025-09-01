@@ -5,7 +5,7 @@ import { displayAddress } from '../lib/index';
 
 const SettingsTable: React.FC = () => {
   const { settings } = useSubscribeSettings({});
-  const { data: settingsFromSQL } = useSettings({});
+  const { settings: settingsFromSQL } = useSettings({});
 
   console.log(settings);
   console.log(settingsFromSQL);

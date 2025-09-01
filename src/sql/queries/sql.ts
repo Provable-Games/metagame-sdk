@@ -1,10 +1,46 @@
 import { padAddress } from '../../shared/lib';
 import { padU64 } from '../../shared/lib';
 
+// Helper function to map sortBy field to SQL column
+const getSortColumn = (sortBy: string): string => {
+  switch (sortBy) {
+    case 'score':
+      return 'score';
+    case 'minted_at':
+      return 'minted_at';
+    case 'player_name':
+      return 'player_name';
+    case 'token_id':
+      return 'o.token_id';
+    case 'game_over':
+      return 'game_over';
+    case 'owner':
+      return 'o.owner';
+    case 'game_id':
+      return 'tm.game_id';
+    default:
+      return 'minted_at';
+  }
+};
+
+export const miniGamesCountQuery = ({
+  namespace,
+  gameAddresses,
+}: {
+  namespace: string;
+  gameAddresses?: string[];
+}) => {
+  return `
+  SELECT COUNT(*) as count
+  FROM '${namespace}-GameMetadataUpdate'
+  ${gameAddresses ? `WHERE contract_address IN (${gameAddresses.map((address) => `'${address}'`).join(',')})` : ''}
+  `;
+};
+
 export const miniGamesQuery = ({
   namespace,
   gameAddresses,
-  limit = 10,
+  limit,
   offset = 0,
 }: {
   namespace: string;
@@ -16,8 +52,8 @@ export const miniGamesQuery = ({
   SELECT *
   FROM '${namespace}-GameMetadataUpdate'
   ${gameAddresses ? `WHERE contract_address IN (${gameAddresses.map((address) => `'${address}'`).join(',')})` : ''}
-  LIMIT ${limit}
-  OFFSET ${offset}
+  ${limit !== undefined ? `LIMIT ${limit}` : ''}
+  ${offset !== undefined && offset > 0 ? `OFFSET ${offset}` : ''}
   `;
 };
 
@@ -35,23 +71,37 @@ interface GamesQueryParams {
   gameAddresses?: string[];
   tokenIds?: number[];
   hasContext?: boolean;
+  context?: {
+    name?: string;
+    attributes?: Record<string, string>;
+  };
+  settings_id?: number;
+  completed_all_objectives?: boolean;
+  soulbound?: boolean;
+  objective_id?: string;
   mintedByAddress?: string;
   limit?: number;
   offset?: number;
+  sortBy?: 'score' | 'minted_at' | 'player_name' | 'token_id' | 'game_over' | 'owner' | 'game_id';
+  sortOrder?: 'asc' | 'desc';
 }
 
-export const gamesQuery = ({
-  namespace,
-  owner,
-  gameAddresses,
-  tokenIds,
-  hasContext,
-  mintedByAddress,
-  limit = 100,
-  offset = 0,
-}: GamesQueryParams) => {
-  // Build WHERE conditions dynamically
+const buildGameConditions = (
+  params: Omit<GamesQueryParams, 'namespace' | 'limit' | 'offset' | 'sortBy' | 'sortOrder'>
+) => {
   const conditions = [];
+  const {
+    owner,
+    gameAddresses,
+    tokenIds,
+    hasContext,
+    context,
+    settings_id,
+    completed_all_objectives,
+    soulbound,
+    objective_id,
+    mintedByAddress,
+  } = params;
 
   if (owner) {
     conditions.push(`o.owner = "${padAddress(owner)}"`);
@@ -75,8 +125,94 @@ export const gamesQuery = ({
     conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
   }
 
-  // Create WHERE clause only if there are conditions
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  if (settings_id !== undefined) {
+    conditions.push(`tm.settings_id = '${Number(settings_id)}'`);
+  }
+
+  if (completed_all_objectives !== undefined) {
+    conditions.push(`tm.completed_all_objectives = ${completed_all_objectives ? 1 : 0}`);
+  }
+
+  if (soulbound !== undefined) {
+    conditions.push(`tm.soulbound = ${soulbound ? 1 : 0}`);
+  }
+
+  if (objective_id) {
+    conditions.push(`tobj.objective_id = '${objective_id}'`);
+  }
+
+  if (context) {
+    if (context.name) {
+      conditions.push(
+        `(JSON_EXTRACT(tc.context_data, '$.name') LIKE '%${context.name}%' OR JSON_EXTRACT(tc.context_data, '$.Name') LIKE '%${context.name}%')`
+      );
+    }
+
+    if (context.attributes) {
+      for (const [key, value] of Object.entries(context.attributes)) {
+        conditions.push(`JSON_EXTRACT(tc.context_data, '$.Contexts."${key}"') = '${value}'`);
+      }
+    }
+  }
+
+  return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+};
+
+export const gamesCountQuery = (
+  params: Omit<GamesQueryParams, 'limit' | 'offset' | 'sortBy' | 'sortOrder'>
+) => {
+  const { namespace } = params;
+  const whereClause = buildGameConditions(params);
+
+  return `
+  SELECT COUNT(DISTINCT tm.id) as count
+  FROM '${namespace}-TokenMetadataUpdate' tm
+  LEFT JOIN '${namespace}-OwnersUpdate' o ON o.token_id = tm.id
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.id = tm.game_id
+  LEFT JOIN '${namespace}-TokenScoreUpdate' s on s.id = tm.id
+  LEFT JOIN '${namespace}-TokenPlayerNameUpdate' pn on pn.id = tm.id
+  LEFT JOIN '${namespace}-TokenContextUpdate' tc on tc.id = tm.id
+  LEFT JOIN '${namespace}-SettingsCreated' sd on sd.settings_id = tm.settings_id
+  LEFT JOIN '${namespace}-ObjectiveUpdate' tobj ON tobj.token_id = tm.id
+  LEFT JOIN '${namespace}-ObjectiveCreated' od ON od.objective_id = tobj.objective_id
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = tm.game_id
+  LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = tm.id
+  LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = tm.id
+  LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
+  LEFT JOIN tokens t ON SUBSTR(t.token_id, INSTR(t.token_id, ':') + 1) = tm.id
+  ${whereClause}
+  `;
+};
+
+export const gamesQuery = ({
+  namespace,
+  owner,
+  gameAddresses,
+  tokenIds,
+  hasContext,
+  context,
+  settings_id,
+  completed_all_objectives,
+  soulbound,
+  objective_id,
+  mintedByAddress,
+  limit = 100,
+  offset = 0,
+  sortBy = 'minted_at',
+  sortOrder = 'desc',
+}: GamesQueryParams) => {
+  const whereClause = buildGameConditions({
+    owner,
+    gameAddresses,
+    tokenIds,
+    hasContext,
+    context,
+    settings_id,
+    completed_all_objectives,
+    soulbound,
+    objective_id,
+    mintedByAddress,
+  });
 
   return `
   SELECT
@@ -130,8 +266,9 @@ export const gamesQuery = ({
   ${whereClause}
   GROUP BY 
     tm.id
-  LIMIT ${limit}
-  OFFSET ${offset}
+  ORDER BY ${getSortColumn(sortBy)} ${sortOrder.toUpperCase()}
+  ${limit !== undefined ? `LIMIT ${limit}` : ''}
+  ${offset !== undefined && offset > 0 ? `OFFSET ${offset}` : ''}
   `;
 };
 
@@ -143,21 +280,9 @@ interface GameSettingsQueryParams {
   offset?: number;
 }
 
-export const gameSettingsQuery = ({
-  namespace,
-  gameAddresses,
-  settingsIds,
-  limit = 100,
-  offset = 0,
-}: GameSettingsQueryParams) => {
-  let query = `
-  SELECT *
-  FROM '${namespace}-SettingsCreated' sd
-  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = sd.game_address
-  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
-  `;
-
+const buildSettingsConditions = (params: Omit<GameSettingsQueryParams, 'namespace' | 'limit' | 'offset'>) => {
   const conditions = [];
+  const { gameAddresses, settingsIds } = params;
 
   if (gameAddresses && gameAddresses.length > 0) {
     const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
@@ -169,11 +294,45 @@ export const gameSettingsQuery = ({
     conditions.push(`sd.settings_id IN (${idList})`);
   }
 
-  if (conditions.length > 0) {
-    query += ` WHERE ${conditions.join(' AND ')}`;
-  }
+  return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+};
 
-  query += ` LIMIT ${limit} OFFSET ${offset}`;
+export const gameSettingsCountQuery = (params: Omit<GameSettingsQueryParams, 'limit' | 'offset'>) => {
+  const { namespace } = params;
+  const whereClause = buildSettingsConditions(params);
+
+  return `
+  SELECT COUNT(*) as count
+  FROM '${namespace}-SettingsCreated' sd
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = sd.game_address
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
+  ${whereClause}
+  `;
+};
+
+export const gameSettingsQuery = ({
+  namespace,
+  gameAddresses,
+  settingsIds,
+  limit,
+  offset = 0,
+}: GameSettingsQueryParams) => {
+  const whereClause = buildSettingsConditions({ gameAddresses, settingsIds });
+
+  let query = `
+  SELECT *
+  FROM '${namespace}-SettingsCreated' sd
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = sd.game_address
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
+  ${whereClause}
+  `;
+
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined && offset > 0) {
+    query += ` OFFSET ${offset}`;
+  }
 
   return query;
 };
@@ -186,21 +345,9 @@ interface ObjectivesQueryParams {
   offset?: number;
 }
 
-export const objectivesQuery = ({
-  namespace,
-  gameAddresses,
-  objectiveIds,
-  limit = 100,
-  offset = 0,
-}: ObjectivesQueryParams) => {
-  let query = `
-  SELECT *
-  FROM '${namespace}-ObjectiveCreated' od
-  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = od.game_address
-  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
-  `;
-
+const buildObjectivesConditions = (params: Omit<ObjectivesQueryParams, 'namespace' | 'limit' | 'offset'>) => {
   const conditions = [];
+  const { gameAddresses, objectiveIds } = params;
 
   if (gameAddresses && gameAddresses.length > 0) {
     const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
@@ -212,11 +359,45 @@ export const objectivesQuery = ({
     conditions.push(`od.objective_id IN (${idList})`);
   }
 
-  if (conditions.length > 0) {
-    query += ` WHERE ${conditions.join(' AND ')}`;
-  }
+  return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+};
 
-  query += ` LIMIT ${limit} OFFSET ${offset}`;
+export const objectivesCountQuery = (params: Omit<ObjectivesQueryParams, 'limit' | 'offset'>) => {
+  const { namespace } = params;
+  const whereClause = buildObjectivesConditions(params);
+
+  return `
+  SELECT COUNT(*) as count
+  FROM '${namespace}-ObjectiveCreated' od
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = od.game_address
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
+  ${whereClause}
+  `;
+};
+
+export const objectivesQuery = ({
+  namespace,
+  gameAddresses,
+  objectiveIds,
+  limit,
+  offset = 0,
+}: ObjectivesQueryParams) => {
+  const whereClause = buildObjectivesConditions({ gameAddresses, objectiveIds });
+
+  let query = `
+  SELECT *
+  FROM '${namespace}-ObjectiveCreated' od
+  LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.contract_address = od.game_address
+  LEFT JOIN '${namespace}-GameMetadataUpdate' gm on gm.id = gr.id
+  ${whereClause}
+  `;
+
+  if (limit !== undefined) {
+    query += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined && offset > 0) {
+    query += ` OFFSET ${offset}`;
+  }
 
   return query;
 };

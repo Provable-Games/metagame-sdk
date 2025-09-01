@@ -5,7 +5,7 @@ import { displayAddress } from '../lib/index';
 
 const MiniGamesTable: React.FC = () => {
   const { miniGames } = useSubscribeMiniGames({});
-  const { data: miniGamesFromSQL } = useMiniGames({});
+  const { minigames: miniGamesFromSQL } = useMiniGames({});
 
   console.log(miniGames);
   console.log(miniGamesFromSQL);

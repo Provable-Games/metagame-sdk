@@ -5,7 +5,7 @@ import { displayAddress } from '../lib/index';
 
 const ObjectivesTable: React.FC = () => {
   const { objectives } = useSubscribeObjectives({});
-  const { data: objectivesFromSQL } = useObjectives({});
+  const { objectives: objectivesFromSQL } = useObjectives({});
 
   console.log('objectives', objectives);
   console.log('objectivesFromSQL', objectivesFromSQL);

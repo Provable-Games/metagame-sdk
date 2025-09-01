@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useGameTokens } from 'metagame-sdk';
 import { useSubscribeGameTokens } from 'metagame-sdk/subscriptions';
 
 const PaginatedGamesList: React.FC = () => {
@@ -14,18 +15,18 @@ const PaginatedGamesList: React.FC = () => {
     isSubscribing,
     error,
     isInitialized,
-    pagination: {
-      currentPage,
-      totalPages,
-      totalItems,
-      hasNextPage,
-      hasPreviousPage,
-      goToPage,
-      nextPage,
-      previousPage,
-      firstPage,
-      lastPage,
-    },
+    // pagination: {
+    //   currentPage,
+    //   totalPages,
+    //   totalItems,
+    //   hasNextPage,
+    //   hasPreviousPage,
+    //   goToPage,
+    //   nextPage,
+    //   previousPage,
+    //   firstPage,
+    //   lastPage,
+    // },
   } = useSubscribeGameTokens({
     // Optional filters
     soulbound: false,
@@ -39,6 +40,41 @@ const PaginatedGamesList: React.FC = () => {
       sortOrder: sortOrder, // Sort order
     },
   });
+
+  const {
+    games: gamesFromSQL,
+    pagination: {
+      currentPage,
+      totalPages,
+      totalCount,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    },
+    loading,
+  } = useGameTokens({
+    // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
+    // tokenIds: [2],
+    // owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
+    // sortBy: 'score',
+    // sortOrder: 'desc',
+    pagination: {
+      pageSize: 10,
+    },
+    // context: {
+    //   name: 'Budokan',
+    //   attributes: {
+    //     'Tournament ID': '1',
+    //   },
+    // },
+    // settings_id: 0,
+  });
+
+  console.log(gamesFromSQL, totalCount, totalPages, loading);
 
   // Show error if there is one
   if (error) {
@@ -74,7 +110,7 @@ const PaginatedGamesList: React.FC = () => {
       {/* Summary */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <p className="text-sm text-gray-700">
-          Showing {games.length} of {totalItems} games (Page {currentPage + 1} of {totalPages})
+          Showing {games.length} of {totalCount} games (Page {currentPage + 1} of {totalPages})
         </p>
         <p className="text-sm text-gray-700">Total games available: {allGames.length}</p>
         <p className="text-sm text-gray-700">

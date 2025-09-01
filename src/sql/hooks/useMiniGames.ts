@@ -1,29 +1,57 @@
-import { miniGamesQuery } from '../queries/sql';
-import { useSqlQuery } from '../services/sqlService';
-import { useCallback, useMemo } from 'react';
+import { miniGamesQuery, miniGamesCountQuery } from '../queries/sql';
+import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
+import { useCallback, useMemo, useState } from 'react';
 import { feltToString } from '../../shared/lib';
 import { getMetagameClientSafe } from '../../shared/singleton';
 import type { GameMetadata } from '../../shared/types';
+import type { PaginationControls } from './useGameTokens';
 
 interface UseMiniGamesProps {
   gameAddresses?: string[];
   limit?: number;
   offset?: number;
   logging?: boolean;
+  pagination?: {
+    pageSize?: number;
+    initialPage?: number;
+  };
 }
 
-export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniGamesProps) => {
+export interface UseMiniGamesResult extends Omit<SqlQueryResult<GameMetadata>, 'data'> {
+  minigames: GameMetadata[];
+  pagination: PaginationControls;
+}
+
+export const useMiniGames = ({
+  gameAddresses,
+  limit,
+  offset = 0,
+  pagination,
+}: UseMiniGamesProps): UseMiniGamesResult => {
   const client = getMetagameClientSafe();
+
+  // Pagination state
+  const isPaginationEnabled = !!pagination;
+  const pageSize = pagination?.pageSize ?? 100;
+  const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
 
   const query = useMemo(() => {
     if (!client) return null;
     return miniGamesQuery({
       namespace: client.getNamespace(),
       gameAddresses,
-      limit,
-      offset,
+      limit: isPaginationEnabled ? pageSize : limit,
+      offset: isPaginationEnabled ? currentPage * pageSize : offset,
     });
-  }, [client, gameAddresses, limit, offset]);
+  }, [client, gameAddresses, isPaginationEnabled, pageSize, currentPage, limit, offset]);
+
+  const countQuery = useMemo(() => {
+    if (!client || !isPaginationEnabled) return null;
+    return miniGamesCountQuery({
+      namespace: client.getNamespace(),
+      gameAddresses,
+    });
+  }, [client, isPaginationEnabled, gameAddresses]);
 
   const {
     data: miniGamesData,
@@ -32,7 +60,25 @@ export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniG
     refetch: miniGamesRefetch,
   } = useSqlQuery(client?.getConfig().toriiUrl || '', query);
 
+  const {
+    data: countData,
+    loading: countLoading,
+    error: countError,
+  } = useSqlQuery(client?.getConfig().toriiUrl || '', countQuery, true);
+
+  const error = miniGamesError || countError;
+  const isLoading = miniGamesLoading || countLoading;
+
+  const totalCount = useMemo(() => {
+    if (!isPaginationEnabled) return 0;
+    if (!countData || !countData.length) return 0;
+    return Number((countData[0] as any).count) || 0;
+  }, [isPaginationEnabled, countData]);
+
+  const totalPages = isPaginationEnabled ? Math.ceil(totalCount / pageSize) : 1;
+
   const gameData = useMemo(() => {
+    if (!miniGamesData || !miniGamesData.length) return [];
     return miniGamesData.map((game: any) => {
       const filteredGame: GameMetadata = {
         game_id: Number(game.id) || 0,
@@ -51,14 +97,77 @@ export const useMiniGames = ({ gameAddresses, limit = 10, offset = 0 }: UseMiniG
     });
   }, [miniGamesData]);
 
+  const hasNextPage = isPaginationEnabled ? currentPage < totalPages - 1 : false;
+  const hasPreviousPage = isPaginationEnabled ? currentPage > 0 : false;
+
+  // Pagination control functions
+  const goToPage = useCallback(
+    (page: number) => {
+      const clampedPage = Math.max(0, Math.min(page, totalPages - 1));
+      setCurrentPage(clampedPage);
+    },
+    [totalPages]
+  );
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [hasNextPage]);
+
+  const previousPage = useCallback(() => {
+    if (hasPreviousPage) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [hasPreviousPage]);
+
+  const firstPage = useCallback(() => {
+    setCurrentPage(0);
+  }, []);
+
+  const lastPage = useCallback(() => {
+    setCurrentPage(Math.max(0, totalPages - 1));
+  }, [totalPages]);
+
+  // Pagination controls object
+  const paginationControls: PaginationControls = useMemo(
+    () => ({
+      currentPage,
+      pageSize,
+      totalCount,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    }),
+    [
+      currentPage,
+      pageSize,
+      totalCount,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    ]
+  );
+
   const refetchAll = useCallback(async () => {
     await miniGamesRefetch();
   }, [miniGamesRefetch]);
 
   return {
-    data: gameData,
-    loading: miniGamesLoading,
-    error: miniGamesError,
-    refetch: refetchAll,
+    minigames: gameData,
+    loading: isLoading,
+    error,
+    refetch: miniGamesRefetch,
+    pagination: paginationControls,
   };
 };

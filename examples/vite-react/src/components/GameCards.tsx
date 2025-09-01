@@ -23,18 +23,22 @@ const GameCards: React.FC = () => {
     //   addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
     // ],
     // soulbound: false,
-    // minted_by_address: addAddressPadding(
-    //   '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
-    // ),
+    minted_by_address: addAddressPadding(
+      '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
+    ),
   });
-  const { data: gamesFromSQL } = useGameTokens({
-    // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-    tokenIds: [2],
-    owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-  });
+  // const { data: gamesFromSQL } = useGameTokens({
+  //   // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
+  //   // tokenIds: [2],
+  //   // owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
+  //   sortBy: 'score',
+  //   sortOrder: 'desc',
+  //   pagination: {
+  //     pageSize: 10,
+  //   },
+  // });
 
   console.log('games', games);
-  console.log('gamesFromSQL', gamesFromSQL);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

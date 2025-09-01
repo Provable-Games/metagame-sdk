@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useSqlQuery, type SqlQueryResult } from '../services/sqlService';
-import { objectivesQuery } from '../queries/sql';
+import { objectivesQuery, objectivesCountQuery } from '../queries/sql';
 import { getMetagameClientSafe } from '../../shared/singleton';
 import { feltToString } from '../../shared/lib';
 import type { GameObjective } from '../../shared/types';
+import type { PaginationControls } from './useGameTokens';
 
 interface UseGameObjectivesProps {
   gameAddresses?: string[];
@@ -11,16 +12,32 @@ interface UseGameObjectivesProps {
   limit?: number;
   offset?: number;
   logging?: boolean;
+  pagination?: {
+    pageSize?: number;
+    initialPage?: number;
+  };
+}
+
+export interface UseObjectivesResult extends Omit<SqlQueryResult<GameObjective>, 'data'> {
+  objectives: GameObjective[];
+  pagination: PaginationControls;
 }
 
 export const useObjectives = ({
   gameAddresses,
   objectiveIds,
-  limit = 100,
+  limit,
   offset = 0,
   logging = false,
-}: UseGameObjectivesProps): SqlQueryResult<GameObjective> => {
+  pagination,
+}: UseGameObjectivesProps): UseObjectivesResult => {
   const client = getMetagameClientSafe();
+  const toriiUrl = client?.getConfig().toriiUrl || '';
+
+  // Pagination state
+  const isPaginationEnabled = !!pagination;
+  const pageSize = pagination?.pageSize ?? 100;
+  const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
 
   const query = useMemo(() => {
     if (!client) return null;
@@ -28,17 +45,52 @@ export const useObjectives = ({
       namespace: client.getNamespace(),
       gameAddresses,
       objectiveIds,
-      limit,
-      offset,
+      limit: isPaginationEnabled ? pageSize : limit,
+      offset: isPaginationEnabled ? currentPage * pageSize : offset,
     });
-  }, [client, gameAddresses, objectiveIds, limit, offset]);
+  }, [
+    client,
+    gameAddresses,
+    objectiveIds,
+    isPaginationEnabled,
+    pageSize,
+    currentPage,
+    limit,
+    offset,
+  ]);
+
+  const countQuery = useMemo(() => {
+    if (!client || !isPaginationEnabled) return null;
+    return objectivesCountQuery({
+      namespace: client.getNamespace(),
+      gameAddresses,
+      objectiveIds,
+    });
+  }, [client, isPaginationEnabled, gameAddresses, objectiveIds]);
 
   const {
     data: rawObjectivesData,
     loading,
-    error,
+    error: queryError,
     refetch,
-  } = useSqlQuery<GameObjective>(client?.getConfig().toriiUrl || '', query, logging);
+  } = useSqlQuery<GameObjective>(toriiUrl, query, logging);
+
+  const {
+    data: countData,
+    loading: countLoading,
+    error: countError,
+  } = useSqlQuery(toriiUrl, countQuery, logging);
+
+  const error = queryError || countError;
+  const isLoading = loading || countLoading;
+
+  const totalCount = useMemo(() => {
+    if (!isPaginationEnabled) return 0; // Not applicable for non-paginated queries
+    if (!countData || !countData.length) return 0;
+    return Number((countData[0] as any).count) || 0;
+  }, [isPaginationEnabled, countData]);
+
+  const totalPages = isPaginationEnabled ? Math.ceil(totalCount / pageSize) : 1;
 
   const objectivesData = useMemo(() => {
     if (!rawObjectivesData || !rawObjectivesData.length) return [];
@@ -69,5 +121,73 @@ export const useObjectives = ({
     });
   }, [rawObjectivesData]);
 
-  return { data: objectivesData, loading, error, refetch };
+  const hasNextPage = isPaginationEnabled ? currentPage < totalPages - 1 : false;
+  const hasPreviousPage = isPaginationEnabled ? currentPage > 0 : false;
+
+  // Pagination control functions
+  const goToPage = useCallback(
+    (page: number) => {
+      const clampedPage = Math.max(0, Math.min(page, totalPages - 1));
+      setCurrentPage(clampedPage);
+    },
+    [totalPages]
+  );
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  }, [hasNextPage]);
+
+  const previousPage = useCallback(() => {
+    if (hasPreviousPage) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  }, [hasPreviousPage]);
+
+  const firstPage = useCallback(() => {
+    setCurrentPage(0);
+  }, []);
+
+  const lastPage = useCallback(() => {
+    setCurrentPage(Math.max(0, totalPages - 1));
+  }, [totalPages]);
+
+  // Pagination controls object
+  const paginationControls: PaginationControls = useMemo(
+    () => ({
+      currentPage,
+      pageSize,
+      totalCount,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    }),
+    [
+      currentPage,
+      pageSize,
+      totalCount,
+      totalPages,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+      lastPage,
+    ]
+  );
+
+  return {
+    objectives: objectivesData,
+    loading: isLoading,
+    error,
+    refetch,
+    pagination: paginationControls,
+  };
 };

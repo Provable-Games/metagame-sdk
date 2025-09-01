@@ -366,6 +366,7 @@ export function useSubscribeGameTokens(
     completed_all_objectives,
     soulbound,
     objective_id,
+    minted_by_address,
     gameTokens,
     isInitialized,
     lastUpdated,
