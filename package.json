@@ -86,5 +86,5 @@
       "default": "./dist/cjs/src/shared/index.js"
     }
   },
-  "version": "0.1.15"
+  "version": "0.1.16"
 }
