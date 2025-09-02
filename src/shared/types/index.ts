@@ -74,6 +74,48 @@ export interface GameObjective {
   gameMetadata: GameMetadata | undefined;
 }
 
+// Ranking types
+export interface GameRankingData {
+  rank: number;
+  totalCount: number;
+  score: number;
+}
+
+// Unified ranking types
+export interface GameRankingParams {
+  namespace: string;
+  tokenId: number;
+  mintedByAddress?: string;
+  gameAddress?: string;
+  settings_id?: number;
+  ownerFilter?: string;
+}
+
+
+// Leaderboard types
+export interface GameLeaderboardEntry {
+  rank: number;
+  tokenId: number;
+  owner: string;
+  playerName?: string;
+  mintedByAddress: string;
+  score: number;
+  mintedAt: number;
+  isCurrentUser: boolean;
+}
+
+export interface GameLeaderboardParams {
+  namespace: string;
+  tokenId: number;
+  mintedByAddress?: string;
+  gameAddress?: string;
+  above?: number; // Number of games to show above current rank (default: 3)
+  below?: number; // Number of games to show below current rank (default: 3)
+  settings_id?: number;
+  ownerFilter?: string;
+}
+
+
 // Alias for backward compatibility
 export type Game = GameTokenData;
 export type MiniGame = GameMetadata;

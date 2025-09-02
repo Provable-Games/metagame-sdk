@@ -1,5 +1,6 @@
 import { padAddress } from '../../shared/lib';
 import { padU64 } from '../../shared/lib';
+import { GameRankingParams, GameLeaderboardParams } from '../../shared/types';
 
 // Helper function to map sortBy field to SQL column
 const getSortColumn = (sortBy: string): string => {
@@ -401,3 +402,133 @@ export const objectivesQuery = ({
 
   return query;
 };
+
+// Ranking query interfaces
+
+
+export const gameRankingQuery = ({
+  namespace,
+  tokenId,
+  mintedByAddress,
+  gameAddress,
+  settings_id,
+  ownerFilter,
+}: GameRankingParams) => {
+  const conditions = [];
+  
+  if (mintedByAddress) {
+    conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
+  }
+  
+  if (gameAddress) {
+    conditions.push(`gr.contract_address = '${padAddress(gameAddress)}'`);
+  }
+  
+  if (settings_id !== undefined) {
+    conditions.push(`tm.settings_id = '${Number(settings_id)}'`);
+  }
+  
+  if (ownerFilter) {
+    conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  return `
+  WITH ranked_games AS (
+    SELECT 
+      tm.id,
+      o.token_id,
+      COALESCE(s.score, 0) as score,
+      ROW_NUMBER() OVER (ORDER BY COALESCE(s.score, 0) DESC, tm.minted_at DESC) as rank
+    FROM '${namespace}-TokenMetadataUpdate' tm
+    LEFT JOIN '${namespace}-OwnersUpdate' o ON o.token_id = tm.id
+    LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.id = tm.game_id
+    LEFT JOIN '${namespace}-TokenScoreUpdate' s on s.id = tm.id
+    LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
+    ${whereClause}
+  )
+  SELECT 
+    rank,
+    (SELECT COUNT(*) FROM ranked_games) as total_count,
+    score
+  FROM ranked_games
+  WHERE token_id = '${padU64(BigInt(tokenId))}'
+  `;
+};
+
+
+
+
+// Get leaderboard around specific tokenId among filtered games
+export const gameLeaderboardQuery = ({
+  namespace,
+  mintedByAddress,
+  tokenId,
+  gameAddress,
+  above,
+  below,
+  settings_id,
+  ownerFilter,
+}: GameLeaderboardParams) => {
+  const conditions = [];
+  
+  if (mintedByAddress && mintedByAddress.trim() !== '') {
+    conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
+  }
+  
+  if (gameAddress) {
+    conditions.push(`gr.contract_address = '${padAddress(gameAddress)}'`);
+  }
+  
+  if (settings_id !== undefined) {
+    conditions.push(`tm.settings_id = '${Number(settings_id)}'`);
+  }
+  
+  if (ownerFilter) {
+    conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  return `
+  WITH ranked_games AS (
+    SELECT 
+      tm.id,
+      o.token_id,
+      o.owner,
+      pn.player_name,
+      mr.minter_address as minted_by_address,
+      COALESCE(s.score, 0) as score,
+      tm.minted_at,
+      ROW_NUMBER() OVER (ORDER BY COALESCE(s.score, 0) DESC, tm.minted_at DESC) as rank
+    FROM '${namespace}-TokenMetadataUpdate' tm
+    LEFT JOIN '${namespace}-OwnersUpdate' o ON o.token_id = tm.id
+    LEFT JOIN '${namespace}-GameRegistryUpdate' gr on gr.id = tm.game_id
+    LEFT JOIN '${namespace}-TokenScoreUpdate' s on s.id = tm.id
+    LEFT JOIN '${namespace}-TokenPlayerNameUpdate' pn on pn.id = tm.id
+    LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
+    ${whereClause}
+  ),
+  target_rank AS (
+    SELECT rank as target_rank
+    FROM ranked_games
+    WHERE token_id = '${padU64(BigInt(tokenId))}'
+  )
+  SELECT 
+    rg.rank,
+    rg.token_id,
+    rg.owner,
+    rg.player_name,
+    rg.minted_by_address,
+    rg.score,
+    rg.minted_at,
+    (rg.rank = (SELECT target_rank FROM target_rank)) as is_current_user
+  FROM ranked_games rg
+  CROSS JOIN target_rank tr
+  WHERE rg.rank >= (tr.target_rank - ${above}) 
+    AND rg.rank <= (tr.target_rank + ${below})
+  ORDER BY rg.rank
+  `;
+};
+

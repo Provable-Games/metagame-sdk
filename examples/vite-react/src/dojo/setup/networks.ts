@@ -121,7 +121,7 @@ const snSepoliaConfig: DojoChainConfig = {
   chainId: ChainId.SN_SEPOLIA,
   name: 'Starknet Sepolia',
   rpcUrl: 'https://api.cartridge.gg/x/starknet/sepolia',
-  toriiUrl: 'https://api.cartridge.gg/x/pg-sepolia-5/torii',
+  toriiUrl: 'https://api.cartridge.gg/x/pg-sepolia/torii',
   toriiTokensUrl: '',
   relayUrl: undefined,
   blastRpc: undefined,

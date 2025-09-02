@@ -3,6 +3,7 @@ export { useGameTokens } from './hooks/useGameTokens';
 export { useMiniGames } from './hooks/useMiniGames';
 export { useSettings } from './hooks/useSettings';
 export { useObjectives } from './hooks/useObjectives';
+export { useGameTokenRanking, useGameLeaderboard } from './hooks/useGameTokenRanking';
 
 // SQL queries (for advanced usage)
 export * from './queries/sql';
@@ -12,4 +13,13 @@ export { useSqlQuery, executeSqlQuery } from './services/sqlService';
 export type { SqlQueryResult } from './services/sqlService';
 
 // Types
-export type { Game, MiniGame, MetaGame, GameSettings } from '../shared/types';
+export type {
+  Game,
+  MiniGame,
+  MetaGame,
+  GameSettings,
+  GameRankingData,
+  GameRankingParams,
+  GameLeaderboardEntry,
+  GameLeaderboardParams,
+} from '../shared/types';
