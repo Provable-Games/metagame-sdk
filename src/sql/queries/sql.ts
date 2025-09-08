@@ -180,7 +180,7 @@ export const gamesCountQuery = (
   LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = tm.id
   LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = tm.id
   LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
-  LEFT JOIN tokens t ON SUBSTR(t.token_id, INSTR(t.token_id, ':') + 1) = tm.id
+  LEFT JOIN tokens t ON t.token_id = tm.id
   ${whereClause}
   `;
 };
@@ -263,7 +263,7 @@ export const gamesQuery = ({
   LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = tm.id
   LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = tm.id
   LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
-  LEFT JOIN tokens t ON SUBSTR(t.token_id, INSTR(t.token_id, ':') + 1) = tm.id
+  LEFT JOIN tokens t ON t.token_id = tm.id
   ${whereClause}
   GROUP BY 
     tm.id
@@ -281,7 +281,9 @@ interface GameSettingsQueryParams {
   offset?: number;
 }
 
-const buildSettingsConditions = (params: Omit<GameSettingsQueryParams, 'namespace' | 'limit' | 'offset'>) => {
+const buildSettingsConditions = (
+  params: Omit<GameSettingsQueryParams, 'namespace' | 'limit' | 'offset'>
+) => {
   const conditions = [];
   const { gameAddresses, settingsIds } = params;
 
@@ -298,7 +300,9 @@ const buildSettingsConditions = (params: Omit<GameSettingsQueryParams, 'namespac
   return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 };
 
-export const gameSettingsCountQuery = (params: Omit<GameSettingsQueryParams, 'limit' | 'offset'>) => {
+export const gameSettingsCountQuery = (
+  params: Omit<GameSettingsQueryParams, 'limit' | 'offset'>
+) => {
   const { namespace } = params;
   const whereClause = buildSettingsConditions(params);
 
@@ -346,7 +350,9 @@ interface ObjectivesQueryParams {
   offset?: number;
 }
 
-const buildObjectivesConditions = (params: Omit<ObjectivesQueryParams, 'namespace' | 'limit' | 'offset'>) => {
+const buildObjectivesConditions = (
+  params: Omit<ObjectivesQueryParams, 'namespace' | 'limit' | 'offset'>
+) => {
   const conditions = [];
   const { gameAddresses, objectiveIds } = params;
 
@@ -405,7 +411,6 @@ export const objectivesQuery = ({
 
 // Ranking query interfaces
 
-
 export const gameRankingQuery = ({
   namespace,
   tokenId,
@@ -415,19 +420,19 @@ export const gameRankingQuery = ({
   ownerFilter,
 }: GameRankingParams) => {
   const conditions = [];
-  
+
   if (mintedByAddress) {
     conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
   }
-  
+
   if (gameAddress) {
     conditions.push(`gr.contract_address = '${padAddress(gameAddress)}'`);
   }
-  
+
   if (settings_id !== undefined) {
     conditions.push(`tm.settings_id = '${Number(settings_id)}'`);
   }
-  
+
   if (ownerFilter) {
     conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
   }
@@ -457,9 +462,6 @@ export const gameRankingQuery = ({
   `;
 };
 
-
-
-
 // Get leaderboard around specific tokenId among filtered games
 export const gameLeaderboardQuery = ({
   namespace,
@@ -472,19 +474,19 @@ export const gameLeaderboardQuery = ({
   ownerFilter,
 }: GameLeaderboardParams) => {
   const conditions = [];
-  
+
   if (mintedByAddress && mintedByAddress.trim() !== '') {
     conditions.push(`mr.minter_address = "${padAddress(mintedByAddress)}"`);
   }
-  
+
   if (gameAddress) {
     conditions.push(`gr.contract_address = '${padAddress(gameAddress)}'`);
   }
-  
+
   if (settings_id !== undefined) {
     conditions.push(`tm.settings_id = '${Number(settings_id)}'`);
   }
-  
+
   if (ownerFilter) {
     conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
   }
@@ -531,4 +533,3 @@ export const gameLeaderboardQuery = ({
   ORDER BY rg.rank
   `;
 };
-
