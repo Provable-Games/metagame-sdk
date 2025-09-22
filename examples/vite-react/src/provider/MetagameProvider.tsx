@@ -34,7 +34,7 @@ export const MetagameProvider = ({ children }: { children: ReactNode }) => {
       const metagameClient = await initMetagame({
         toriiUrl: selectedChainConfig.toriiUrl!,
         worldAddress: manifest.world.address,
-        tokenAddress: '0x610aba32da98547f9f65fe0195cc60c08f1ef6fa2f2a0fc03e35f1c29319fd3',
+        tokenAddress: '0x036017e69d21d6d8c13e266eabb73ef1f1d02722d86bdcabe5f168f8e549d3cd',
       });
 
       console.log(

@@ -16,11 +16,15 @@ interface UseGameObjectivesProps {
     pageSize?: number;
     initialPage?: number;
   };
+  // Fetch total count even when pagination is disabled (default: false)
+  fetchCount?: boolean;
 }
 
 export interface UseObjectivesResult extends Omit<SqlQueryResult<GameObjective>, 'data'> {
   objectives: GameObjective[];
   pagination: PaginationControls;
+  // Total count of objectives (only available when pagination is enabled or fetchCount is true)
+  totalCount?: number;
 }
 
 export const useObjectives = ({
@@ -30,6 +34,7 @@ export const useObjectives = ({
   offset = 0,
   logging = false,
   pagination,
+  fetchCount = false,
 }: UseGameObjectivesProps): UseObjectivesResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -60,37 +65,38 @@ export const useObjectives = ({
   ]);
 
   const countQuery = useMemo(() => {
-    if (!client || !isPaginationEnabled) return null;
+    if (!client || (!isPaginationEnabled && !fetchCount)) return null;
     return objectivesCountQuery({
       namespace: client.getNamespace(),
       gameAddresses,
       objectiveIds,
     });
-  }, [client, isPaginationEnabled, gameAddresses, objectiveIds]);
+  }, [client, isPaginationEnabled, fetchCount, gameAddresses, objectiveIds]);
 
   const {
     data: rawObjectivesData,
     loading,
     error: queryError,
-    refetch,
+    refetch: refetchMain,
   } = useSqlQuery<GameObjective>(toriiUrl, query, logging);
 
   const {
     data: countData,
     loading: countLoading,
     error: countError,
+    refetch: refetchCount,
   } = useSqlQuery(toriiUrl, countQuery, logging);
 
   const error = queryError || countError;
   const isLoading = loading || countLoading;
 
   const totalCount = useMemo(() => {
-    if (!isPaginationEnabled) return 0; // Not applicable for non-paginated queries
+    if (!isPaginationEnabled && !fetchCount) return undefined;
     if (!countData || !countData.length) return 0;
     return Number((countData[0] as any).count) || 0;
-  }, [isPaginationEnabled, countData]);
+  }, [isPaginationEnabled, fetchCount, countData]);
 
-  const totalPages = isPaginationEnabled ? Math.ceil(totalCount / pageSize) : 1;
+  const totalPages = isPaginationEnabled && totalCount !== undefined ? Math.ceil(totalCount / pageSize) : 1;
 
   const objectivesData = useMemo(() => {
     if (!rawObjectivesData || !rawObjectivesData.length) return [];
@@ -153,12 +159,27 @@ export const useObjectives = ({
     setCurrentPage(Math.max(0, totalPages - 1));
   }, [totalPages]);
 
+  // Create a combined refetch function that refetches both queries
+  const refetch = useCallback(async () => {
+    const promises: Promise<void>[] = [];
+
+    if (refetchMain) {
+      promises.push(refetchMain());
+    }
+
+    if ((isPaginationEnabled || fetchCount) && refetchCount) {
+      promises.push(refetchCount());
+    }
+
+    await Promise.all(promises);
+  }, [refetchMain, refetchCount, isPaginationEnabled, fetchCount]);
+
   // Pagination controls object
   const paginationControls: PaginationControls = useMemo(
     () => ({
       currentPage,
       pageSize,
-      totalCount,
+      totalCount: totalCount ?? 0,
       totalPages,
       hasNextPage,
       hasPreviousPage,
@@ -187,7 +208,8 @@ export const useObjectives = ({
     objectives: objectivesData,
     loading: isLoading,
     error,
-    refetch,
+    refetch, // Use the combined refetch
     pagination: paginationControls,
+    totalCount,
   };
 };

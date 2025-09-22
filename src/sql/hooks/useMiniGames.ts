@@ -15,11 +15,15 @@ interface UseMiniGamesProps {
     pageSize?: number;
     initialPage?: number;
   };
+  // Fetch total count even when pagination is disabled (default: false)
+  fetchCount?: boolean;
 }
 
 export interface UseMiniGamesResult extends Omit<SqlQueryResult<GameMetadata>, 'data'> {
   minigames: GameMetadata[];
   pagination: PaginationControls;
+  // Total count of minigames (only available when pagination is enabled or fetchCount is true)
+  totalCount?: number;
 }
 
 export const useMiniGames = ({
@@ -27,6 +31,7 @@ export const useMiniGames = ({
   limit,
   offset = 0,
   pagination,
+  fetchCount = false,
 }: UseMiniGamesProps): UseMiniGamesResult => {
   const client = getMetagameClientSafe();
 
@@ -46,12 +51,12 @@ export const useMiniGames = ({
   }, [client, gameAddresses, isPaginationEnabled, pageSize, currentPage, limit, offset]);
 
   const countQuery = useMemo(() => {
-    if (!client || !isPaginationEnabled) return null;
+    if (!client || (!isPaginationEnabled && !fetchCount)) return null;
     return miniGamesCountQuery({
       namespace: client.getNamespace(),
       gameAddresses,
     });
-  }, [client, isPaginationEnabled, gameAddresses]);
+  }, [client, isPaginationEnabled, fetchCount, gameAddresses]);
 
   const {
     data: miniGamesData,
@@ -64,18 +69,19 @@ export const useMiniGames = ({
     data: countData,
     loading: countLoading,
     error: countError,
+    refetch: refetchCount,
   } = useSqlQuery(client?.getConfig().toriiUrl || '', countQuery, true);
 
   const error = miniGamesError || countError;
   const isLoading = miniGamesLoading || countLoading;
 
   const totalCount = useMemo(() => {
-    if (!isPaginationEnabled) return 0;
+    if (!isPaginationEnabled && !fetchCount) return undefined;
     if (!countData || !countData.length) return 0;
     return Number((countData[0] as any).count) || 0;
-  }, [isPaginationEnabled, countData]);
+  }, [isPaginationEnabled, fetchCount, countData]);
 
-  const totalPages = isPaginationEnabled ? Math.ceil(totalCount / pageSize) : 1;
+  const totalPages = isPaginationEnabled && totalCount !== undefined ? Math.ceil(totalCount / pageSize) : 1;
 
   const gameData = useMemo(() => {
     if (!miniGamesData || !miniGamesData.length) return [];
@@ -134,7 +140,7 @@ export const useMiniGames = ({
     () => ({
       currentPage,
       pageSize,
-      totalCount,
+      totalCount: totalCount ?? 0,
       totalPages,
       hasNextPage,
       hasPreviousPage,
@@ -159,15 +165,27 @@ export const useMiniGames = ({
     ]
   );
 
-  const refetchAll = useCallback(async () => {
-    await miniGamesRefetch();
-  }, [miniGamesRefetch]);
+  // Create a combined refetch function that refetches both queries
+  const refetch = useCallback(async () => {
+    const promises: Promise<void>[] = [];
+
+    if (miniGamesRefetch) {
+      promises.push(miniGamesRefetch());
+    }
+
+    if ((isPaginationEnabled || fetchCount) && refetchCount) {
+      promises.push(refetchCount());
+    }
+
+    await Promise.all(promises);
+  }, [miniGamesRefetch, refetchCount, isPaginationEnabled, fetchCount]);
 
   return {
     minigames: gameData,
     loading: isLoading,
     error,
-    refetch: miniGamesRefetch,
+    refetch, // Use the combined refetch
     pagination: paginationControls,
+    totalCount,
   };
 };

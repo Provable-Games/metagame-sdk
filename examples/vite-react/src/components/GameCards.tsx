@@ -7,53 +7,71 @@ import { useGameTokenRanking, useGameLeaderboard } from 'metagame-sdk/sql';
 
 const GameCards: React.FC = () => {
   const { address } = useAccount();
-  const { games } = useSubscribeGameTokens({
+  // const { games } = useSubscribeGameTokens({
+  //   // context: {
+  //   //   name: 'Budokan',
+  //   //   attributes: {
+  //   //     'Tournament ID': (1)?.toString() ?? '0',
+  //   //   },
+  //   // },
+  //   // pagination: {
+  //   //   pageSize: 10,
+  //   //   sortBy: 'score',
+  //   //   sortOrder: 'desc',
+  //   // },
+  //   // owner: addAddressPadding(address ?? '0'),
+  //   // gameAddresses: [
+  //   //   addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
+  //   // ],
+  //   // soulbound: false,
+  //   // minted_by_address: addAddressPadding(
+  //   //   '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
+  //   // ),
+  // });
+  const {
+    games,
+    pagination: {
+      currentPage,
+      hasNextPage,
+      hasPreviousPage,
+      goToPage,
+      nextPage,
+      previousPage,
+      firstPage,
+    },
+    refetch,
+  } = useGameTokens({
     // context: {
-    //   name: 'Budokan',
+    //   name: "Budokan",
     //   attributes: {
-    //     'Tournament ID': (1)?.toString() ?? '0',
+    //     "Tournament ID": tournamentId?.toString() ?? "0",
     //   },
     // },
-    // pagination: {
-    //   pageSize: 10,
-    //   sortBy: 'score',
-    //   sortOrder: 'desc',
-    // },
-    // owner: addAddressPadding(address ?? '0'),
-    // gameAddresses: [
-    //   addAddressPadding('0x07ae26eecf0274aabb31677753ff3a4e15beec7268fa1b104f73ce3c89202831'),
-    // ],
-    // soulbound: false,
-    // minted_by_address: addAddressPadding(
-    //   '0x1db6fcda8eefcf806f29d888c8085644b8a9ea9ba74e28a6b4af4bd4ec256af'
-    // ),
+    pagination: {
+      pageSize: 10,
+    },
+    sortBy: 'score',
+    sortOrder: 'desc',
+    mintedByAddress: '0x058f888ba5897efa811eca5e5818540d35b664f4281660cd839cd5a4b0bf4582',
   });
-  // const { data: gamesFromSQL } = useGameTokens({
-  //   // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-  //   // tokenIds: [2],
-  //   // owner: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
-  //   sortBy: 'score',
-  //   sortOrder: 'desc',
-  //   pagination: {
-  //     pageSize: 10,
-  //   },
+
+  // const { ranking } = useGameTokenRanking({
+  //   tokenId: 59,
+  //   mintedByAddress: '0x02b481049177d5947b7ac5b40ae231c14af517c8cdc5506fb2529f064fc47edd',
   // });
 
-  const { ranking } = useGameTokenRanking({
-    tokenId: 59,
-    mintedByAddress: '0x02b481049177d5947b7ac5b40ae231c14af517c8cdc5506fb2529f064fc47edd',
-  });
+  // console.log(ranking);
 
-  console.log(ranking);
+  // const { leaderboard } = useGameLeaderboard({
+  //   tokenId: 59,
+  //   mintedByAddress: '0x02b481049177d5947b7ac5b40ae231c14af517c8cdc5506fb2529f064fc47edd',
+  // });
 
-  const { leaderboard } = useGameLeaderboard({
-    tokenId: 59,
-    mintedByAddress: '0x02b481049177d5947b7ac5b40ae231c14af517c8cdc5506fb2529f064fc47edd',
-  });
-
-  console.log(leaderboard);
+  // console.log(leaderboard);
 
   // console.log('games', games);
+
+  console.log(games);
 
   return (
     <div className="max-w-7xl mx-auto p-6">

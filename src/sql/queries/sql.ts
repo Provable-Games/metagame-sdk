@@ -180,7 +180,6 @@ export const gamesCountQuery = (
   LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = tm.id
   LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = tm.id
   LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
-  LEFT JOIN tokens t ON t.token_id = tm.id
   ${whereClause}
   `;
 };
@@ -231,7 +230,6 @@ export const gamesQuery = ({
     completed_all_objectives,
     o.token_id,
     pn.player_name,
-    t.metadata,
     tc.context_data as context,
     sd.settings_data as settings_data,
     COALESCE(s.score, 0) as score,
@@ -263,7 +261,6 @@ export const gamesQuery = ({
   LEFT JOIN '${namespace}-TokenRendererUpdate' tr on tr.id = tm.id
   LEFT JOIN '${namespace}-TokenClientUrlUpdate' tcu on tcu.id = tm.id
   LEFT JOIN '${namespace}-MinterRegistryUpdate' mr on mr.id = tm.minted_by
-  LEFT JOIN tokens t ON t.token_id = tm.id
   ${whereClause}
   GROUP BY 
     tm.id

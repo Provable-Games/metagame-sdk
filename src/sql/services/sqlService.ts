@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { logger } from '../../shared/utils/logger';
 
 interface ErrorResponse {
@@ -22,6 +22,12 @@ export function useSqlQuery<T>(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use refs to track previous values and prevent unnecessary re-fetches
+  const lastQueryRef = useRef<string | null | undefined>();
+  const lastToriiUrlRef = useRef<string | undefined>();
+  const hasFetchedRef = useRef(false);
+
+  // Create a stable fetch function
   const fetchData = useCallback(async () => {
     if (!toriiUrl) {
       setError('Torii URL is not configured');
@@ -58,16 +64,29 @@ export function useSqlQuery<T>(
     }
   }, [toriiUrl, query, logging]);
 
-  // Fetch data initially
+  // Only fetch when query or toriiUrl actually changes
   useEffect(() => {
-    fetchData();
+    const queryChanged = lastQueryRef.current !== query;
+    const toriiUrlChanged = lastToriiUrlRef.current !== toriiUrl;
+
+    if (queryChanged || toriiUrlChanged || !hasFetchedRef.current) {
+      lastQueryRef.current = query;
+      lastToriiUrlRef.current = toriiUrl;
+      hasFetchedRef.current = true;
+      fetchData();
+    }
+  }, [query, toriiUrl, fetchData]);
+
+  // Create a stable refetch function
+  const refetch = useCallback(() => {
+    return fetchData();
   }, [fetchData]);
 
   return {
     data,
     loading,
     error,
-    refetch: fetchData,
+    refetch,
   };
 }
 

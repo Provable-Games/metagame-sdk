@@ -9,37 +9,37 @@ const PaginatedGamesList: React.FC = () => {
   >('score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const {
-    games, // Paginated games for current page
-    allGames, // All filtered games (unpaginated)
-    isSubscribing,
-    error,
-    isInitialized,
-    // pagination: {
-    //   currentPage,
-    //   totalPages,
-    //   totalItems,
-    //   hasNextPage,
-    //   hasPreviousPage,
-    //   goToPage,
-    //   nextPage,
-    //   previousPage,
-    //   firstPage,
-    //   lastPage,
-    // },
-  } = useSubscribeGameTokens({
-    // Optional filters
-    soulbound: false,
-    // hasContext: true,
+  // const {
+  //   games, // Paginated games for current page
+  //   allGames, // All filtered games (unpaginated)
+  //   isSubscribing,
+  //   error,
+  //   isInitialized,
+  //   // pagination: {
+  //   //   currentPage,
+  //   //   totalPages,
+  //   //   totalItems,
+  //   //   hasNextPage,
+  //   //   hasPreviousPage,
+  //   //   goToPage,
+  //   //   nextPage,
+  //   //   previousPage,
+  //   //   firstPage,
+  //   //   lastPage,
+  //   // },
+  // } = useSubscribeGameTokens({
+  //   // Optional filters
+  //   soulbound: false,
+  //   // hasContext: true,
 
-    // Built-in pagination with sorting
-    pagination: {
-      pageSize: 5, // Show 5 games per page
-      initialPage: 0, // Start on first page
-      sortBy: sortBy, // Sort by selected field
-      sortOrder: sortOrder, // Sort order
-    },
-  });
+  //   // Built-in pagination with sorting
+  //   pagination: {
+  //     pageSize: 5, // Show 5 games per page
+  //     initialPage: 0, // Start on first page
+  //     sortBy: sortBy, // Sort by selected field
+  //     sortOrder: sortOrder, // Sort order
+  //   },
+  // });
 
   const {
     games: gamesFromSQL,
@@ -56,6 +56,7 @@ const PaginatedGamesList: React.FC = () => {
       lastPage,
     },
     loading,
+    error,
   } = useGameTokens({
     // mintedByAddress: '0x77b8ed8356a7c1f0903fc4ba6e15f9b09cf437ce04f21b2cbf32dc2790183d0',
     // tokenIds: [2],
@@ -82,24 +83,24 @@ const PaginatedGamesList: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-64 p-6">
         <div className="text-lg text-red-600 mb-4">Subscription Error</div>
         <div className="text-sm text-gray-600 bg-red-50 p-4 rounded-lg max-w-2xl">
-          <strong>Error:</strong> {error.message}
+          <strong>Error:</strong> {error}
         </div>
         <div className="text-xs text-gray-500 mt-2">Check the browser console for more details</div>
       </div>
     );
   }
 
-  // Show loading state
-  if (!isSubscribing || !isInitialized) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-64">
-        <div className="text-lg text-gray-600 mb-2">Connecting to real-time updates...</div>
-        <div className="text-sm text-gray-500">
-          Subscription: {isSubscribing ? '✅' : '⏳'} | Store: {isInitialized ? '✅' : '⏳'}
-        </div>
-      </div>
-    );
-  }
+  // // Show loading state
+  // if (!isSubscribing || !isInitialized) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-64">
+  //       <div className="text-lg text-gray-600 mb-2">Connecting to real-time updates...</div>
+  //       <div className="text-sm text-gray-500">
+  //         Subscription: {isSubscribing ? '✅' : '⏳'} | Store: {isInitialized ? '✅' : '⏳'}
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -110,9 +111,10 @@ const PaginatedGamesList: React.FC = () => {
       {/* Summary */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <p className="text-sm text-gray-700">
-          Showing {games.length} of {totalCount} games (Page {currentPage + 1} of {totalPages})
+          Showing {gamesFromSQL.length} of {totalCount} games (Page {currentPage + 1} of{' '}
+          {totalPages})
         </p>
-        <p className="text-sm text-gray-700">Total games available: {allGames.length}</p>
+        <p className="text-sm text-gray-700">Total games available: {gamesFromSQL.length}</p>
         <p className="text-sm text-gray-700">
           Sorted by: <strong>{sortBy}</strong> ({sortOrder}ending)
         </p>
@@ -158,12 +160,12 @@ const PaginatedGamesList: React.FC = () => {
 
       {/* Games list */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {games.length === 0 ? (
+        {gamesFromSQL.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <p className="text-gray-500">No games found on this page.</p>
           </div>
         ) : (
-          games.map((game) => (
+          gamesFromSQL.map((game) => (
             <div
               key={game.token_id}
               className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
