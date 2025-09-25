@@ -37,6 +37,8 @@ interface GameTokensQueryParams {
   includeMetadata?: boolean;
   // Fetch total count even when pagination is disabled (default: false)
   fetchCount?: boolean;
+  // Only fetch count, skip main data query (default: false)
+  countOnly?: boolean;
 }
 
 export interface PaginationControls {
@@ -83,6 +85,7 @@ export const useGameTokens = ({
   pagination,
   includeMetadata = true,
   fetchCount = false,
+  countOnly = false,
 }: GameTokensQueryParams): UseGameTokensResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -100,7 +103,7 @@ export const useGameTokens = ({
   const finalSortOrder = sortOrder ?? defaultSortOrder;
 
   const query = useMemo(() => {
-    if (!client) return null;
+    if (!client || countOnly) return null;
     return gamesQuery({
       namespace: client.getNamespace(),
       owner,
@@ -121,6 +124,7 @@ export const useGameTokens = ({
     });
   }, [
     client,
+    countOnly,
     owner,
     gameAddresses,
     tokenIds,
@@ -142,7 +146,7 @@ export const useGameTokens = ({
   ]);
 
   const countQuery = useMemo(() => {
-    if (!client || (!isPaginationEnabled && !fetchCount)) return null;
+    if (!client || (!isPaginationEnabled && !fetchCount && !countOnly)) return null;
     return gamesCountQuery({
       namespace: client.getNamespace(),
       owner,
@@ -161,6 +165,7 @@ export const useGameTokens = ({
     client,
     isPaginationEnabled,
     fetchCount,
+    countOnly,
     owner,
     gameAddresses,
     tokenIds,
@@ -192,16 +197,16 @@ export const useGameTokens = ({
   const isLoading = loading || countLoading;
 
   const totalCount = useMemo(() => {
-    if (!isPaginationEnabled && !fetchCount) return undefined;
+    if (!isPaginationEnabled && !fetchCount && !countOnly) return undefined;
     if (!countData || !countData.length) return 0;
     return Number((countData[0] as any).count) || 0;
-  }, [isPaginationEnabled, fetchCount, countData]);
+  }, [isPaginationEnabled, fetchCount, countOnly, countData]);
 
   const totalPages = isPaginationEnabled && totalCount !== undefined ? Math.ceil(totalCount / pageSize) : 1;
 
   // Extract unique token IDs when game data changes
   const tokenIdsToFetch = useMemo(() => {
-    if (!rawGameData || !rawGameData.length || !includeMetadata) return [];
+    if (!rawGameData || !rawGameData.length || !includeMetadata || countOnly) return [];
     const uniqueIds = new Set<number>();
     rawGameData.forEach((game: any) => {
       if (game.token_id) {
@@ -209,7 +214,7 @@ export const useGameTokens = ({
       }
     });
     return Array.from(uniqueIds);
-  }, [rawGameData, includeMetadata]);
+  }, [rawGameData, includeMetadata, countOnly]);
 
   // Fetch metadata progressively after main data loads
   useEffect(() => {
@@ -245,7 +250,7 @@ export const useGameTokens = ({
   }, [tokenIdsToFetch, toriiUrl]);
 
   const gameScores = useMemo(() => {
-    if (!rawGameData || !rawGameData.length) return [];
+    if (!rawGameData || !rawGameData.length || countOnly) return [];
 
     return rawGameData.map((game: any) => {
       // Parse context data if available
@@ -331,7 +336,7 @@ export const useGameTokens = ({
       };
       return filteredGame;
     });
-  }, [rawGameData, tokenMetadataMap, includeMetadata]);
+  }, [rawGameData, tokenMetadataMap, includeMetadata, countOnly]);
 
   const hasNextPage = isPaginationEnabled ? currentPage < totalPages - 1 : false;
   const hasPreviousPage = isPaginationEnabled ? currentPage > 0 : false;
@@ -379,7 +384,7 @@ export const useGameTokens = ({
       promises.push(refetchMain());
     }
 
-    if ((isPaginationEnabled || fetchCount) && refetchCount) {
+    if ((isPaginationEnabled || fetchCount || countOnly) && refetchCount) {
       promises.push(refetchCount());
     }
 

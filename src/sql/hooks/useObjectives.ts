@@ -18,6 +18,8 @@ interface UseGameObjectivesProps {
   };
   // Fetch total count even when pagination is disabled (default: false)
   fetchCount?: boolean;
+  // Only fetch count, skip main data query (default: false)
+  countOnly?: boolean;
 }
 
 export interface UseObjectivesResult extends Omit<SqlQueryResult<GameObjective>, 'data'> {
@@ -35,6 +37,7 @@ export const useObjectives = ({
   logging = false,
   pagination,
   fetchCount = false,
+  countOnly = false,
 }: UseGameObjectivesProps): UseObjectivesResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -45,7 +48,7 @@ export const useObjectives = ({
   const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
 
   const query = useMemo(() => {
-    if (!client) return null;
+    if (!client || countOnly) return null;
     return objectivesQuery({
       namespace: client.getNamespace(),
       gameAddresses,
@@ -55,6 +58,7 @@ export const useObjectives = ({
     });
   }, [
     client,
+    countOnly,
     gameAddresses,
     objectiveIds,
     isPaginationEnabled,
@@ -65,13 +69,13 @@ export const useObjectives = ({
   ]);
 
   const countQuery = useMemo(() => {
-    if (!client || (!isPaginationEnabled && !fetchCount)) return null;
+    if (!client || (!isPaginationEnabled && !fetchCount && !countOnly)) return null;
     return objectivesCountQuery({
       namespace: client.getNamespace(),
       gameAddresses,
       objectiveIds,
     });
-  }, [client, isPaginationEnabled, fetchCount, gameAddresses, objectiveIds]);
+  }, [client, isPaginationEnabled, fetchCount, countOnly, gameAddresses, objectiveIds]);
 
   const {
     data: rawObjectivesData,
@@ -91,15 +95,15 @@ export const useObjectives = ({
   const isLoading = loading || countLoading;
 
   const totalCount = useMemo(() => {
-    if (!isPaginationEnabled && !fetchCount) return undefined;
+    if (!isPaginationEnabled && !fetchCount && !countOnly) return undefined;
     if (!countData || !countData.length) return 0;
     return Number((countData[0] as any).count) || 0;
-  }, [isPaginationEnabled, fetchCount, countData]);
+  }, [isPaginationEnabled, fetchCount, countOnly, countData]);
 
   const totalPages = isPaginationEnabled && totalCount !== undefined ? Math.ceil(totalCount / pageSize) : 1;
 
   const objectivesData = useMemo(() => {
-    if (!rawObjectivesData || !rawObjectivesData.length) return [];
+    if (!rawObjectivesData || !rawObjectivesData.length || countOnly) return [];
 
     return rawObjectivesData.map((objective: any) => {
       // Build gameMetadata object if available
@@ -125,7 +129,7 @@ export const useObjectives = ({
         gameMetadata,
       };
     });
-  }, [rawObjectivesData]);
+  }, [rawObjectivesData, countOnly]);
 
   const hasNextPage = isPaginationEnabled ? currentPage < totalPages - 1 : false;
   const hasPreviousPage = isPaginationEnabled ? currentPage > 0 : false;
@@ -167,7 +171,7 @@ export const useObjectives = ({
       promises.push(refetchMain());
     }
 
-    if ((isPaginationEnabled || fetchCount) && refetchCount) {
+    if ((isPaginationEnabled || fetchCount || countOnly) && refetchCount) {
       promises.push(refetchCount());
     }
 

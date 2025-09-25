@@ -19,6 +19,8 @@ interface UseSettingsProps {
   };
   // Fetch total count even when pagination is disabled (default: false)
   fetchCount?: boolean;
+  // Only fetch count, skip main data query (default: false)
+  countOnly?: boolean;
 }
 
 export interface UseSettingsResult extends Omit<SqlQueryResult<GameSettings>, 'data'> {
@@ -36,6 +38,7 @@ export const useSettings = ({
   logging = false,
   pagination,
   fetchCount = false,
+  countOnly = false,
 }: UseSettingsProps): UseSettingsResult => {
   const client = getMetagameClientSafe();
 
@@ -45,7 +48,7 @@ export const useSettings = ({
   const [currentPage, setCurrentPage] = useState(pagination?.initialPage ?? 0);
 
   const query = useMemo(() => {
-    if (!client) return null;
+    if (!client || countOnly) return null;
     return gameSettingsQuery({
       namespace: client.getNamespace(),
       gameAddresses,
@@ -55,6 +58,7 @@ export const useSettings = ({
     });
   }, [
     client,
+    countOnly,
     gameAddresses,
     settingsIds,
     isPaginationEnabled,
@@ -65,13 +69,13 @@ export const useSettings = ({
   ]);
 
   const countQuery = useMemo(() => {
-    if (!client || (!isPaginationEnabled && !fetchCount)) return null;
+    if (!client || (!isPaginationEnabled && !fetchCount && !countOnly)) return null;
     return gameSettingsCountQuery({
       namespace: client.getNamespace(),
       gameAddresses,
       settingsIds,
     });
-  }, [client, isPaginationEnabled, fetchCount, gameAddresses, settingsIds]);
+  }, [client, isPaginationEnabled, fetchCount, countOnly, gameAddresses, settingsIds]);
 
   const {
     data: rawSettingsData,
@@ -91,15 +95,15 @@ export const useSettings = ({
   const isLoading = loading || countLoading;
 
   const totalCount = useMemo(() => {
-    if (!isPaginationEnabled && !fetchCount) return undefined;
+    if (!isPaginationEnabled && !fetchCount && !countOnly) return undefined;
     if (!countData || !countData.length) return 0;
     return Number((countData[0] as any).count) || 0;
-  }, [isPaginationEnabled, fetchCount, countData]);
+  }, [isPaginationEnabled, fetchCount, countOnly, countData]);
 
   const totalPages = isPaginationEnabled && totalCount !== undefined ? Math.ceil(totalCount / pageSize) : 1;
 
   const settingsData = useMemo(() => {
-    if (!rawSettingsData || !rawSettingsData.length) return [];
+    if (!rawSettingsData || !rawSettingsData.length || countOnly) return [];
 
     return rawSettingsData.map((settings: any) => {
       const settingsData = settings.settings_data || settings.data; // Support both new and legacy field names
@@ -129,7 +133,7 @@ export const useSettings = ({
         data: parsedSettingsData?.data,
       };
     });
-  }, [rawSettingsData]);
+  }, [rawSettingsData, countOnly]);
 
   const hasNextPage = isPaginationEnabled ? currentPage < totalPages - 1 : false;
   const hasPreviousPage = isPaginationEnabled ? currentPage > 0 : false;
@@ -171,7 +175,7 @@ export const useSettings = ({
       promises.push(refetchMain());
     }
 
-    if ((isPaginationEnabled || fetchCount) && refetchCount) {
+    if ((isPaginationEnabled || fetchCount || countOnly) && refetchCount) {
       promises.push(refetchCount());
     }
 
