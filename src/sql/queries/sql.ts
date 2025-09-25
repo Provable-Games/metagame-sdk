@@ -81,6 +81,7 @@ interface GamesQueryParams {
   soulbound?: boolean;
   objective_id?: string;
   mintedByAddress?: string;
+  gameOver?: boolean;
   limit?: number;
   offset?: number;
   sortBy?: 'score' | 'minted_at' | 'player_name' | 'token_id' | 'game_over' | 'owner' | 'game_id';
@@ -102,6 +103,7 @@ const buildGameConditions = (
     soulbound,
     objective_id,
     mintedByAddress,
+    gameOver,
   } = params;
 
   if (owner) {
@@ -140,6 +142,10 @@ const buildGameConditions = (
 
   if (objective_id) {
     conditions.push(`tobj.objective_id = '${objective_id}'`);
+  }
+
+  if (gameOver !== undefined) {
+    conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
   }
 
   if (context) {
@@ -196,6 +202,7 @@ export const gamesQuery = ({
   soulbound,
   objective_id,
   mintedByAddress,
+  gameOver,
   limit = 100,
   offset = 0,
   sortBy = 'minted_at',
@@ -212,6 +219,7 @@ export const gamesQuery = ({
     soulbound,
     objective_id,
     mintedByAddress,
+    gameOver,
   });
 
   return `
@@ -415,6 +423,7 @@ export const gameRankingQuery = ({
   gameAddress,
   settings_id,
   ownerFilter,
+  gameOver,
 }: GameRankingParams) => {
   const conditions = [];
 
@@ -432,6 +441,10 @@ export const gameRankingQuery = ({
 
   if (ownerFilter) {
     conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
+  }
+
+  if (gameOver !== undefined) {
+    conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -469,6 +482,7 @@ export const gameLeaderboardQuery = ({
   below,
   settings_id,
   ownerFilter,
+  gameOver,
 }: GameLeaderboardParams) => {
   const conditions = [];
 
@@ -486,6 +500,10 @@ export const gameLeaderboardQuery = ({
 
   if (ownerFilter) {
     conditions.push(`o.owner = "${padAddress(ownerFilter)}"`);
+  }
+
+  if (gameOver !== undefined) {
+    conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

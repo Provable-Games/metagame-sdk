@@ -89,6 +89,7 @@ export interface GameRankingParams {
   gameAddress?: string;
   settings_id?: number;
   ownerFilter?: string;
+  gameOver?: boolean;
 }
 
 
@@ -113,6 +114,7 @@ export interface GameLeaderboardParams {
   below?: number; // Number of games to show below current rank (default: 3)
   settings_id?: number;
   ownerFilter?: string;
+  gameOver?: boolean;
 }
 
 
