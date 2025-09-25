@@ -82,6 +82,11 @@ interface GamesQueryParams {
   objective_id?: string;
   mintedByAddress?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
   limit?: number;
   offset?: number;
   sortBy?: 'score' | 'minted_at' | 'player_name' | 'token_id' | 'game_over' | 'owner' | 'game_id';
@@ -104,6 +109,7 @@ const buildGameConditions = (
     objective_id,
     mintedByAddress,
     gameOver,
+    score,
   } = params;
 
   if (owner) {
@@ -146,6 +152,19 @@ const buildGameConditions = (
 
   if (gameOver !== undefined) {
     conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
+  }
+
+  if (score) {
+    if (score.exact !== undefined) {
+      conditions.push(`COALESCE(s.score, 0) = ${score.exact}`);
+    } else {
+      if (score.min !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) >= ${score.min}`);
+      }
+      if (score.max !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) <= ${score.max}`);
+      }
+    }
   }
 
   if (context) {
@@ -203,6 +222,7 @@ export const gamesQuery = ({
   objective_id,
   mintedByAddress,
   gameOver,
+  score,
   limit = 100,
   offset = 0,
   sortBy = 'minted_at',
@@ -220,6 +240,7 @@ export const gamesQuery = ({
     objective_id,
     mintedByAddress,
     gameOver,
+    score,
   });
 
   return `
@@ -424,6 +445,7 @@ export const gameRankingQuery = ({
   settings_id,
   ownerFilter,
   gameOver,
+  score,
 }: GameRankingParams) => {
   const conditions = [];
 
@@ -445,6 +467,19 @@ export const gameRankingQuery = ({
 
   if (gameOver !== undefined) {
     conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
+  }
+
+  if (score) {
+    if (score.exact !== undefined) {
+      conditions.push(`COALESCE(s.score, 0) = ${score.exact}`);
+    } else {
+      if (score.min !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) >= ${score.min}`);
+      }
+      if (score.max !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) <= ${score.max}`);
+      }
+    }
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -483,6 +518,7 @@ export const gameLeaderboardQuery = ({
   settings_id,
   ownerFilter,
   gameOver,
+  score,
 }: GameLeaderboardParams) => {
   const conditions = [];
 
@@ -504,6 +540,19 @@ export const gameLeaderboardQuery = ({
 
   if (gameOver !== undefined) {
     conditions.push(`tm.game_over = ${gameOver ? 1 : 0}`);
+  }
+
+  if (score) {
+    if (score.exact !== undefined) {
+      conditions.push(`COALESCE(s.score, 0) = ${score.exact}`);
+    } else {
+      if (score.min !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) >= ${score.min}`);
+      }
+      if (score.max !== undefined) {
+        conditions.push(`COALESCE(s.score, 0) <= ${score.max}`);
+      }
+    }
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';

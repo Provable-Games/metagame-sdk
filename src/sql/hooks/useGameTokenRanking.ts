@@ -16,6 +16,11 @@ export interface UseGameTokenRankingParams {
   settings_id?: number;
   ownerFilter?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
 }
 
 export interface UseGameTokenRankingResult {
@@ -33,6 +38,7 @@ export const useGameTokenRanking = ({
   settings_id,
   ownerFilter,
   gameOver,
+  score,
 }: UseGameTokenRankingParams): UseGameTokenRankingResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -48,8 +54,9 @@ export const useGameTokenRanking = ({
       settings_id,
       ownerFilter,
       gameOver,
+      score,
     });
-  }, [client, tokenId, mintedByAddress, gameAddress, settings_id, ownerFilter, gameOver]);
+  }, [client, tokenId, mintedByAddress, gameAddress, settings_id, ownerFilter, gameOver, score]);
 
   const { data: rankingData, loading, error, refetch } = useSqlQuery(toriiUrl, rankingQuery, true);
 
@@ -84,6 +91,11 @@ export interface UseGameLeaderboardParams {
   settings_id?: number;
   ownerFilter?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
 
   // Leaderboard range (optional)
   above?: number; // Number of games to show above current rank (default: 3)
@@ -107,6 +119,7 @@ export const useGameLeaderboard = ({
   settings_id,
   ownerFilter,
   gameOver,
+  score,
 }: UseGameLeaderboardParams): UseGameLeaderboardResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -125,8 +138,9 @@ export const useGameLeaderboard = ({
       settings_id,
       ownerFilter,
       gameOver,
+      score,
     });
-  }, [client, tokenId, mintedByAddress, gameAddress, above, below, settings_id, ownerFilter, gameOver]);
+  }, [client, tokenId, mintedByAddress, gameAddress, above, below, settings_id, ownerFilter, gameOver, score]);
 
   const {
     data: leaderboardData,

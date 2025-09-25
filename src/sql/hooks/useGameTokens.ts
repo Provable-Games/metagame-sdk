@@ -22,6 +22,11 @@ interface GameTokensQueryParams {
   objective_id?: string;
   mintedByAddress?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
   limit?: number;
   offset?: number;
   // Sorting parameters
@@ -78,6 +83,7 @@ export const useGameTokens = ({
   objective_id,
   mintedByAddress,
   gameOver,
+  score,
   limit,
   offset = 0,
   sortBy = 'minted_at',
@@ -117,6 +123,7 @@ export const useGameTokens = ({
       objective_id,
       mintedByAddress,
       gameOver,
+      score,
       limit: isPaginationEnabled ? pageSize : limit,
       offset: isPaginationEnabled ? currentPage * pageSize : offset,
       sortBy,
@@ -136,6 +143,7 @@ export const useGameTokens = ({
     objective_id,
     mintedByAddress,
     gameOver,
+    score,
     isPaginationEnabled,
     pageSize,
     currentPage,
@@ -160,6 +168,7 @@ export const useGameTokens = ({
       objective_id,
       mintedByAddress,
       gameOver,
+      score,
     });
   }, [
     client,
@@ -177,6 +186,7 @@ export const useGameTokens = ({
     objective_id,
     mintedByAddress,
     gameOver,
+    score,
   ]);
 
   const {

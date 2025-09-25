@@ -90,6 +90,11 @@ export interface GameRankingParams {
   settings_id?: number;
   ownerFilter?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
 }
 
 
@@ -115,6 +120,11 @@ export interface GameLeaderboardParams {
   settings_id?: number;
   ownerFilter?: string;
   gameOver?: boolean;
+  score?: {
+    min?: number;
+    max?: number;
+    exact?: number;
+  };
 }
 
 
