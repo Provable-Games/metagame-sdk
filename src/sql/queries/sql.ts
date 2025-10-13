@@ -87,6 +87,9 @@ interface GamesQueryParams {
     max?: number;
     exact?: number;
   };
+  // Lifecycle filters
+  started?: boolean; // Filter for games that have started (current time >= lifecycle_start)
+  expired?: boolean; // Filter for games that have expired (current time >= lifecycle_end)
   limit?: number;
   offset?: number;
   sortBy?: 'score' | 'minted_at' | 'player_name' | 'token_id' | 'game_over' | 'owner' | 'game_id';
@@ -110,6 +113,8 @@ const buildGameConditions = (
     mintedByAddress,
     gameOver,
     score,
+    started,
+    expired,
   } = params;
 
   if (owner) {
@@ -164,6 +169,37 @@ const buildGameConditions = (
       if (score.max !== undefined) {
         conditions.push(`COALESCE(s.score, 0) <= ${score.max}`);
       }
+    }
+  }
+
+  // Lifecycle filters - use current timestamp
+  const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+
+  if (started !== undefined) {
+    if (started) {
+      // Game has started: current time >= lifecycle_start (or lifecycle_start is 0x0000000000000000)
+      conditions.push(
+        `(tm.lifecycle_start = '0x0000000000000000' OR ${currentTime} >= CAST(tm.lifecycle_start AS INTEGER))`
+      );
+    } else {
+      // Game has not started: current time < lifecycle_start (and lifecycle_start is not 0x0000000000000000)
+      conditions.push(
+        `(tm.lifecycle_start != '0x0000000000000000' AND ${currentTime} < CAST(tm.lifecycle_start AS INTEGER))`
+      );
+    }
+  }
+
+  if (expired !== undefined) {
+    if (expired) {
+      // Game has expired: current time >= lifecycle_end (and lifecycle_end is not 0x0000000000000000)
+      conditions.push(
+        `(tm.lifecycle_end != '0x0000000000000000' AND ${currentTime} >= CAST(tm.lifecycle_end AS INTEGER))`
+      );
+    } else {
+      // Game has not expired: current time < lifecycle_end (or lifecycle_end is 0x0000000000000000)
+      conditions.push(
+        `(tm.lifecycle_end = '0x0000000000000000' OR ${currentTime} < CAST(tm.lifecycle_end AS INTEGER))`
+      );
     }
   }
 
@@ -223,6 +259,8 @@ export const gamesQuery = ({
   mintedByAddress,
   gameOver,
   score,
+  started,
+  expired,
   limit = 100,
   offset = 0,
   sortBy = 'minted_at',
@@ -241,6 +279,8 @@ export const gamesQuery = ({
     mintedByAddress,
     gameOver,
     score,
+    started,
+    expired,
   });
 
   return `
@@ -314,7 +354,7 @@ const buildSettingsConditions = (
   const { gameAddresses, settingsIds } = params;
 
   if (gameAddresses && gameAddresses.length > 0) {
-    const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
+    const addressList = gameAddresses.map((addr) => `'${padAddress(addr)}'`).join(', ');
     conditions.push(`gr.contract_address IN (${addressList})`);
   }
 
@@ -383,7 +423,7 @@ const buildObjectivesConditions = (
   const { gameAddresses, objectiveIds } = params;
 
   if (gameAddresses && gameAddresses.length > 0) {
-    const addressList = gameAddresses.map((addr) => `'${addr}'`).join(', ');
+    const addressList = gameAddresses.map((addr) => `'${padAddress(addr)}'`).join(', ');
     conditions.push(`gr.contract_address IN (${addressList})`);
   }
 

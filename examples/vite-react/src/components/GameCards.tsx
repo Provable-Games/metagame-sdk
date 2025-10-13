@@ -42,10 +42,10 @@ const GameCards: React.FC = () => {
     sortOrder: 'desc',
     mintedByAddress: '0x00a67ef20b61a9846e1c82b411175e6ab167ea9f8632bd6c2091823c3629ec42',
     owner: '0x077b8Ed8356a7C1F0903Fc4bA6E15F9b09CF437ce04f21B2cBf32dC2790183d0'.toLowerCase(),
-    countOnly: true,
+    expired: false,
   });
 
-  console.log(totalCount);
+  console.log(games);
 
   // const { ranking } = useGameTokenRanking({
   //   tokenId: 59,

@@ -1,13 +1,15 @@
 import React from 'react';
-import { useSubscribeSettings } from 'metagame-sdk/subscriptions';
 import { useSettings } from 'metagame-sdk/sql';
 import { displayAddress } from '../lib/index';
 
 const SettingsTable: React.FC = () => {
-  const { settings } = useSubscribeSettings({});
-  const { settings: settingsFromSQL } = useSettings({});
+  // const { settings } = useSubscribeSettings({});
+  const { settings: settingsFromSQL } = useSettings({
+    gameAddresses: ['0x5e2dfbdc3c193de629e5beb116083b06bd944c1608c9c793351d5792ba29863'],
+    limit: 5,
+    offset: 0,
+  });
 
-  console.log(settings);
   console.log(settingsFromSQL);
 
   return (
@@ -56,7 +58,7 @@ const SettingsTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {Object.entries(settings).map(([key, setting]: [string, any], index: number) => (
+            {Object.entries(settingsFromSQL).map(([key, setting]: [string, any], index: number) => (
               <tr key={key} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {key}
@@ -86,7 +88,7 @@ const SettingsTable: React.FC = () => {
             ))}
           </tbody>
         </table>
-        {Object.entries(settings).length === 0 && (
+        {Object.entries(settingsFromSQL).length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No settings found.</p>
           </div>

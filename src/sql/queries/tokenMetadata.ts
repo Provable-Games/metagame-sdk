@@ -1,5 +1,5 @@
 import { getMetagameClientSafe } from '../../shared/singleton';
-import { indexAddress } from '../../shared';
+import { padAddress } from '../../shared/lib';
 
 /**
  * Creates a SQL query to fetch token metadata for multiple token IDs
@@ -13,7 +13,7 @@ export const tokenMetadataQuery = (tokenIds: number[]): string => {
 
   const client = getMetagameClientSafe();
 
-  const tokenAddress = indexAddress(client?.getTokenAddress() ?? '0x0');
+  const tokenAddress = padAddress(client?.getTokenAddress() ?? '0x0');
 
   // Convert token IDs to proper U256 format (64 hex chars)
   const paddedIds = tokenIds
