@@ -40,9 +40,12 @@ const GameCards: React.FC = () => {
     },
     sortBy: 'score',
     sortOrder: 'desc',
-    mintedByAddress: '0x00a67ef20b61a9846e1c82b411175e6ab167ea9f8632bd6c2091823c3629ec42',
+    mintedByAddress: '0x58f888ba5897efa811eca5e5818540d35b664f4281660cd839cd5a4b0bf4582',
     owner: '0x077b8Ed8356a7C1F0903Fc4bA6E15F9b09CF437ce04f21B2cBf32dC2790183d0'.toLowerCase(),
-    expired: false,
+    context: {
+      id: 14,
+    },
+    includeMetadata: false,
   });
 
   console.log(games);

@@ -9,6 +9,7 @@ interface GameTokensCountParams {
   tokenIds?: number[];
   hasContext?: boolean;
   context?: {
+    id?: number;
     name?: string;
     attributes?: Record<string, string>;
   };

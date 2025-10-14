@@ -13,6 +13,7 @@ interface GameTokensQueryParams {
   tokenIds?: number[];
   hasContext?: boolean;
   context?: {
+    id?: number;
     name?: string;
     attributes?: Record<string, string>; // Filter by specific attributes within contexts object
   };

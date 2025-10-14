@@ -41,6 +41,7 @@ interface GameTokensState {
     tokenIds?: number[];
     hasContext?: boolean;
     context?: {
+      id?: number;
       name?: string;
       attributes?: Record<string, unknown>;
     };
@@ -304,6 +305,19 @@ export const useGameTokensStore = create<GameTokensState>()(
         // New context-based filtering
         if (filter.context) {
           if (!game.context) return false;
+
+          // Filter by context id
+          if (filter.context.id !== undefined) {
+            // Parse the context data to check the Id field
+            try {
+              const contextData = typeof game.context === 'string' ? JSON.parse(game.context) : game.context;
+              const contextId = contextData?.Id || contextData?.id;
+              if (contextId !== filter.context.id) return false;
+            } catch (e) {
+              // If parsing fails, treat as no match
+              return false;
+            }
+          }
 
           // Filter by context name
           if (filter.context.name && game.context.name !== filter.context.name) return false;

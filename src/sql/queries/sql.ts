@@ -73,6 +73,7 @@ interface GamesQueryParams {
   tokenIds?: number[];
   hasContext?: boolean;
   context?: {
+    id?: number;
     name?: string;
     attributes?: Record<string, string>;
   };
@@ -204,10 +205,12 @@ const buildGameConditions = (
   }
 
   if (context) {
+    if (context.id) {
+      conditions.push(`JSON_EXTRACT(tc.context_data, '$.Context Id') = '${context.id}'`);
+    }
+
     if (context.name) {
-      conditions.push(
-        `(JSON_EXTRACT(tc.context_data, '$.name') LIKE '%${context.name}%' OR JSON_EXTRACT(tc.context_data, '$.Name') LIKE '%${context.name}%')`
-      );
+      conditions.push(`JSON_EXTRACT(tc.context_data, '$.Name') = '${context.name}'`);
     }
 
     if (context.attributes) {
