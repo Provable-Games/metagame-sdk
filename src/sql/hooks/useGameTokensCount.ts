@@ -27,6 +27,7 @@ interface GameTokensCountParams {
   // Lifecycle filters
   started?: boolean;
   expired?: boolean;
+  playerName?: string;
 }
 
 export interface UseGameTokensCountResult {
@@ -51,6 +52,7 @@ export const useGameTokensCount = ({
   score,
   started,
   expired,
+  playerName,
 }: GameTokensCountParams): UseGameTokensCountResult => {
   const client = getMetagameClientSafe();
   const toriiUrl = client?.getConfig().toriiUrl || '';
@@ -73,6 +75,7 @@ export const useGameTokensCount = ({
       score,
       started,
       expired,
+      playerName,
     });
   }, [
     client,
@@ -90,6 +93,7 @@ export const useGameTokensCount = ({
     score,
     started,
     expired,
+    playerName,
   ]);
 
   const {

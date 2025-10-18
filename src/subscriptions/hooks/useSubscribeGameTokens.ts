@@ -26,6 +26,7 @@ export interface UseSubscribeGameTokensParams {
   enabled?: boolean;
   pollingInterval?: number;
   minted_by_address?: string; // Add minted by address
+  playerName?: string;
 
   // Pagination parameters
   pagination?: {
@@ -84,6 +85,7 @@ export function useSubscribeGameTokens(
     objective_id,
     pagination,
     minted_by_address,
+    playerName,
   } = params;
 
   // Ensure mini games store is initialized for gameMetadata relationships
@@ -274,6 +276,7 @@ export function useSubscribeGameTokens(
       soulbound,
       objective_id,
       minted_by_address,
+      playerName,
     });
 
     // Populate gameMetadata from mini games store

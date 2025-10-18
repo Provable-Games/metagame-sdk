@@ -1,5 +1,4 @@
-import { padAddress } from '../../shared/lib';
-import { padU64 } from '../../shared/lib';
+import { padAddress, padU64, stringToFelt } from '../../shared/lib';
 import { GameRankingParams, GameLeaderboardParams } from '../../shared/types';
 
 // Helper function to map sortBy field to SQL column
@@ -91,6 +90,7 @@ interface GamesQueryParams {
   // Lifecycle filters
   started?: boolean; // Filter for games that have started (current time >= lifecycle_start)
   expired?: boolean; // Filter for games that have expired (current time >= lifecycle_end)
+  playerName?: string;
   limit?: number;
   offset?: number;
   sortBy?: 'score' | 'minted_at' | 'player_name' | 'token_id' | 'game_over' | 'owner' | 'game_id';
@@ -116,6 +116,7 @@ const buildGameConditions = (
     score,
     started,
     expired,
+    playerName,
   } = params;
 
   if (owner) {
@@ -220,6 +221,12 @@ const buildGameConditions = (
     }
   }
 
+  if (playerName) {
+    const playerNameFelt = stringToFelt(playerName);
+    const paddedPlayerName = padAddress(playerNameFelt.toString());
+    conditions.push(`pn.player_name = "${paddedPlayerName}"`);
+  }
+
   return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 };
 
@@ -264,6 +271,7 @@ export const gamesQuery = ({
   score,
   started,
   expired,
+  playerName,
   limit = 100,
   offset = 0,
   sortBy = 'minted_at',
@@ -284,6 +292,7 @@ export const gamesQuery = ({
     score,
     started,
     expired,
+    playerName,
   });
 
   return `

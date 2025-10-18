@@ -37,6 +37,8 @@ interface GameTokensQueryParams {
   // Lifecycle filters
   started?: boolean; // Filter for games that have started (current time >= lifecycle_start)
   expired?: boolean; // Filter for games that have expired (current time >= lifecycle_end)
+  
+  playerName?: string;
 
   // Pagination parameters
   pagination?: {
@@ -90,6 +92,7 @@ export const useGameTokens = ({
   score,
   started,
   expired,
+  playerName,
   limit,
   offset = 0,
   sortBy = 'minted_at',
@@ -131,6 +134,7 @@ export const useGameTokens = ({
       score,
       started,
       expired,
+      playerName,
       limit: isPaginationEnabled ? pageSize : limit,
       offset: isPaginationEnabled ? currentPage * pageSize : offset,
       sortBy,
@@ -152,6 +156,7 @@ export const useGameTokens = ({
     score,
     started,
     expired,
+    playerName,
     isPaginationEnabled,
     pageSize,
     currentPage,
@@ -179,6 +184,7 @@ export const useGameTokens = ({
       score,
       started,
       expired,
+      playerName,
     });
   }, [
     client,
@@ -198,6 +204,7 @@ export const useGameTokens = ({
     score,
     started,
     expired,
+    playerName,
   ]);
 
   const {
