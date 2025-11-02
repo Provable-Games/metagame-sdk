@@ -51,7 +51,7 @@ export const useMiniGames = ({
       limit: isPaginationEnabled ? pageSize : limit,
       offset: isPaginationEnabled ? currentPage * pageSize : offset,
     });
-  }, [client, countOnly, gameAddresses, isPaginationEnabled, pageSize, currentPage, limit, offset]);
+  }, [client, countOnly, JSON.stringify(gameAddresses), isPaginationEnabled, pageSize, currentPage, limit, offset]);
 
   const countQuery = useMemo(() => {
     if (!client || (!isPaginationEnabled && !fetchCount && !countOnly)) return null;
@@ -59,7 +59,7 @@ export const useMiniGames = ({
       namespace: client.getNamespace(),
       gameAddresses,
     });
-  }, [client, isPaginationEnabled, fetchCount, countOnly, gameAddresses]);
+  }, [client, isPaginationEnabled, fetchCount, countOnly, JSON.stringify(gameAddresses)]);
 
   const {
     data: miniGamesData,

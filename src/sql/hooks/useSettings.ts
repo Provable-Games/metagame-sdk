@@ -59,8 +59,8 @@ export const useSettings = ({
   }, [
     client,
     countOnly,
-    gameAddresses,
-    settingsIds,
+    JSON.stringify(gameAddresses),
+    JSON.stringify(settingsIds),
     isPaginationEnabled,
     pageSize,
     currentPage,
@@ -75,7 +75,7 @@ export const useSettings = ({
       gameAddresses,
       settingsIds,
     });
-  }, [client, isPaginationEnabled, fetchCount, countOnly, gameAddresses, settingsIds]);
+  }, [client, isPaginationEnabled, fetchCount, countOnly, JSON.stringify(gameAddresses), JSON.stringify(settingsIds)]);
 
   const {
     data: rawSettingsData,

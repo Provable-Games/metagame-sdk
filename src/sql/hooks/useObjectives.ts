@@ -59,8 +59,8 @@ export const useObjectives = ({
   }, [
     client,
     countOnly,
-    gameAddresses,
-    objectiveIds,
+    JSON.stringify(gameAddresses),
+    JSON.stringify(objectiveIds),
     isPaginationEnabled,
     pageSize,
     currentPage,
@@ -75,7 +75,7 @@ export const useObjectives = ({
       gameAddresses,
       objectiveIds,
     });
-  }, [client, isPaginationEnabled, fetchCount, countOnly, gameAddresses, objectiveIds]);
+  }, [client, isPaginationEnabled, fetchCount, countOnly, JSON.stringify(gameAddresses), JSON.stringify(objectiveIds)]);
 
   const {
     data: rawObjectivesData,

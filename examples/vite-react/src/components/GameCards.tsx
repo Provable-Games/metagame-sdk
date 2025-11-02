@@ -29,12 +29,6 @@ const GameCards: React.FC = () => {
   //   // ),
   // });
   const { games, totalCount } = useGameTokens({
-    // context: {
-    //   name: "Budokan",
-    //   attributes: {
-    //     "Tournament ID": tournamentId?.toString() ?? "0",
-    //   },
-    // },
     pagination: {
       pageSize: 10,
     },
@@ -45,7 +39,6 @@ const GameCards: React.FC = () => {
       id: 14,
     },
     includeMetadata: false,
-    playerName: 'bitshi',
   });
 
   console.log(games);

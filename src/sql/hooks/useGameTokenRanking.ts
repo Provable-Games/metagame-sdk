@@ -56,7 +56,7 @@ export const useGameTokenRanking = ({
       gameOver,
       score,
     });
-  }, [client, tokenId, mintedByAddress, gameAddress, settings_id, ownerFilter, gameOver, score]);
+  }, [client, tokenId, mintedByAddress, gameAddress, settings_id, ownerFilter, gameOver, JSON.stringify(score)]);
 
   const { data: rankingData, loading, error, refetch } = useSqlQuery(toriiUrl, rankingQuery, true);
 
@@ -140,7 +140,7 @@ export const useGameLeaderboard = ({
       gameOver,
       score,
     });
-  }, [client, tokenId, mintedByAddress, gameAddress, above, below, settings_id, ownerFilter, gameOver, score]);
+  }, [client, tokenId, mintedByAddress, gameAddress, above, below, settings_id, ownerFilter, gameOver, JSON.stringify(score)]);
 
   const {
     data: leaderboardData,

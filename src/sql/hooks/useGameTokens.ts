@@ -143,17 +143,17 @@ export const useGameTokens = ({
   }, [
     client,
     owner,
-    gameAddresses,
-    tokenIds,
+    JSON.stringify(gameAddresses),
+    JSON.stringify(tokenIds),
     hasContext,
-    context,
+    JSON.stringify(context),
     settings_id,
     completed_all_objectives,
     soulbound,
     objective_id,
     mintedByAddress,
     gameOver,
-    score,
+    JSON.stringify(score),
     started,
     expired,
     playerName,
@@ -191,17 +191,17 @@ export const useGameTokens = ({
     isPaginationEnabled,
     fetchCount,
     owner,
-    gameAddresses,
-    tokenIds,
+    JSON.stringify(gameAddresses),
+    JSON.stringify(tokenIds),
     hasContext,
-    context,
+    JSON.stringify(context),
     settings_id,
     completed_all_objectives,
     soulbound,
     objective_id,
     mintedByAddress,
     gameOver,
-    score,
+    JSON.stringify(score),
     started,
     expired,
     playerName,
@@ -276,7 +276,7 @@ export const useGameTokens = ({
     };
 
     fetchMetadata();
-  }, [tokenIdsToFetch, toriiUrl]);
+  }, [JSON.stringify(tokenIdsToFetch), toriiUrl]);
 
   const gameScores = useMemo(() => {
     if (!rawGameData || !rawGameData.length) return [];
